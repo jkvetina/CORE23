@@ -86,6 +86,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
             AND d.account_locked            = 'No'
             AND ROWNUM                      = 1;
         --
+        -- NV('APP_BUILDER_SESSION')
+        --
         RETURN TRUE;
     EXCEPTION
     WHEN NO_DATA_FOUND THEN
@@ -403,7 +405,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_values               VARCHAR2    := NULL,
         in_overload             VARCHAR2    := NULL,    -- JSON object to overload passed items/values
         in_session_id           NUMBER      := NULL,
-        in_reset                CHAR        := 'Y'      -- reset page items
+        in_reset                CHAR        := 'Y',     -- reset page items
+        in_plain                CHAR        := 'Y'      -- remove JS
     )
     RETURN VARCHAR2
     AS
@@ -432,7 +435,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             p_page              => COALESCE(in_page_id, core.get_page_id()),
             p_clear_cache       => CASE WHEN in_reset = 'Y' THEN COALESCE(in_page_id, core.get_page_id()) END,
             p_items             => out_names,
-            p_values            => NULLIF(out_values, 'NULL')
+            p_values            => NULLIF(out_values, 'NULL'),
             /*
             p_request            IN VARCHAR2 DEFAULT NULL,
             p_debug              IN VARCHAR2 DEFAULT NULL,
@@ -441,6 +444,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             p_triggering_element IN VARCHAR2 DEFAULT 'this',
             p_plain_url          IN BOOLEAN DEFAULT FALSE
             */
+            p_plain_url         => (in_plain = 'Y')
         );
     EXCEPTION
     WHEN core.app_exception THEN
@@ -481,12 +485,48 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
     FUNCTION get_icon (
         in_name                 VARCHAR2,
-        in_title                VARCHAR2    := NULL
+        in_title                VARCHAR2    := NULL,
+        in_style                VARCHAR2    := NULL
     )
     RETURN VARCHAR2
     AS
     BEGIN
-        RETURN '<span class="fa ' || in_name || '" title="' || in_title || '"></span>';
+        RETURN '<span class="fa ' || in_name || '" style="' || in_style || '" title="' || in_title || '"></span>';
+    END;
+
+
+
+    FUNCTION get_grid_action
+    RETURN VARCHAR2
+    AS
+    BEGIN
+        RETURN APEX_UTIL.GET_SESSION_STATE('APEX$ROW_STATUS');
+    END;
+
+
+
+    FUNCTION get_grid_data (
+        in_column_name          VARCHAR2
+    )
+    RETURN VARCHAR2
+    AS
+    BEGIN
+        RETURN APEX_UTIL.GET_SESSION_STATE(in_column_name);
+    END;
+
+
+
+    PROCEDURE set_grid_data (
+        in_column_name          VARCHAR2,
+        in_value                VARCHAR2
+    )
+    AS
+    BEGIN
+        APEX_UTIL.SET_SESSION_STATE (
+            p_name      => in_column_name,
+            p_value     => in_value,
+            p_commit    => FALSE
+        );
     END;
 
 
@@ -732,6 +772,194 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_name             => in_name,
             in_value            => TO_CHAR(in_value, c_format_date_time)
         );
+    END;
+
+
+
+    PROCEDURE set_page_items (
+        in_query            VARCHAR2,
+        in_page_id          NUMBER          := NULL
+    )
+    AS
+        l_cursor            PLS_INTEGER;
+        l_refcur            SYS_REFCURSOR;
+        l_items             t_page_items;
+    BEGIN
+        -- process cursor
+        OPEN l_refcur FOR LTRIM(RTRIM(in_query));
+        --
+        l_cursor    := DBMS_SQL.TO_CURSOR_NUMBER(l_refcur);
+        l_items     := get_values(l_cursor , in_page_id);
+    EXCEPTION
+    WHEN OTHERS THEN
+        RAISE;
+    END;
+
+
+
+    FUNCTION set_page_items (
+        in_query            VARCHAR2,
+        in_page_id          NUMBER          := NULL
+    )
+    RETURN t_page_items PIPELINED
+    AS
+        l_cursor            PLS_INTEGER;
+        l_refcur            SYS_REFCURSOR;
+        l_items             t_page_items;
+    BEGIN
+        -- process cursor
+        OPEN l_refcur FOR LTRIM(RTRIM(in_query));
+        --
+        l_cursor    := DBMS_SQL.TO_CURSOR_NUMBER(l_refcur);
+        l_items     := get_values(l_cursor , in_page_id);
+        --
+        FOR i IN l_items.FIRST .. l_items.LAST LOOP
+            PIPE ROW (l_items(i));
+        END LOOP;
+        --
+        RETURN;
+    EXCEPTION
+    WHEN OTHERS THEN
+        RAISE;
+        RETURN;
+    END;
+
+
+
+    PROCEDURE set_page_items (
+        in_cursor           SYS_REFCURSOR,
+        in_page_id          NUMBER          := NULL
+    )
+    AS
+        l_cursor            PLS_INTEGER;
+        l_cloned_curs       SYS_REFCURSOR;
+        l_items             t_page_items;
+    BEGIN
+        l_cloned_curs   := in_cursor;
+        l_cursor        := get_cursor_number(l_cloned_curs);
+        l_items         := get_values(l_cursor , in_page_id);
+    EXCEPTION
+    WHEN OTHERS THEN
+        RAISE;
+    END;
+
+
+
+    FUNCTION set_page_items (
+        in_cursor           SYS_REFCURSOR,
+        in_page_id          NUMBER          := NULL
+    )
+    RETURN t_page_items PIPELINED
+    AS
+        l_cursor            PLS_INTEGER;
+        l_cloned_curs       SYS_REFCURSOR;
+        l_items             t_page_items;
+    BEGIN
+        l_cloned_curs   := in_cursor;
+        l_cursor        := get_cursor_number(l_cloned_curs);
+        l_items         := get_values(l_cursor , in_page_id);
+        --
+        FOR i IN l_items.FIRST .. l_items.LAST LOOP
+            PIPE ROW (l_items(i));
+        END LOOP;
+        --
+        RETURN;
+    EXCEPTION
+    WHEN OTHERS THEN
+        RAISE;
+        RETURN;
+    END;
+
+
+
+    FUNCTION get_values (
+        io_cursor           IN OUT  PLS_INTEGER,
+        in_page_id                  NUMBER          := NULL
+    )
+    RETURN t_page_items
+    AS
+        l_desc          DBMS_SQL.DESC_TAB;
+        l_cols          PLS_INTEGER;
+        l_number        NUMBER;
+        l_date          DATE;
+        l_string        VARCHAR2(4000);
+        --
+        out_items       t_page_items        := t_page_items();
+        out_item        type_page_items;
+    BEGIN
+        -- get column names
+        DBMS_SQL.DESCRIBE_COLUMNS(io_cursor, l_cols, l_desc);
+        --
+        FOR i IN 1 .. l_cols LOOP
+            IF l_desc(i).col_type = DBMS_SQL.NUMBER_TYPE THEN
+                DBMS_SQL.DEFINE_COLUMN(io_cursor, i, l_number);
+            ELSIF l_desc(i).col_type = DBMS_SQL.DATE_TYPE THEN
+                DBMS_SQL.DEFINE_COLUMN(io_cursor, i, l_date);
+            ELSE
+                DBMS_SQL.DEFINE_COLUMN(io_cursor, i, l_string, 4000);
+            END IF;
+        END LOOP;
+
+        -- fetch data
+        WHILE DBMS_SQL.FETCH_ROWS(io_cursor) > 0 LOOP
+            FOR i IN 1 .. l_cols LOOP
+                IF l_desc(i).col_type = DBMS_SQL.NUMBER_TYPE THEN
+                    DBMS_SQL.COLUMN_VALUE(io_cursor, i, l_number);
+                    l_string := TO_CHAR(l_number);
+                ELSIF l_desc(i).col_type = DBMS_SQL.DATE_TYPE THEN
+                    DBMS_SQL.COLUMN_VALUE(io_cursor, i, l_date);
+                    l_string := TO_CHAR(l_date);
+                ELSE
+                    DBMS_SQL.COLUMN_VALUE(io_cursor, i, l_string);
+                END IF;
+
+                -- set application/page item
+                out_item.column_name    := l_desc(i).col_name;
+                out_item.item_name      := CASE WHEN in_page_id IS NOT NULL THEN 'P' || in_page_id || '_' END || l_desc(i).col_name;
+                out_item.item_value     := l_string;
+                --
+                core.set_item (
+                    in_name     => out_item.item_name,
+                    in_value    => out_item.item_value
+                );
+                --
+                out_items.EXTEND;
+                out_items(out_items.LAST) := out_item;
+            END LOOP;
+        END LOOP;
+
+        -- cleanup
+        close_cursor(io_cursor);
+        --
+        RETURN out_items;
+    EXCEPTION
+    WHEN OTHERS THEN
+        close_cursor(io_cursor);
+        RAISE;
+    END;
+
+
+
+    FUNCTION get_cursor_number (
+        io_cursor           IN OUT SYS_REFCURSOR
+    )
+    RETURN PLS_INTEGER
+    AS
+    BEGIN
+        RETURN DBMS_SQL.TO_CURSOR_NUMBER(io_cursor);
+    END;
+
+
+
+    PROCEDURE close_cursor (
+        io_cursor           IN OUT PLS_INTEGER
+    )
+    AS
+    BEGIN
+        DBMS_SQL.CLOSE_CURSOR(io_cursor);
+    EXCEPTION
+    WHEN OTHERS THEN
+        NULL;
     END;
 
 
@@ -982,19 +1210,33 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_arg8                 VARCHAR2    := NULL,
         --
         in_payload              VARCHAR2    := NULL,
-        in_rollback             BOOLEAN     := FALSE
+        in_rollback             BOOLEAN     := FALSE,
+        in_traceback            BOOLEAN     := FALSE
     )
     AS
+        v_message               VARCHAR2(4000);
+        v_backtrace             VARCHAR2(4000);
     BEGIN
         IF in_rollback THEN
             ROLLBACK;
         END IF;
         --
-        RAISE_APPLICATION_ERROR (
-            core.app_exception_code,
-            COALESCE(in_action_name, core.get_caller_name(), 'UNEXPECTED_ERROR'),
-            TRUE
-        );
+        v_message := SUBSTR(REPLACE(REPLACE(
+            COALESCE(in_action_name, SQLERRM) ||
+            RTRIM(
+                '|' || in_arg1 || '|' || in_arg2 || '|' || in_arg3 || '|' || in_arg4 ||
+                '|' || in_arg5 || '|' || in_arg6 || '|' || in_arg7 || '|' || in_arg8,
+                '|'
+            ) ||
+            '|' || core.get_caller_name(3),
+            '"', ''), '&' || 'quot;', ''),
+            1, 4000);
+        --
+        v_backtrace := SUBSTR(REPLACE(REPLACE(DBMS_UTILITY.FORMAT_ERROR_BACKTRACE, '"', ''), '&' || 'quot;', ''), 1, 4000);
+        --
+        APEX_DEBUG.ERROR(core.app_exception_code || ' ' || v_message || '|' || v_backtrace);
+        --
+        RAISE_APPLICATION_ERROR(core.app_exception_code, v_message || CASE WHEN in_traceback OR core.is_developer() THEN '|' || v_backtrace END, TRUE);
     END;
 
 
@@ -1007,7 +1249,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         FOR c IN (
             SELECT m.mview_name
             FROM user_mviews m
-            WHERE (m.mview_name LIKE in_name_like OR in_name_like IS NULL)
+            WHERE (m.mview_name LIKE in_name_like ESCAPE '\' OR in_name_like IS NULL)
             ORDER BY 1
         ) LOOP
             DBMS_MVIEW.REFRESH(c.mview_name, 'C', parallelism => 1);
@@ -1517,6 +1759,32 @@ CREATE OR REPLACE PACKAGE BODY core AS
         DBMS_SQL.CLOSE_CURSOR(l_cursor);
         --
         RETURN out_value;
+    END;
+
+
+
+    PROCEDURE download_file (
+        in_file_name                        VARCHAR2,
+        in_file_mime                        VARCHAR2,
+        in_file_payload     IN OUT NOCOPY   BLOB
+    ) AS
+    BEGIN
+        HTP.INIT;
+        OWA_UTIL.MIME_HEADER(in_file_mime, FALSE);
+        --
+        HTP.P('Content-Type: application/octet-stream');
+        HTP.P('Content-Length: ' || DBMS_LOB.GETLENGTH(in_file_payload));
+        HTP.P('Content-Disposition: attachment; filename="' || REGEXP_SUBSTR(in_file_name, '([^/]*)$') || '"');
+        HTP.P('Cache-Control: max-age=0');
+        --
+        OWA_UTIL.HTTP_HEADER_CLOSE;
+        WPG_DOCLOAD.DOWNLOAD_FILE(in_file_payload);
+        APEX_APPLICATION.STOP_APEX_ENGINE;              -- throws ORA-20876 Stop APEX Engine
+    EXCEPTION
+    WHEN APEX_APPLICATION.E_STOP_APEX_ENGINE THEN
+        NULL;
+    WHEN OTHERS THEN
+        core.raise_error();
     END;
 
 END;

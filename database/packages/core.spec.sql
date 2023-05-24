@@ -2,7 +2,7 @@ CREATE OR REPLACE PACKAGE core AS
 
     /**
      * This package is part of the CORE project under MIT licence.
-     * https://github.com/jkvetina/#core
+     * https://github.com/jkvetina/core23
      *
      * Copyright (c) Jan Kvetina, 2023
      *
@@ -53,6 +53,15 @@ CREATE OR REPLACE PACKAGE core AS
     c_smtp_timeout          CONSTANT NUMBER(8)      := NULL;
     c_smtp_username         CONSTANT VARCHAR2(128)  := '';
     c_smtp_password         CONSTANT VARCHAR2(128)  := '';
+
+    -- for bulk set_item(s)
+    TYPE type_page_items IS RECORD (
+        column_name     VARCHAR2(30),
+        item_name       VARCHAR2(64),
+        item_value      VARCHAR2(2000)
+    );
+    --
+    TYPE t_page_items IS TABLE OF type_page_items;
 
 
 
@@ -186,7 +195,8 @@ CREATE OR REPLACE PACKAGE core AS
         in_values               VARCHAR2    := NULL,
         in_overload             VARCHAR2    := NULL,    -- JSON object to overload passed items/values
         in_session_id           NUMBER      := NULL,
-        in_reset                CHAR        := 'Y'      -- reset page items
+        in_reset                CHAR        := 'Y',     -- reset page items
+        in_plain                CHAR        := 'Y'      -- remove JS
     )
     RETURN VARCHAR2;
 
@@ -206,9 +216,29 @@ CREATE OR REPLACE PACKAGE core AS
 
     FUNCTION get_icon (
         in_name                 VARCHAR2,
-        in_title                VARCHAR2    := NULL
+        in_title                VARCHAR2    := NULL,
+        in_style                VARCHAR2    := NULL
     )
     RETURN VARCHAR2;
+
+
+
+    FUNCTION get_grid_action
+    RETURN VARCHAR2;
+
+
+
+    FUNCTION get_grid_data (
+        in_column_name          VARCHAR2
+    )
+    RETURN VARCHAR2;
+
+
+
+    PROCEDURE set_grid_data (
+        in_column_name          VARCHAR2,
+        in_value                VARCHAR2
+    );
 
 
 
@@ -312,6 +342,57 @@ CREATE OR REPLACE PACKAGE core AS
 
 
 
+    PROCEDURE set_page_items (
+        in_query            VARCHAR2,
+        in_page_id          NUMBER          := NULL
+    );
+
+
+
+    FUNCTION set_page_items (
+        in_query            VARCHAR2,
+        in_page_id          NUMBER          := NULL
+    )
+    RETURN t_page_items PIPELINED;
+
+
+
+    PROCEDURE set_page_items (
+        in_cursor           SYS_REFCURSOR,
+        in_page_id          NUMBER          := NULL
+    );
+
+
+
+    FUNCTION set_page_items (
+        in_cursor           SYS_REFCURSOR,
+        in_page_id          NUMBER          := NULL
+    )
+    RETURN t_page_items PIPELINED;
+
+
+
+    FUNCTION get_values (
+        io_cursor           IN OUT  PLS_INTEGER,
+        in_page_id                  NUMBER          := NULL
+    )
+    RETURN t_page_items;
+
+
+
+    FUNCTION get_cursor_number (
+        io_cursor           IN OUT SYS_REFCURSOR
+    )
+    RETURN PLS_INTEGER;
+
+
+
+    PROCEDURE close_cursor (
+        io_cursor           IN OUT PLS_INTEGER
+    );
+
+
+
     PROCEDURE clear_items;
 
 
@@ -405,7 +486,8 @@ CREATE OR REPLACE PACKAGE core AS
         in_arg8                 VARCHAR2    := NULL,
         --
         in_payload              VARCHAR2    := NULL,
-        in_rollback             BOOLEAN     := FALSE
+        in_rollback             BOOLEAN     := FALSE,
+        in_traceback            BOOLEAN     := FALSE
     );
 
 
@@ -502,6 +584,14 @@ CREATE OR REPLACE PACKAGE core AS
         in_owner                VARCHAR2    := NULL
     )
     RETURN VARCHAR2;
+
+
+
+    PROCEDURE download_file (
+        in_file_name                        VARCHAR2,
+        in_file_mime                        VARCHAR2,
+        in_file_payload     IN OUT NOCOPY   BLOB
+    );
 
 END;
 /
