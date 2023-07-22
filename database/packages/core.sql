@@ -1789,6 +1789,40 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
+    PROCEDURE redirect (
+        in_page_id              NUMBER          := NULL,
+        in_names                VARCHAR2        := NULL,
+        in_values               VARCHAR2        := NULL,
+        in_overload             VARCHAR2        := NULL,    -- JSON object to overload passed items/values
+        in_transform            BOOLEAN         := FALSE,   -- to pass all page items to new page
+        in_reset                CHAR            := NULL
+    ) AS
+        out_target              VARCHAR2(32767);
+    BEGIN
+        -- commit otherwise anything before redirect will be rolled back
+        COMMIT;
+
+        -- check if we are in APEX or not
+        HTP.INIT;
+        out_target := core.get_page_url (
+            in_page_id          => in_page_id,
+            in_names            => in_names,
+            in_values           => in_values,
+            in_overload         => in_overload,
+            in_reset            => in_reset
+        );
+        --
+        APEX_UTIL.REDIRECT_URL(out_target);  -- OWA_UTIL not working on Cloud
+        --
+        APEX_APPLICATION.STOP_APEX_ENGINE;
+        --
+        -- EXCEPTION
+        -- WHEN APEX_APPLICATION.E_STOP_APEX_ENGINE THEN
+        --
+    END;
+
+
+
     PROCEDURE assert_true (
         in_error_message        VARCHAR2,
         in_bool_expression      BOOLEAN

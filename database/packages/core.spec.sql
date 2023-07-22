@@ -602,6 +602,19 @@ CREATE OR REPLACE PACKAGE core AS
         in_file_payload     IN OUT NOCOPY   BLOB
     );
 
+
+
+    PROCEDURE redirect (
+        in_page_id              NUMBER          := NULL,
+        in_names                VARCHAR2        := NULL,
+        in_values               VARCHAR2        := NULL,
+        in_overload             VARCHAR2        := NULL,    -- JSON object to overload passed items/values
+        in_transform            BOOLEAN         := FALSE,   -- to pass all page items to new page
+        in_reset                CHAR            := NULL
+    );
+
+
+
     PROCEDURE assert_true (
         in_error_message        VARCHAR2,
         in_bool_expression      BOOLEAN
