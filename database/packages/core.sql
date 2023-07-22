@@ -71,6 +71,10 @@ CREATE OR REPLACE PACKAGE BODY core AS
     AS
         is_valid                CHAR;
     BEGIN
+        IF NV('APP_BUILDER_SESSION') > 0 THEN
+            RETURN TRUE;
+        END IF;
+        --
         WITH u AS (
             SELECT core.get_user_id() AS user_id    FROM DUAL UNION ALL
             SELECT in_user                          FROM DUAL
@@ -85,8 +89,6 @@ CREATE OR REPLACE PACKAGE BODY core AS
             AND d.is_application_developer  = 'Yes'
             AND d.account_locked            = 'No'
             AND ROWNUM                      = 1;
-        --
-        -- NV('APP_BUILDER_SESSION')
         --
         RETURN TRUE;
     EXCEPTION
