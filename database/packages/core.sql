@@ -653,13 +653,15 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 EXCEPTION
                 WHEN OTHERS THEN
                     BEGIN
-                        RETURN TO_DATE(SUBSTR(REPLACE(l_value, '.', '/'), 1, 10), 'DD/MM/YYYY');
---
--- @TODO: V('APP_NLS_DATE_FORMAT')
---
+                        RETURN TO_DATE(l_value, V('APP_NLS_DATE_FORMAT'));
                     EXCEPTION
                     WHEN OTHERS THEN
-                        core.raise_error('INVALID_DATE', in_value, in_format);
+                        BEGIN
+                            RETURN TO_DATE(l_value);
+                        EXCEPTION
+                        WHEN OTHERS THEN
+                            core.raise_error('INVALID_DATE', in_value, in_format);
+                        END;
                     END;
                 END;
             END;
