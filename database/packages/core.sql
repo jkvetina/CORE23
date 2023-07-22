@@ -1256,7 +1256,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             WHERE (m.mview_name LIKE in_name_like ESCAPE '\' OR in_name_like IS NULL)
             ORDER BY 1
         ) LOOP
-            DBMS_MVIEW.REFRESH(c.mview_name, 'C', parallelism => 1);
+            DBMS_MVIEW.REFRESH(c.mview_name, 'C', parallelism => 1, atomic_refresh => FALSE);
         END LOOP;
     EXCEPTION
     WHEN OTHERS THEN
