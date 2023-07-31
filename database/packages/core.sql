@@ -1152,6 +1152,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_autodrop             BOOLEAN         := TRUE,
         in_comments             VARCHAR2        := NULL
     ) AS
+        PRAGMA AUTONOMOUS_TRANSACTION;
+        --
         v_job_name              user_scheduler_jobs.job_name%TYPE;
         v_action                VARCHAR2(32767);
     BEGIN
@@ -1194,8 +1196,11 @@ CREATE OR REPLACE PACKAGE BODY core AS
         IF in_enabled THEN
             DBMS_SCHEDULER.ENABLE(v_job_name);
         END IF;
+        --
+        COMMIT;
     EXCEPTION
     WHEN OTHERS THEN
+        ROLLBACK;
         core.raise_error();
     END;
 
