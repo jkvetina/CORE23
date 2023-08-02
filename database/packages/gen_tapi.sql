@@ -123,6 +123,9 @@ CREATE OR REPLACE PACKAGE BODY gen_tapi AS
         -- create procedure for upsert records with arguments
         --
         DBMS_OUTPUT.PUT_LINE('');
+        DBMS_OUTPUT.PUT_LINE('    --');
+        DBMS_OUTPUT.PUT_LINE('    -- TAPI package');
+        DBMS_OUTPUT.PUT_LINE('    --');
         DBMS_OUTPUT.PUT_LINE('    PROCEDURE ' || c_procedure_name || ' (');
         DBMS_OUTPUT.PUT_LINE('        ' || RPAD('rec', g_width_in) || 'IN OUT NOCOPY   ' || c_table_name || '%ROWTYPE,');
         DBMS_OUTPUT.PUT_LINE('        --');
@@ -147,7 +150,7 @@ CREATE OR REPLACE PACKAGE BODY gen_tapi AS
 
         -- auth evaluation
         DBMS_OUTPUT.PUT_LINE('        -- evaluate access to this table');
-        DBMS_OUTPUT.PUT_LINE('        ' || in_auth_package || '.check_allowed_dml (');
+        DBMS_OUTPUT.PUT_LINE('        ' || LOWER(in_auth_package) || '.check_allowed_dml (');
         DBMS_OUTPUT.PUT_LINE('            in_table_name       => gen_tapi.get_table_name(),');
         DBMS_OUTPUT.PUT_LINE('            in_action           => c_action,');
         DBMS_OUTPUT.PUT_LINE('            in_user_id          => core.get_user_id(),');
@@ -157,7 +160,7 @@ CREATE OR REPLACE PACKAGE BODY gen_tapi AS
         DBMS_OUTPUT.PUT_LINE('');
         DBMS_OUTPUT.PUT_LINE('        -- delete record');
         DBMS_OUTPUT.PUT_LINE('        IF c_action = ''D'' THEN');
-        DBMS_OUTPUT.PUT_LINE('            gen_tapi.' || c_procedure_name || '_d (');
+        DBMS_OUTPUT.PUT_LINE('            ' || LOWER(in_tapi_package) || '.' || c_procedure_name || '_d (');
         --
         FOR c IN c_primary_key_columns(in_table_name) LOOP
             DBMS_OUTPUT.PUT_LINE('                '
@@ -304,7 +307,10 @@ CREATE OR REPLACE PACKAGE BODY gen_tapi AS
         -- create procedure for upsert records with arguments
         --
         DBMS_OUTPUT.PUT_LINE('');
-        DBMS_OUTPUT.PUT_LINE('    PROCEDURE save_' || c_procedure_name);
+        DBMS_OUTPUT.PUT_LINE('    --');
+        DBMS_OUTPUT.PUT_LINE('    -- APP package');
+        DBMS_OUTPUT.PUT_LINE('    --');
+        DBMS_OUTPUT.PUT_LINE('    PROCEDURE ' || c_procedure_name);
         DBMS_OUTPUT.PUT_LINE('    AS');
         DBMS_OUTPUT.PUT_LINE('        ' || RPAD('rec', g_width_in) || c_table_name || '%ROWTYPE;');
         DBMS_OUTPUT.PUT_LINE('        ' || RPAD('in_action', g_width_in) || 'CONSTANT CHAR := core.get_grid_action();');
