@@ -1159,8 +1159,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
     BEGIN
         v_job_name := '"' || in_job_name || '"';
         --
-        IF v_job_name LIKE '?' THEN
-            v_job_name := REPLACE(v_job_name, '?', DBMS_SCHEDULER.GENERATE_JOB_NAME(v_job_name));  -- create unique name
+        IF INSTR(v_job_name, '?') > 0 THEN
+            v_job_name := DBMS_SCHEDULER.GENERATE_JOB_NAME(REPLACE(v_job_name, '?', ''));  -- create unique name
         END IF;
         --
         v_action :=
