@@ -1275,12 +1275,15 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     FUNCTION get_caller_name (
-        in_offset               PLS_INTEGER     := NULL
+        in_offset               PLS_INTEGER     := NULL,
+        in_add_line             BOOLEAN         := FALSE
     )
     RETURN VARCHAR2
     AS
     BEGIN
-        RETURN UTL_CALL_STACK.CONCATENATE_SUBPROGRAM(UTL_CALL_STACK.SUBPROGRAM(NVL(in_offset, 2)));
+        RETURN
+            UTL_CALL_STACK.CONCATENATE_SUBPROGRAM(UTL_CALL_STACK.SUBPROGRAM(NVL(in_offset, 2))) ||
+            CASE WHEN in_add_line THEN '[' || UTL_CALL_STACK.UNIT_LINE( NVL(in_offset, 2)) || ']' END;
     EXCEPTION
     WHEN BAD_DEPTH THEN
         RETURN NULL;

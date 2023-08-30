@@ -517,7 +517,8 @@ CREATE OR REPLACE PACKAGE core AS
 
 
     FUNCTION get_caller_name (
-        in_offset               PLS_INTEGER     := NULL
+        in_offset               PLS_INTEGER     := NULL,
+        in_add_line             BOOLEAN         := FALSE
     )
     RETURN VARCHAR2;
 
