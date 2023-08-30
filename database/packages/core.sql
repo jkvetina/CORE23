@@ -1323,7 +1323,218 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
+    PROCEDURE log__ (
+        in_action_type          CHAR,
+        in_action_name          VARCHAR2,
+        in_arg1                 VARCHAR2    := NULL,
+        in_arg2                 VARCHAR2    := NULL,
+        in_arg3                 VARCHAR2    := NULL,
+        in_arg4                 VARCHAR2    := NULL,
+        in_arg5                 VARCHAR2    := NULL,
+        in_arg6                 VARCHAR2    := NULL,
+        in_arg7                 VARCHAR2    := NULL,
+        in_arg8                 VARCHAR2    := NULL,
+        in_arg9                 VARCHAR2    := NULL,
+        in_arg10                VARCHAR2    := NULL,
+        in_arg11                VARCHAR2    := NULL,
+        in_arg12                VARCHAR2    := NULL,
+        in_arg13                VARCHAR2    := NULL,
+        in_arg14                VARCHAR2    := NULL,
+        in_arg15                VARCHAR2    := NULL,
+        in_arg16                VARCHAR2    := NULL,
+        in_arg17                VARCHAR2    := NULL,
+        in_arg18                VARCHAR2    := NULL,
+        in_arg19                VARCHAR2    := NULL,
+        in_arg20                VARCHAR2    := NULL,
+        in_payload              VARCHAR2    := NULL,
+        in_json_object          BOOLEAN     := FALSE
+    )
+    AS
+        v_log_id                NUMBER;
+    BEGIN
+        v_log_id := core.log__ (
+            in_action_type      => in_action_type,
+            in_action_name      => in_action_name,
+            in_arg1             => in_arg1,
+            in_arg2             => in_arg2,
+            in_arg3             => in_arg3,
+            in_arg4             => in_arg4,
+            in_arg5             => in_arg5,
+            in_arg6             => in_arg6,
+            in_arg7             => in_arg7,
+            in_arg8             => in_arg8,
+            in_arg9             => in_arg9,
+            in_arg10            => in_arg10,
+            in_arg11            => in_arg11,
+            in_arg12            => in_arg12,
+            in_arg13            => in_arg13,
+            in_arg14            => in_arg14,
+            in_arg15            => in_arg15,
+            in_arg16            => in_arg16,
+            in_arg17            => in_arg17,
+            in_arg18            => in_arg18,
+            in_arg19            => in_arg19,
+            in_arg20            => in_arg20,
+            in_payload          => in_payload,
+            in_json_object      => in_json_object
+        );
+    END;
+
+
+
+    FUNCTION log__ (
+        in_action_type          CHAR,
+        in_action_name          VARCHAR2,
+        in_arg1                 VARCHAR2    := NULL,
+        in_arg2                 VARCHAR2    := NULL,
+        in_arg3                 VARCHAR2    := NULL,
+        in_arg4                 VARCHAR2    := NULL,
+        in_arg5                 VARCHAR2    := NULL,
+        in_arg6                 VARCHAR2    := NULL,
+        in_arg7                 VARCHAR2    := NULL,
+        in_arg8                 VARCHAR2    := NULL,
+        in_arg9                 VARCHAR2    := NULL,
+        in_arg10                VARCHAR2    := NULL,
+        in_arg11                VARCHAR2    := NULL,
+        in_arg12                VARCHAR2    := NULL,
+        in_arg13                VARCHAR2    := NULL,
+        in_arg14                VARCHAR2    := NULL,
+        in_arg15                VARCHAR2    := NULL,
+        in_arg16                VARCHAR2    := NULL,
+        in_arg17                VARCHAR2    := NULL,
+        in_arg18                VARCHAR2    := NULL,
+        in_arg19                VARCHAR2    := NULL,
+        in_arg20                VARCHAR2    := NULL,
+        in_payload              VARCHAR2    := NULL,
+        in_json_object          BOOLEAN     := FALSE
+    )
+    RETURN NUMBER
+    AS
+        PRAGMA AUTONOMOUS_TRANSACTION;
         --
+        out_log_id              NUMBER;
+        --
+        v_message               VARCHAR2(32767);
+        v_arguments             VARCHAR2(32767);
+        v_callstack             VARCHAR2(32767);
+        v_backtrace             VARCHAR2(32767);
+    BEGIN
+        -- gather usefull info:
+        --      app, page, user, session    | these should be covered by default
+        --      action_name                 | short and unique error message
+        --      module_name + line          | source of the error
+        --      arguments + payload         | arguments passed
+        --      error_backtrace             | cleaned error backtrace
+        --      callback                    | cleaned callstack
+        --
+        -- in custom logger we would have multiple columns in log table
+        -- but to be able to use Logger or APEX logs, we have to concat these
+        --
+        v_message := COALESCE(in_action_name, SQLERRM) || '|' || core.get_caller_name(3, TRUE);
+
+        -- convert arguments to JSON list or object
+        v_arguments := CASE
+            WHEN in_json_object THEN
+                core.get_json_object (
+                    in_name01   => in_arg1,     in_value01  => in_arg2,
+                    in_name02   => in_arg3,     in_value02  => in_arg4,
+                    in_name03   => in_arg5,     in_value03  => in_arg6,
+                    in_name04   => in_arg7,     in_value04  => in_arg8,
+                    in_name05   => in_arg9,     in_value05  => in_arg10,
+                    in_name06   => in_arg11,    in_value06  => in_arg12,
+                    in_name07   => in_arg13,    in_value07  => in_arg14,
+                    in_name08   => in_arg15,    in_value08  => in_arg16,
+                    in_name09   => in_arg17,    in_value09  => in_arg18,
+                    in_name10   => in_arg19,    in_value10  => in_arg20
+                )
+            ELSE
+                core.get_json_list (
+                    in_arg1     => in_arg1,
+                    in_arg2     => in_arg2,
+                    in_arg3     => in_arg3,
+                    in_arg4     => in_arg4,
+                    in_arg5     => in_arg5,
+                    in_arg6     => in_arg6,
+                    in_arg7     => in_arg7,
+                    in_arg8     => in_arg8,
+                    in_arg9     => in_arg9,
+                    in_arg10    => in_arg10,
+                    in_arg11    => in_arg11,
+                    in_arg12    => in_arg12,
+                    in_arg13    => in_arg13,
+                    in_arg14    => in_arg14,
+                    in_arg15    => in_arg15,
+                    in_arg16    => in_arg16,
+                    in_arg17    => in_arg17,
+                    in_arg18    => in_arg18,
+                    in_arg19    => in_arg19,
+                    in_arg20    => in_arg20
+                )
+            END;
+
+        -- add error stack
+        IF SQLCODE != 0 THEN
+            v_backtrace := CHR(10) || '-- BACKTRACE:' || CHR(10) || core.get_shorter_stack(core.get_error_stack());
+        END IF;
+
+        -- add call stack
+        IF (SQLCODE != 0 OR in_action_type IN (flag_error, flag_warning, flag_module)) THEN
+            v_callstack := CHR(10) || '-- CALLSTACK:' || CHR(10) || core.get_shorter_stack(core.get_call_stack());
+        END IF;
+
+        -- finally store the log
+        CASE in_action_type
+            --
+            -- @TODO: need a switch for APEX log, logger or custom logger
+            --
+            WHEN flag_error THEN
+                APEX_DEBUG.ERROR (
+                    p_message       => v_message || '|' || v_arguments || '|' || in_payload || v_backtrace || v_callstack,
+                    p_max_length    => 32767
+                );
+                --
+            WHEN flag_warning THEN
+                APEX_DEBUG.WARN (
+                    p_message       => v_message || '|' || v_arguments || '|' || in_payload || v_backtrace || v_callstack,
+                    p_max_length    => 32767
+                );
+                --
+            WHEN flag_debug THEN
+                APEX_DEBUG.INFO (
+                    p_message       => v_message || '|' || v_arguments || '|' || in_payload || v_backtrace || v_callstack,
+                    p_max_length    => 32767
+                );
+                --
+            WHEN flag_module THEN
+                APEX_DEBUG.MESSAGE (
+                    p_message       => v_message || '|' || v_arguments || '|' || in_payload || v_backtrace || v_callstack,
+                    p_max_length    => 32767,
+                    p_force         => TRUE
+                );
+            ELSE
+                NULL;
+            END CASE;
+        --
+        COMMIT;
+        --
+        --out_log_id := APEX_DEBUG.GET_LAST_MESSAGE_ID();
+        --
+        RETURN out_log_id;
+    EXCEPTION
+    WHEN OTHERS THEN
+        COMMIT;         -- just this log call
+        --
+        DBMS_OUTPUT.PUT_LINE('-- NOT LOGGED ERROR:');
+        DBMS_OUTPUT.PUT_LINE(DBMS_UTILITY.FORMAT_ERROR_STACK);
+        DBMS_OUTPUT.PUT_LINE(DBMS_UTILITY.FORMAT_ERROR_BACKTRACE);
+        DBMS_OUTPUT.PUT_LINE(DBMS_UTILITY.FORMAT_CALL_STACK);
+        DBMS_OUTPUT.PUT_LINE('-- ^');
+        --
+        RAISE_APPLICATION_ERROR(core.app_exception_code, 'LOG_FAILED|' || SQLERRM, TRUE);
+    END;
+
+
+
         in_arg1                 VARCHAR2    := NULL,
         in_arg2                 VARCHAR2    := NULL,
         in_arg3                 VARCHAR2    := NULL,
