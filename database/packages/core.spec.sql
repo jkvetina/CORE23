@@ -2,7 +2,7 @@ CREATE OR REPLACE PACKAGE core AS
 
     /**
      * This package is part of the CORE project under MIT licence.
-     * https://github.com/jkvetina/core23
+     * https://github.com/jkvetina/CORE23
      *
      * Copyright (c) Jan Kvetina, 2023
      *

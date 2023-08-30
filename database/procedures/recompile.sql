@@ -25,7 +25,7 @@ AS
 BEGIN
     /**
      * This package is part of the APP CORE project under MIT licence.
-     * https://github.com/jkvetina/#core
+     * https://github.com/jkvetina/CORE23
      *
      * Copyright (c) Jan Kvetina, 2022
      *
