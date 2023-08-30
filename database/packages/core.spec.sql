@@ -43,25 +43,34 @@ CREATE OR REPLACE PACKAGE core AS
     c_assert_message            CONSTANT VARCHAR2(30)   := 'ASSERT_FAILED|';
 
     -- define assert exception
-    c_assert_exception_code     CONSTANT PLS_INTEGER    := -20000;
+    c_assert_exception_code     CONSTANT PLS_INTEGER    := -20992;
     assert_exception            EXCEPTION;
     --
     PRAGMA EXCEPTION_INIT(assert_exception, c_assert_exception_code);
 
-    -- some constants
-    c_page_item_wild        CONSTANT VARCHAR2(2)    := '$';
-    c_page_item_prefix      CONSTANT VARCHAR2(2)    := 'P';
+    -- some constants, used also in APEX app substitutions
     c_format_date           CONSTANT VARCHAR2(32)   := 'YYYY-MM-DD';
     c_format_date_time      CONSTANT VARCHAR2(32)   := 'YYYY-MM-DD HH24:MI:SS';
     c_format_date_short     CONSTANT VARCHAR2(32)   := 'YYYY-MM-DD HH24:MI';
+    c_format_time           CONSTANT VARCHAR2(32)   := 'HH24:MI:SS';
+    c_format_time_short     CONSTANT VARCHAR2(32)   := 'HH24:MI';
+    c_format_number         CONSTANT VARCHAR2(32)   := '999G999G999G999G999G990D00';
+    c_format_number_int     CONSTANT VARCHAR2(32)   := '999G999G999G999G999G990';
+    c_format_currency       CONSTANT VARCHAR2(32)   := 'FML999G999G999G999G999G990D00';
+    c_format_currency_int   CONSTANT VARCHAR2(32)   := 'FML999G999G999G999G999G990';
+    --
     c_app_proxy             CONSTANT VARCHAR2(128)  := '';
     c_app_wallet            CONSTANT VARCHAR2(128)  := '';
+    --
     c_smtp_from             CONSTANT VARCHAR2(128)  := '';
     c_smtp_host             CONSTANT VARCHAR2(128)  := '';
     c_smtp_port             CONSTANT NUMBER(8)      := NULL;
     c_smtp_timeout          CONSTANT NUMBER(8)      := NULL;
     c_smtp_username         CONSTANT VARCHAR2(128)  := '';
     c_smtp_password         CONSTANT VARCHAR2(128)  := '';
+    --
+    c_page_item_wild        CONSTANT VARCHAR2(2)    := '$';
+    c_page_item_prefix      CONSTANT VARCHAR2(2)    := 'P';
 
     -- for bulk set_item(s)
     TYPE type_page_items IS RECORD (
