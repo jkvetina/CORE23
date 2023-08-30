@@ -72,6 +72,14 @@ CREATE OR REPLACE PACKAGE core AS
     c_page_item_wild        CONSTANT VARCHAR2(2)    := '$';
     c_page_item_prefix      CONSTANT VARCHAR2(2)    := 'P';
 
+    -- flags use in logging
+    flag_module             CONSTANT CHAR           := 'M';     -- start of any module (procedure/function)
+    flag_debug              CONSTANT CHAR           := 'D';     -- debug
+    flag_warning            CONSTANT CHAR           := 'W';     -- warning
+    flag_error              CONSTANT CHAR           := 'E';     -- error
+
+
+
     -- for bulk set_item(s)
     TYPE type_page_items IS RECORD (
         column_name     VARCHAR2(30),
@@ -507,6 +515,65 @@ CREATE OR REPLACE PACKAGE core AS
         in_rollback             BOOLEAN     := FALSE,
         in_traceback            BOOLEAN     := FALSE
     );
+
+
+
+    PROCEDURE log__ (
+        in_action_type          CHAR,
+        in_action_name          VARCHAR2,
+        in_arg1                 VARCHAR2    := NULL,
+        in_arg2                 VARCHAR2    := NULL,
+        in_arg3                 VARCHAR2    := NULL,
+        in_arg4                 VARCHAR2    := NULL,
+        in_arg5                 VARCHAR2    := NULL,
+        in_arg6                 VARCHAR2    := NULL,
+        in_arg7                 VARCHAR2    := NULL,
+        in_arg8                 VARCHAR2    := NULL,
+        in_arg9                 VARCHAR2    := NULL,
+        in_arg10                VARCHAR2    := NULL,
+        in_arg11                VARCHAR2    := NULL,
+        in_arg12                VARCHAR2    := NULL,
+        in_arg13                VARCHAR2    := NULL,
+        in_arg14                VARCHAR2    := NULL,
+        in_arg15                VARCHAR2    := NULL,
+        in_arg16                VARCHAR2    := NULL,
+        in_arg17                VARCHAR2    := NULL,
+        in_arg18                VARCHAR2    := NULL,
+        in_arg19                VARCHAR2    := NULL,
+        in_arg20                VARCHAR2    := NULL,
+        in_payload              VARCHAR2    := NULL,
+        in_json_object          BOOLEAN     := FALSE
+    );
+
+
+
+    FUNCTION log__ (
+        in_action_type          CHAR,
+        in_action_name          VARCHAR2,
+        in_arg1                 VARCHAR2    := NULL,
+        in_arg2                 VARCHAR2    := NULL,
+        in_arg3                 VARCHAR2    := NULL,
+        in_arg4                 VARCHAR2    := NULL,
+        in_arg5                 VARCHAR2    := NULL,
+        in_arg6                 VARCHAR2    := NULL,
+        in_arg7                 VARCHAR2    := NULL,
+        in_arg8                 VARCHAR2    := NULL,
+        in_arg9                 VARCHAR2    := NULL,
+        in_arg10                VARCHAR2    := NULL,
+        in_arg11                VARCHAR2    := NULL,
+        in_arg12                VARCHAR2    := NULL,
+        in_arg13                VARCHAR2    := NULL,
+        in_arg14                VARCHAR2    := NULL,
+        in_arg15                VARCHAR2    := NULL,
+        in_arg16                VARCHAR2    := NULL,
+        in_arg17                VARCHAR2    := NULL,
+        in_arg18                VARCHAR2    := NULL,
+        in_arg19                VARCHAR2    := NULL,
+        in_arg20                VARCHAR2    := NULL,
+        in_payload              VARCHAR2    := NULL,
+        in_json_object          BOOLEAN     := FALSE
+    )
+    RETURN NUMBER;
 
 
 
