@@ -513,7 +513,6 @@ CREATE OR REPLACE PACKAGE core AS
 
     PROCEDURE raise_error (
         in_action_name          VARCHAR2    := NULL,
-        --
         in_arg1                 VARCHAR2    := NULL,
         in_arg2                 VARCHAR2    := NULL,
         in_arg3                 VARCHAR2    := NULL,
@@ -522,8 +521,20 @@ CREATE OR REPLACE PACKAGE core AS
         in_arg6                 VARCHAR2    := NULL,
         in_arg7                 VARCHAR2    := NULL,
         in_arg8                 VARCHAR2    := NULL,
-        --
+        in_arg9                 VARCHAR2    := NULL,
+        in_arg10                VARCHAR2    := NULL,
+        in_arg11                VARCHAR2    := NULL,
+        in_arg12                VARCHAR2    := NULL,
+        in_arg13                VARCHAR2    := NULL,
+        in_arg14                VARCHAR2    := NULL,
+        in_arg15                VARCHAR2    := NULL,
+        in_arg16                VARCHAR2    := NULL,
+        in_arg17                VARCHAR2    := NULL,
+        in_arg18                VARCHAR2    := NULL,
+        in_arg19                VARCHAR2    := NULL,
+        in_arg20                VARCHAR2    := NULL,
         in_payload              VARCHAR2    := NULL,
+        in_json_object          BOOLEAN     := FALSE,
         in_rollback             BOOLEAN     := FALSE,
         in_traceback            BOOLEAN     := FALSE
     );

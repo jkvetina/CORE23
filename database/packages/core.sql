@@ -1240,6 +1240,89 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
     PROCEDURE raise_error (
         in_action_name          VARCHAR2    := NULL,
+        in_arg1                 VARCHAR2    := NULL,
+        in_arg2                 VARCHAR2    := NULL,
+        in_arg3                 VARCHAR2    := NULL,
+        in_arg4                 VARCHAR2    := NULL,
+        in_arg5                 VARCHAR2    := NULL,
+        in_arg6                 VARCHAR2    := NULL,
+        in_arg7                 VARCHAR2    := NULL,
+        in_arg8                 VARCHAR2    := NULL,
+        in_arg9                 VARCHAR2    := NULL,
+        in_arg10                VARCHAR2    := NULL,
+        in_arg11                VARCHAR2    := NULL,
+        in_arg12                VARCHAR2    := NULL,
+        in_arg13                VARCHAR2    := NULL,
+        in_arg14                VARCHAR2    := NULL,
+        in_arg15                VARCHAR2    := NULL,
+        in_arg16                VARCHAR2    := NULL,
+        in_arg17                VARCHAR2    := NULL,
+        in_arg18                VARCHAR2    := NULL,
+        in_arg19                VARCHAR2    := NULL,
+        in_arg20                VARCHAR2    := NULL,
+        in_payload              VARCHAR2    := NULL,
+        in_json_object          BOOLEAN     := FALSE,
+        in_rollback             BOOLEAN     := FALSE,
+        in_traceback            BOOLEAN     := FALSE
+    )
+    AS
+        v_message               VARCHAR2(4000);
+        v_backtrace             VARCHAR2(4000);
+    BEGIN
+        -- rollback transaction if requested (cant do this from trigger)
+        IF in_rollback THEN
+            ROLLBACK;
+        END IF;
+
+        -- always log raised error
+        core.log_error (
+            in_action_name      => in_action_name,
+            in_arg1             => in_arg1,
+            in_arg2             => in_arg2,
+            in_arg3             => in_arg3,
+            in_arg4             => in_arg4,
+            in_arg5             => in_arg5,
+            in_arg6             => in_arg6,
+            in_arg7             => in_arg7,
+            in_arg8             => in_arg8,
+            in_arg9             => in_arg9,
+            in_arg10            => in_arg10,
+            in_arg11            => in_arg11,
+            in_arg12            => in_arg12,
+            in_arg13            => in_arg13,
+            in_arg14            => in_arg14,
+            in_arg15            => in_arg15,
+            in_arg16            => in_arg16,
+            in_arg17            => in_arg17,
+            in_arg18            => in_arg18,
+            in_arg19            => in_arg19,
+            in_arg20            => in_arg20,
+            in_payload          => in_payload,
+            in_json_object      => in_json_object
+        );
+
+        -- construct message for user
+        v_message := SUBSTR(REPLACE(REPLACE(
+            COALESCE(in_action_name, SQLERRM) ||
+            RTRIM(
+                '|' || core.get_caller_name(3, TRUE) ||
+                '|' || in_arg1 || '|' || in_arg2 || '|' || in_arg3 || '|' || in_arg4 ||
+                '|' || in_arg5 || '|' || in_arg6 || '|' || in_arg7 || '|' || in_arg8,
+                '|'
+            ),
+            '"', ''), '&' || 'quot;', ''),
+            1, 4000);
+
+        -- add backtrace for developers (or on demand) to quickly find the problem
+        IF (in_traceback OR core.is_developer()) THEN
+            v_backtrace := SUBSTR('|' || REPLACE(REPLACE(get_shorter_stack(DBMS_UTILITY.FORMAT_ERROR_BACKTRACE), '"', ''), '&' || 'quot;', ''), 1, 4000);
+        END IF;
+        --
+        RAISE_APPLICATION_ERROR(core.app_exception_code, v_message || v_backtrace, TRUE);
+    END;
+
+
+
         --
         in_arg1                 VARCHAR2    := NULL,
         in_arg2                 VARCHAR2    := NULL,
