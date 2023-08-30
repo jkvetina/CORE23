@@ -1068,14 +1068,42 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_arg5                 VARCHAR2    := NULL,
         in_arg6                 VARCHAR2    := NULL,
         in_arg7                 VARCHAR2    := NULL,
-        in_arg8                 VARCHAR2    := NULL
+        in_arg8                 VARCHAR2    := NULL,
+        in_arg9                 VARCHAR2    := NULL,
+        in_arg10                VARCHAR2    := NULL,
+        in_arg11                VARCHAR2    := NULL,
+        in_arg12                VARCHAR2    := NULL,
+        in_arg13                VARCHAR2    := NULL,
+        in_arg14                VARCHAR2    := NULL,
+        in_arg15                VARCHAR2    := NULL,
+        in_arg16                VARCHAR2    := NULL,
+        in_arg17                VARCHAR2    := NULL,
+        in_arg18                VARCHAR2    := NULL,
+        in_arg19                VARCHAR2    := NULL,
+        in_arg20                VARCHAR2    := NULL
     )
     RETURN VARCHAR2
     AS
     BEGIN
+    apex_debug.error('ARGS=' || NULLIF(REGEXP_REPLACE(
+            REGEXP_REPLACE(
+                NULLIF(JSON_ARRAY(
+                    in_arg1,    in_arg2,    in_arg3,    in_arg4,    in_arg5,    in_arg6,    in_arg7,    in_arg8,    in_arg9,    in_arg10,
+                    in_arg11,   in_arg12,   in_arg13,   in_arg14,   in_arg15,   in_arg16,   in_arg17,   in_arg18,   in_arg19,   in_arg20
+                    NULL ON NULL),
+                    '[]'),
+                '"(\d+)([.,]\d+)?"', '\1\2'  -- convert to numbers if possible
+            ),
+            '(,null)+\]$', ']'),  -- strip NULLs from the right side
+            '[null]'));
+    
         RETURN NULLIF(REGEXP_REPLACE(
             REGEXP_REPLACE(
-                NULLIF(JSON_ARRAY(in_arg1, in_arg2, in_arg3, in_arg4, in_arg5, in_arg6, in_arg7, in_arg8 NULL ON NULL), '[]'),
+                NULLIF(JSON_ARRAY(
+                    in_arg1,    in_arg2,    in_arg3,    in_arg4,    in_arg5,    in_arg6,    in_arg7,    in_arg8,    in_arg9,    in_arg10,
+                    in_arg11,   in_arg12,   in_arg13,   in_arg14,   in_arg15,   in_arg16,   in_arg17,   in_arg18,   in_arg19,   in_arg20
+                    NULL ON NULL),
+                    '[]'),
                 '"(\d+)([.,]\d+)?"', '\1\2'  -- convert to numbers if possible
             ),
             '(,null)+\]$', ']'),  -- strip NULLs from the right side
