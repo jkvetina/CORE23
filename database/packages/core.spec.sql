@@ -49,15 +49,15 @@ CREATE OR REPLACE PACKAGE core AS
     PRAGMA EXCEPTION_INIT(assert_exception, c_assert_exception_code);
 
     -- some constants, used also in APEX app substitutions
-    c_format_date           CONSTANT VARCHAR2(32)   := 'YYYY-MM-DD';
-    c_format_date_time      CONSTANT VARCHAR2(32)   := 'YYYY-MM-DD HH24:MI:SS';
-    c_format_date_short     CONSTANT VARCHAR2(32)   := 'YYYY-MM-DD HH24:MI';
-    c_format_time           CONSTANT VARCHAR2(32)   := 'HH24:MI:SS';
-    c_format_time_short     CONSTANT VARCHAR2(32)   := 'HH24:MI';
-    c_format_number         CONSTANT VARCHAR2(32)   := '999G999G999G999G999G990D00';
-    c_format_number_int     CONSTANT VARCHAR2(32)   := '999G999G999G999G999G990';
-    c_format_currency       CONSTANT VARCHAR2(32)   := 'FML999G999G999G999G999G990D00';
-    c_format_currency_int   CONSTANT VARCHAR2(32)   := 'FML999G999G999G999G999G990';
+    c_format_date               CONSTANT VARCHAR2(32)   := 'YYYY-MM-DD';
+    c_format_date_time          CONSTANT VARCHAR2(32)   := 'YYYY-MM-DD HH24:MI:SS';
+    c_format_date_short         CONSTANT VARCHAR2(32)   := 'YYYY-MM-DD HH24:MI';
+    c_format_time               CONSTANT VARCHAR2(32)   := 'HH24:MI:SS';
+    c_format_time_short         CONSTANT VARCHAR2(32)   := 'HH24:MI';
+    c_format_number             CONSTANT VARCHAR2(32)   := 'FM999G999G999G999G999G990D00';
+    c_format_number_currency    CONSTANT VARCHAR2(32)   := 'FML999G999G999G999G999G990D00';
+    c_format_integer            CONSTANT VARCHAR2(32)   := 'FM999G999G999G999G999G990';
+    c_format_integer_currency   CONSTANT VARCHAR2(32)   := 'FML999G999G999G999G999G990';
     --
     c_app_proxy             CONSTANT VARCHAR2(128)  := '';
     c_app_wallet            CONSTANT VARCHAR2(128)  := '';
