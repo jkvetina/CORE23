@@ -110,6 +110,13 @@ CREATE OR REPLACE PACKAGE core AS
 
 
 
+    FUNCTION get_app_workspace (
+        in_app_id               NUMBER      := NULL
+    )
+    RETURN VARCHAR2;
+
+
+
     FUNCTION get_user_id
     RETURN VARCHAR2;
 

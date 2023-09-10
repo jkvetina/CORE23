@@ -38,6 +38,25 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
+    FUNCTION get_app_workspace (
+        in_app_id               NUMBER      := NULL
+    )
+    RETURN VARCHAR2
+    AS
+        out_name                apex_applications.workspace%TYPE;
+    BEGIN
+        SELECT a.workspace INTO out_name
+        FROM apex_applications a
+        WHERE a.application_id = COALESCE(in_app_id, core.get_app_id());
+        --
+        RETURN out_name;
+    EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RETURN NULL;
+    END;
+
+
+
     FUNCTION get_user_id
     RETURN VARCHAR2
     AS
