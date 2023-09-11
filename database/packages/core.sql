@@ -1,15 +1,25 @@
 CREATE OR REPLACE PACKAGE BODY core AS
 
-    FUNCTION get_owner (
+    FUNCTION get_app_id
+    RETURN NUMBER
+    AS
+    BEGIN
+        RETURN APEX_APPLICATION.G_FLOW_ID;
+    END;
+
+
+
+    FUNCTION get_app_owner (
         in_app_id               NUMBER
     )
     RETURN VARCHAR2
     AS
         out_owner               apex_applications.owner%TYPE;
     BEGIN
-        SELECT a.owner INTO out_owner
+        SELECT a.owner
+        INTO out_owner
         FROM apex_applications a
-        WHERE a.application_id = in_app_id;
+        WHERE a.application_id = COALESCE(in_app_id, core.get_app_id());
         --
         RETURN out_owner;
     EXCEPTION
@@ -19,21 +29,38 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
-    FUNCTION get_owner
+    FUNCTION get_app_owner
     RETURN VARCHAR2
     AS
         out_owner               apex_applications.owner%TYPE;
     BEGIN
-        RETURN COALESCE(core.get_owner(core.get_app_id()), APEX_UTIL.GET_DEFAULT_SCHEMA, USER);
+        RETURN COALESCE(core.get_app_owner(in_app_id => core.get_app_id()), APEX_UTIL.GET_DEFAULT_SCHEMA, USER);
     END;
 
 
 
-    FUNCTION get_app_id
-    RETURN NUMBER
+    FUNCTION get_app_prefix (
+        in_app_id               NUMBER      := NULL
+    )
+    RETURN VARCHAR2
     AS
+        out_prefix              VARCHAR2(30);
     BEGIN
-        RETURN APEX_APPLICATION.G_FLOW_ID;
+        SELECT NVL(s.value, b.substitution_value)
+        INTO out_prefix
+        FROM apex_applications a
+        LEFT JOIN apex_application_settings s
+            ON s.application_id         = a.application_id
+            AND s.name                  = 'APP_PREFIX'
+        LEFT JOIN apex_application_substitutions b
+            ON b.application_id         = a.application_id
+            AND b.substitution_string   = 'APP_PREFIX'
+        WHERE a.application_id = COALESCE(in_app_id, core.get_app_id());
+        --
+        RETURN out_prefix;
+    EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RETURN NULL;
     END;
 
 
@@ -53,6 +80,39 @@ CREATE OR REPLACE PACKAGE BODY core AS
     EXCEPTION
     WHEN NO_DATA_FOUND THEN
         RETURN NULL;
+    END;
+
+
+
+    FUNCTION get_app_homepage (
+        in_app_id               NUMBER      := NULL
+    )
+    RETURN NUMBER
+    AS
+        out_page_id             apex_application_pages.page_id%TYPE;
+    BEGIN
+        SELECT p.page_id
+        INTO out_page_id
+        FROM apex_applications a
+        JOIN apex_application_pages p
+            ON p.application_id     = a.application_id
+            AND p.page_alias        = REGEXP_SUBSTR(a.home_link, ':([^:]+)', 1, 1, NULL, 1)
+        WHERE a.application_id      = COALESCE(in_app_id, core.get_app_id());
+        --
+        RETURN out_page_id;
+    EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        BEGIN
+            SELECT TO_NUMBER(REGEXP_SUBSTR(a.home_link, ':([^:]+)', 1, 1, NULL, 1))
+            INTO out_page_id
+            FROM apex_applications a
+            WHERE a.application_id      = COALESCE(in_app_id, core.get_app_id());
+        EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            NULL;
+        END;
+        --
+        RETURN out_page_id;
     END;
 
 
@@ -1104,18 +1164,6 @@ CREATE OR REPLACE PACKAGE BODY core AS
     RETURN VARCHAR2
     AS
     BEGIN
-    apex_debug.error('ARGS=' || NULLIF(REGEXP_REPLACE(
-            REGEXP_REPLACE(
-                NULLIF(JSON_ARRAY(
-                    in_arg1,    in_arg2,    in_arg3,    in_arg4,    in_arg5,    in_arg6,    in_arg7,    in_arg8,    in_arg9,    in_arg10,
-                    in_arg11,   in_arg12,   in_arg13,   in_arg14,   in_arg15,   in_arg16,   in_arg17,   in_arg18,   in_arg19,   in_arg20
-                    NULL ON NULL),
-                    '[]'),
-                '"(\d+)([.,]\d+)?"', '\1\2'  -- convert to numbers if possible
-            ),
-            '(,null)+\]$', ']'),  -- strip NULLs from the right side
-            '[null]'));
-    
         RETURN NULLIF(REGEXP_REPLACE(
             REGEXP_REPLACE(
                 NULLIF(JSON_ARRAY(
@@ -1901,8 +1949,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
     PROCEDURE log_request
     AS
+        v_args                  VARCHAR2(32767);
     BEGIN
-        /*
         -- parse arguments
         v_args := core.get_request_url(in_arguments_only => TRUE);
         --
@@ -1911,7 +1959,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 SELECT JSON_OBJECTAGG (
                     REGEXP_REPLACE(REGEXP_SUBSTR(v_args, '[^&]+', 1, LEVEL), '[=].*$', '')
                     VALUE REGEXP_REPLACE(REGEXP_SUBSTR(v_args, '[^&]+', 1, LEVEL), '^[^=]+[=]', '')
-                ) INTO v_args
+                )
+                INTO v_args
                 FROM DUAL
                 CONNECT BY LEVEL <= REGEXP_COUNT(v_args, '&') + 1
                 ORDER BY LEVEL;
@@ -1920,16 +1969,12 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 core.log_error('JSON_ERROR', v_args);
             END;
         END IF;
-
-        -- create log
-        RETURN core.log__ (
-            in_flag             => constants.get_flag_request(),
-            in_action_name      => core.get_request(),
-            in_arguments        => v_args,
-            in_payload          => NULL
+        --
+        core.log_debug (
+            in_action_name      => 'REQUEST',
+            in_arg1             => v_args,
+            in_arg2             => core.get_request()
         );
-        */
-        NULL;
     END;
 
 
@@ -2116,9 +2161,9 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_arg13        => 'column_alias',      in_arg14    => out_result.column_alias,
             in_arg15        => 'error',             in_arg16    => APEX_ERROR.GET_FIRST_ORA_ERROR_TEXT(p_error => p_error),
             in_payload      =>
-                core.get_shorter_stack(p_error.ora_sqlerrm)         || CHR(10) || '-- DESCRIPTION:' || CHR(10) ||
-                core.get_shorter_stack(p_error.error_statement)     || CHR(10) || '-- STATEMENT:'   || CHR(10) ||
-                core.get_shorter_stack(p_error.error_backtrace)     || CHR(10) || '-- BACKTRACE:'   || CHR(10),
+                CHR(10) || '-- DESCRIPTION:' || CHR(10) || core.get_shorter_stack(p_error.ora_sqlerrm)      || 
+                CHR(10) || '-- STATEMENT:'   || CHR(10) || core.get_shorter_stack(p_error.error_statement)  || 
+                CHR(10) || '-- BACKTRACE:'   || CHR(10) || core.get_shorter_stack(p_error.error_backtrace),
             in_json_object  => TRUE
         );
 
@@ -2130,12 +2175,13 @@ CREATE OR REPLACE PACKAGE BODY core AS
             );
         END IF;
 
-        -- translate message
-        --out_result.message := NVL(core.get_translated_message(out_result.message), out_result.message);
+        -- translate message (custom) just for user (not for the log)
+        -- with APEX globalization - text messages - we can also auto add new messages there through APEX_LANG.CREATE_MESSAGE
+        -- for custom table out_result.message := NVL(core.get_translated_message(out_result.message), out_result.message);
 
         -- show only the latest error message to common users
-        out_result.message          := v_action_name || RTRIM('|' || TO_CHAR(v_log_id), '|') || '<br />' || out_result.message;
-        out_result.message          := REGEXP_REPLACE(out_result.message, '^(ORA-\d+:\s*)\s*', '') || RTRIM(' #' || TO_CHAR(v_log_id), ' #');
+        out_result.message          := APEX_LANG.MESSAGE(v_action_name) || RTRIM(' #' || TO_CHAR(v_log_id), ' #') || '<br />' || APEX_LANG.MESSAGE(out_result.message);
+        out_result.message          := REGEXP_REPLACE(out_result.message, '^(ORA-\d+:\s*)\s*', '');     -- remove oracle error number
         out_result.display_location := APEX_ERROR.C_INLINE_IN_NOTIFICATION;  -- also removes HTML entities
         --
         RETURN out_result;
@@ -2230,7 +2276,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
     BEGIN
         -- better version of DBMS_UTILITY.FORMAT_CALL_STACK
         FOR i IN REVERSE NVL(in_offset, 2) .. UTL_CALL_STACK.DYNAMIC_DEPTH LOOP  -- 2 = ignore this function, 3 = ignore caller
-            CONTINUE WHEN in_skip_others AND NVL(UTL_CALL_STACK.OWNER(i), '-') NOT IN (core.get_owner());
+            CONTINUE WHEN in_skip_others AND NVL(UTL_CALL_STACK.OWNER(i), '-') NOT IN (core.get_app_owner());
             --
             out_module  := UTL_CALL_STACK.CONCATENATE_SUBPROGRAM(UTL_CALL_STACK.SUBPROGRAM(i));
             out_stack   := out_stack || out_module || CASE WHEN in_line_numbers THEN ' [' || TO_CHAR(UTL_CALL_STACK.UNIT_LINE(i)) || ']' END || in_splitter;
@@ -2709,6 +2755,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_reset                CHAR            := NULL
     ) AS
         out_target              VARCHAR2(32767);
+        in_app_id               CONSTANT PLS_INTEGER := get_app_id();
     BEGIN
         -- commit otherwise anything before redirect will be rolled back
         COMMIT;
@@ -2722,6 +2769,18 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_overload         => in_overload,
             in_reset            => in_reset
         );
+
+        -- fix address
+        IF out_target LIKE '%/authentication-scheme-login/%' THEN
+            FOR c IN (
+                SELECT a.alias
+                FROM apex_applications a
+                WHERE a.application_id  = in_app_id
+                    AND ROWNUM          = 1
+            ) LOOP
+                out_target := REPLACE(out_target, '/authentication-scheme-login/', '/' || LOWER(c.alias) || '/');
+            END LOOP;
+        END IF;
         --
         APEX_UTIL.REDIRECT_URL(out_target);  -- OWA_UTIL not working on Cloud
         --
@@ -2730,6 +2789,11 @@ CREATE OR REPLACE PACKAGE BODY core AS
         -- EXCEPTION
         -- WHEN APEX_APPLICATION.E_STOP_APEX_ENGINE THEN
         --
+    EXCEPTION
+    WHEN APEX_APPLICATION.E_STOP_APEX_ENGINE THEN
+        NULL;
+    WHEN OTHERS THEN
+        core.raise_error();
     END;
 
 

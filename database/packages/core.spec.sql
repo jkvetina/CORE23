@@ -93,20 +93,27 @@ CREATE OR REPLACE PACKAGE core AS
 
 
 
-    FUNCTION get_owner (
+    FUNCTION get_app_id
+    RETURN NUMBER;
+
+
+
+    FUNCTION get_app_owner (
         in_app_id               NUMBER
     )
     RETURN VARCHAR2;
 
 
 
-    FUNCTION get_owner
+    FUNCTION get_app_owner
     RETURN VARCHAR2;
 
 
 
-    FUNCTION get_app_id
-    RETURN NUMBER;
+    FUNCTION get_app_prefix (
+        in_app_id               NUMBER      := NULL
+    )
+    RETURN VARCHAR2;
 
 
 
@@ -114,6 +121,13 @@ CREATE OR REPLACE PACKAGE core AS
         in_app_id               NUMBER      := NULL
     )
     RETURN VARCHAR2;
+
+
+
+    FUNCTION get_app_homepage (
+        in_app_id               NUMBER      := NULL
+    )
+    RETURN NUMBER;
 
 
 
