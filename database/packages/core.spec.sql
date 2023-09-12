@@ -93,7 +93,9 @@ CREATE OR REPLACE PACKAGE core AS
 
 
 
-    FUNCTION get_app_id
+    FUNCTION get_app_id (
+        in_dont_override        CHAR := NULL
+    )
     RETURN NUMBER;
 
 

@@ -1,9 +1,17 @@
 CREATE OR REPLACE PACKAGE BODY core AS
 
-    FUNCTION get_app_id
+    FUNCTION get_app_id (
+        in_dont_override        CHAR := NULL
+    )
     RETURN NUMBER
     AS
     BEGIN
+        RETURN COALESCE (
+            CASE WHEN in_dont_override IS NULL THEN TO_NUMBER(APEX_UTIL.GET_SESSION_STATE('G_APP_ID')) END,
+            APEX_APPLICATION.G_FLOW_ID
+        );
+    EXCEPTION
+    WHEN OTHERS THEN
         RETURN APEX_APPLICATION.G_FLOW_ID;
     END;
 
