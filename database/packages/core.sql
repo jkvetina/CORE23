@@ -92,6 +92,25 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
+    FUNCTION get_app_name (
+        in_app_id               NUMBER      := NULL
+    )
+    RETURN VARCHAR2
+    AS
+        out_name                apex_applications.application_name%TYPE;
+    BEGIN
+        SELECT a.application_name INTO out_name
+        FROM apex_applications a
+        WHERE a.application_id = COALESCE(in_app_id, core.get_app_id());
+        --
+        RETURN out_name;
+    EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RETURN NULL;
+    END;
+
+
+
     FUNCTION get_app_homepage (
         in_app_id               NUMBER      := NULL
     )
@@ -441,8 +460,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
         IF out_name IS NULL THEN
             SELECT p.page_name INTO out_name
             FROM apex_application_pages p
-            WHERE p.application_id      = COALESCE(in_app_id, core.get_app_id())
-                AND p.page_id           = COALESCE(in_page_id, core.get_page_id());
+            WHERE p.application_id      = COALESCE(in_app_id,   core.get_app_id())
+                AND p.page_id           = COALESCE(in_page_id,  core.get_page_id());
         END IF;
 
         -- transform icons
@@ -2169,8 +2188,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_arg13        => 'column_alias',      in_arg14    => out_result.column_alias,
             in_arg15        => 'error',             in_arg16    => APEX_ERROR.GET_FIRST_ORA_ERROR_TEXT(p_error => p_error),
             in_payload      =>
-                CHR(10) || '-- DESCRIPTION:' || CHR(10) || core.get_shorter_stack(p_error.ora_sqlerrm)      || 
-                CHR(10) || '-- STATEMENT:'   || CHR(10) || core.get_shorter_stack(p_error.error_statement)  || 
+                CHR(10) || '-- DESCRIPTION:' || CHR(10) || core.get_shorter_stack(p_error.ora_sqlerrm)      ||
+                CHR(10) || '-- STATEMENT:'   || CHR(10) || core.get_shorter_stack(p_error.error_statement)  ||
                 CHR(10) || '-- BACKTRACE:'   || CHR(10) || core.get_shorter_stack(p_error.error_backtrace),
             in_json_object  => TRUE
         );
