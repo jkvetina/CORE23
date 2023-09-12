@@ -1,0 +1,5 @@
+database/packages/core.spec.sql
+database/packages/core.sql
+database/packages/gen_tapi.spec.sql
+database/packages/gen_tapi.sql
+database/procedures/recompile.sql
