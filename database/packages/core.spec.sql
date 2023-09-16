@@ -1009,6 +1009,16 @@ CREATE OR REPLACE PACKAGE core AS
         in_value                VARCHAR2
     );
 
+
+
+    PROCEDURE add_grid_filter (
+        in_static_id            VARCHAR2,
+        in_column_name          VARCHAR2,
+        in_filter_value         VARCHAR2        := NULL,
+        in_operator             VARCHAR2        := 'EQ',
+        in_region_id            VARCHAR2        := NULL
+    );
+
 END;
 /
 

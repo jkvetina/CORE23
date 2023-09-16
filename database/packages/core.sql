@@ -2862,6 +2862,61 @@ CREATE OR REPLACE PACKAGE BODY core AS
         END IF;
     END;
 
+
+
+    PROCEDURE add_grid_filter (
+        in_static_id            VARCHAR2,
+        in_column_name          VARCHAR2,
+        in_filter_value         VARCHAR2        := NULL,
+        in_operator             VARCHAR2        := 'EQ',
+        in_region_id            VARCHAR2        := NULL
+    )
+    AS
+        v_region_id             apex_application_page_regions.region_id%TYPE;
+        v_filter_value          VARCHAR2(2000);
+    BEGIN
+        v_region_id             := in_region_id;
+        v_filter_value          := COALESCE(in_filter_value, core.get_item('$' || in_column_name));
+
+        -- convert static_id to region_id
+        IF in_region_id IS NULL THEN
+            BEGIN
+                SELECT a.region_id
+                INTO v_region_id
+                FROM apex_application_page_regions a
+                WHERE a.application_id  = core.get_app_id()
+                    AND a.page_id       = core.get_page_id()
+                    AND a.static_id     = in_static_id;
+            EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                core.raise_error('REGION_NOT_FOUND', in_static_id);
+            END;
+        END IF;
+        --
+        APEX_IG.RESET_REPORT (
+            p_page_id           => core.get_page_id(),
+            p_region_id         => v_region_id,
+            p_report_id         => NULL
+        );
+        --
+        IF v_filter_value IS NOT NULL THEN
+            APEX_IG.ADD_FILTER (
+                p_page_id           => core.get_page_id(),
+                p_region_id         => v_region_id,
+                p_column_name       => in_column_name,
+                p_filter_value      => v_filter_value,
+                p_operator_abbr     => in_operator,
+                p_is_case_sensitive => FALSE,
+                p_report_id         => NULL
+            );
+        END IF;
+    EXCEPTION
+    WHEN core.app_exception THEN
+        RAISE;
+    WHEN OTHERS THEN
+        core.raise_error();
+    END;
+
 END;
 /
 
