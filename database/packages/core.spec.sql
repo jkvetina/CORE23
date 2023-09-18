@@ -875,6 +875,13 @@ CREATE OR REPLACE PACKAGE core AS
 
 
 
+    FUNCTION get_translated (
+        in_message              VARCHAR2
+    )
+    RETURN VARCHAR2;
+
+
+
     PROCEDURE refresh_mviews (
         in_name_like            VARCHAR2 := NULL
     );

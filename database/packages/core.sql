@@ -2208,7 +2208,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
         -- show only the latest error message to common users
         out_result.message := CASE WHEN v_log_id IS NOT NULL THEN '#' || TO_CHAR(v_log_id) || '<br />' END
-            || APEX_LANG.MESSAGE(REGEXP_REPLACE(out_result.message, '^(ORA' || TO_CHAR(app_exception_code) || ':\s*)\s*', ''));
+            || core.get_translated(REGEXP_REPLACE(out_result.message, '^(ORA' || TO_CHAR(app_exception_code) || ':\s*)\s*', ''));
         --out_result.message := REPLACE(out_result.message, '&' || '#X27;', '');
         --
         out_result.display_location := APEX_ERROR.C_INLINE_IN_NOTIFICATION;  -- also removes HTML entities
@@ -2220,6 +2220,17 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_action_name  => v_action_name,
             in_arg1         => APEX_ERROR.GET_FIRST_ORA_ERROR_TEXT(p_error => p_error)
         );
+    END;
+
+
+
+    FUNCTION get_translated (
+        in_message              VARCHAR2
+    )
+    RETURN VARCHAR2
+    AS
+    BEGIN
+        RETURN NVL(NULLIF(APEX_LANG.MESSAGE(in_message), UPPER(in_message)), in_message);
     END;
 
 
