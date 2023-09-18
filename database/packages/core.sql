@@ -2207,8 +2207,10 @@ CREATE OR REPLACE PACKAGE BODY core AS
         -- for custom table out_result.message := NVL(core.get_translated_message(out_result.message), out_result.message);
 
         -- show only the latest error message to common users
-        out_result.message          := APEX_LANG.MESSAGE(v_action_name) || RTRIM(' #' || TO_CHAR(v_log_id), ' #') || '<br />' || APEX_LANG.MESSAGE(out_result.message);
-        out_result.message          := REGEXP_REPLACE(out_result.message, '^(ORA-\d+:\s*)\s*', '');     -- remove oracle error number
+        out_result.message := CASE WHEN v_log_id IS NOT NULL THEN '#' || TO_CHAR(v_log_id) || '<br />' END
+            || APEX_LANG.MESSAGE(REGEXP_REPLACE(out_result.message, '^(ORA' || TO_CHAR(app_exception_code) || ':\s*)\s*', ''));
+        --out_result.message := REPLACE(out_result.message, '&' || '#X27;', '');
+        --
         out_result.display_location := APEX_ERROR.C_INLINE_IN_NOTIFICATION;  -- also removes HTML entities
         --
         RETURN out_result;
