@@ -2244,12 +2244,20 @@ CREATE OR REPLACE PACKAGE BODY core AS
     AS
     BEGIN
         FOR c IN (
-            SELECT m.mview_name
-            FROM user_mviews m
-            WHERE (m.mview_name LIKE in_name_like ESCAPE '\' OR in_name_like IS NULL)
-            ORDER BY 1
+            SELECT
+                m.owner,
+                m.mview_name
+            FROM all_mviews m
+            WHERE m.owner           = SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA')
+                AND (m.mview_name   LIKE in_name_like ESCAPE '\' OR in_name_like IS NULL)
+            ORDER BY 1, 2
         ) LOOP
-            DBMS_MVIEW.REFRESH(c.mview_name, 'C', parallelism => 1, atomic_refresh => FALSE);
+            DBMS_MVIEW.REFRESH (
+                list            => c.owner || '.' || c.mview_name,
+                method          => 'C',
+                parallelism     => 1,
+                atomic_refresh  => FALSE
+            );
         END LOOP;
     EXCEPTION
     WHEN OTHERS THEN
