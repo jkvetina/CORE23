@@ -1399,11 +1399,10 @@ CREATE OR REPLACE PACKAGE BODY core AS
         v_message := SUBSTR(REPLACE(REPLACE(
             COALESCE(in_action_name, SQLERRM) ||
             RTRIM(
-                '|' || core.get_caller_name(3, TRUE) ||
                 '|' || in_arg1 || '|' || in_arg2 || '|' || in_arg3 || '|' || in_arg4 ||
                 '|' || in_arg5 || '|' || in_arg6 || '|' || in_arg7 || '|' || in_arg8,
                 '|'
-            ),
+            ) || '| ' || core.get_caller_name(3, TRUE),
             '"', ''), '&' || 'quot;', ''),
             1, 4000);
 
@@ -1412,7 +1411,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             v_backtrace := SUBSTR('|' || REPLACE(REPLACE(get_shorter_stack(DBMS_UTILITY.FORMAT_ERROR_BACKTRACE), '"', ''), '&' || 'quot;', ''), 1, 4000);
         END IF;
         --
-        RAISE_APPLICATION_ERROR(core.app_exception_code, v_message || v_backtrace, TRUE);
+        RAISE_APPLICATION_ERROR(core.app_exception_code, v_message || RTRIM(v_backtrace, '|'), TRUE);
     END;
 
 
