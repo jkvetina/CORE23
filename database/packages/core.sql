@@ -2229,7 +2229,11 @@ CREATE OR REPLACE PACKAGE BODY core AS
     RETURN VARCHAR2
     AS
     BEGIN
-        RETURN NVL(NULLIF(APEX_LANG.MESSAGE(in_message), UPPER(in_message)), in_message);
+        RETURN REPLACE(REPLACE(REPLACE(
+            NVL(NULLIF(APEX_LANG.MESSAGE(in_message), UPPER(in_message)), in_message),
+            '| ', '<br />'),
+            '|', ' | '),
+            '[', ' [');
     END;
 
 
