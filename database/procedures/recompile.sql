@@ -64,14 +64,16 @@ BEGIN
             WHERE o.status              != 'VALID'
                 AND o.object_type       NOT IN ('SEQUENCE')
                 AND o.object_name       != $$PLSQL_UNIT         -- not this procedure
+                AND (o.object_type      LIKE in_type ESCAPE '\' OR in_type IS NULL)
+                AND (o.object_name      LIKE in_name ESCAPE '\' OR in_name IS NULL)
             UNION ALL
             SELECT o.object_name, o.object_type
             FROM user_objects o
             WHERE in_force_y            = 'Y'
                 AND o.object_type       IN ('PACKAGE', 'PACKAGE BODY', 'PROCEDURE', 'FUNCTION', 'TRIGGER', 'VIEW', 'MATERIALIZED VIEW', 'SYNONYM')
+                AND o.object_name       != $$PLSQL_UNIT         -- not this procedure
                 AND (o.object_type      LIKE in_type ESCAPE '\' OR in_type IS NULL)
                 AND (o.object_name      LIKE in_name ESCAPE '\' OR in_name IS NULL)
-                AND o.object_name       != $$PLSQL_UNIT         -- not this procedure
         ) o
         ORDER BY CASE o.object_type
             WHEN 'PACKAGE'          THEN 1
