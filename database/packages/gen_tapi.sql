@@ -265,7 +265,7 @@ CREATE OR REPLACE PACKAGE BODY gen_tapi AS
             JOIN all_tables t
                 ON t.owner          = c.owner
                 AND t.table_name    = c.table_name
-            WHERE c.owner           = core.get_owner()
+            WHERE c.owner           = core.get_app_owner()
                 AND c.table_name    LIKE in_app_prefix || '\_%' ESCAPE '\'
                 AND c.column_name   IN (
                     SELECT c.column_name
@@ -407,7 +407,7 @@ CREATE OR REPLACE PACKAGE BODY gen_tapi AS
         JOIN all_cons_columns c
             ON c.owner              = n.owner
             AND c.constraint_name   = n.constraint_name
-        WHERE n.owner               = core.get_owner()
+        WHERE n.owner               = core.get_app_owner()
             AND n.constraint_type   = 'P'
             AND c.table_name        LIKE g_app_prefix || '\_%' ESCAPE '\'
             AND c.column_name       = in_column_name
@@ -473,7 +473,7 @@ CREATE OR REPLACE PACKAGE BODY gen_tapi AS
             JOIN all_tables t
                 ON t.owner          = c.owner
                 AND t.table_name    = c.table_name
-            WHERE c.owner           = core.get_owner()
+            WHERE c.owner           = core.get_app_owner()
                 AND c.table_name    LIKE g_app_prefix || '\_%' ESCAPE '\'
                 AND c.column_name   = in_column_name
         ) LOOP
@@ -520,3 +520,4 @@ CREATE OR REPLACE PACKAGE BODY gen_tapi AS
 
 END;
 /
+
