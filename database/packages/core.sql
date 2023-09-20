@@ -651,7 +651,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         v_app_id                apex_application_page_items.application_id%TYPE;
         is_valid                CHAR;
     BEGIN
-        v_app_id        := NVL(in_app_id, core.get_app_id());
+        v_app_id        := NVL(in_app_id, core.get_app_id(in_dont_override => 'Y'));
         v_page_id       := NVL(in_page_id, core.get_page_id());
         v_item_name     := REPLACE(in_name, c_page_item_wild, c_page_item_prefix || v_page_id || '_');
 
