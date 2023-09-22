@@ -651,8 +651,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
         v_app_id                apex_application_page_items.application_id%TYPE;
         is_valid                CHAR;
     BEGIN
-        v_app_id        := NVL(in_app_id, core.get_app_id(in_dont_override => 'Y'));
-        v_page_id       := NVL(in_page_id, core.get_page_id());
+        v_app_id        := NVL(in_app_id,   core.get_app_id(in_dont_override => 'Y'));
+        v_page_id       := NVL(in_page_id,  core.get_page_id());
         v_item_name     := REPLACE(in_name, c_page_item_wild, c_page_item_prefix || v_page_id || '_');
 
         -- check if item exists
@@ -2234,6 +2234,25 @@ CREATE OR REPLACE PACKAGE BODY core AS
             '| ', '<br />'),
             '|', ' | '),
             '[', ' [');
+    END;
+
+
+
+    PROCEDURE set_json_message (
+        in_message              app_user_messages.message_payload%TYPE,
+        in_type                 app_user_messages.message_type%TYPE         := NULL
+    )
+    AS
+    BEGIN
+        APEX_JSON.OPEN_OBJECT();
+        APEX_JSON.WRITE('message',  CASE WHEN in_type LIKE 'WARN%' THEN 'WARNING! ' END || in_message);
+        APEX_JSON.WRITE('status',   NVL(in_type, 'SUCCESS'));           -- SUCCESS, ERROR, WARNING
+        APEX_JSON.CLOSE_OBJECT();
+    EXCEPTION
+    WHEN core.app_exception THEN
+        RAISE;
+    WHEN OTHERS THEN
+        core.raise_error();
     END;
 
 
