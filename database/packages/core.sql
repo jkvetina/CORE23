@@ -118,28 +118,31 @@ CREATE OR REPLACE PACKAGE BODY core AS
     AS
         out_page_id             apex_application_pages.page_id%TYPE;
     BEGIN
-        SELECT p.page_id
-        INTO out_page_id
-        FROM apex_applications a
-        JOIN apex_application_pages p
-            ON p.application_id     = a.application_id
-            AND p.page_alias        = REGEXP_SUBSTR(a.home_link, ':([^:]+)', 1, 1, NULL, 1)
-        WHERE a.application_id      = COALESCE(in_app_id, core.get_app_id());
-        --
-        RETURN out_page_id;
-    EXCEPTION
-    WHEN NO_DATA_FOUND THEN
         BEGIN
-            SELECT TO_NUMBER(REGEXP_SUBSTR(a.home_link, ':([^:]+)', 1, 1, NULL, 1))
+            SELECT p.page_id
             INTO out_page_id
             FROM apex_applications a
+            JOIN apex_application_pages p
+                ON p.application_id     = a.application_id
+                AND p.page_alias        = REGEXP_SUBSTR(a.home_link, ':([^:]+)', 1, 1, NULL, 1)
             WHERE a.application_id      = COALESCE(in_app_id, core.get_app_id());
         EXCEPTION
         WHEN NO_DATA_FOUND THEN
-            NULL;
+            BEGIN
+                SELECT TO_NUMBER(REGEXP_SUBSTR(a.home_link, ':([^:]+)', 1, 1, NULL, 1))
+                INTO out_page_id
+                FROM apex_applications a
+                WHERE a.application_id      = COALESCE(in_app_id, core.get_app_id());
+            EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                NULL;
+            END;
         END;
         --
         RETURN out_page_id;
+    EXCEPTION
+    WHEN OTHERS THEN
+        core.raise_error('GET_HOMEPAGE_FAILED', COALESCE(in_app_id, core.get_app_id()));
     END;
 
 
