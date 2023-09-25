@@ -298,13 +298,14 @@ CREATE OR REPLACE PACKAGE BODY core AS
         IF (core.get_session_id() IS NULL OR in_session_id = 0) THEN
             BEGIN
                 APEX_SESSION.CREATE_SESSION (
-                    p_app_id    => in_app_id,
-                    p_page_id   => NVL(in_page_id, 0),
-                    p_username  => in_user_id
+                    p_app_id                    => in_app_id,
+                    p_page_id                   => NVL(in_page_id, 0),
+                    p_username                  => in_user_id,
+                    p_call_post_authentication  => TRUE
                 );
             EXCEPTION
             WHEN OTHERS THEN
-                core.raise_error('CREATE_SESSION_FAILED', in_app_id, in_user_id);
+                core.raise_error('CREATE_SESSION_FAILED', in_app_id, NVL(in_page_id, 0), in_user_id);
             END;
         END IF;
         --
