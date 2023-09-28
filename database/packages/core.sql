@@ -430,6 +430,28 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
+    FUNCTION get_page_is_modal (
+        in_page_id              NUMBER      := NULL,
+        in_app_id               NUMBER      := NULL
+    )
+    RETURN CHAR
+    AS
+        out_flag                CHAR;
+    BEGIN
+        SELECT 'Y' INTO out_flag
+        FROM apex_application_pages p
+        WHERE p.application_id      = COALESCE(in_app_id, core.get_app_id())
+            AND p.page_id           = COALESCE(in_page_id, core.get_page_id())
+            AND p.page_mode         != 'Normal';
+        --
+        RETURN out_flag;
+    EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RETURN NULL;
+    END;
+
+
+
     FUNCTION get_page_group (
         in_page_id              NUMBER      := NULL,
         in_app_id               NUMBER      := NULL

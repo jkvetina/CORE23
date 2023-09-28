@@ -218,6 +218,14 @@ CREATE OR REPLACE PACKAGE core AS
 
 
 
+    FUNCTION get_page_is_modal (
+        in_page_id              NUMBER      := NULL,
+        in_app_id               NUMBER      := NULL
+    )
+    RETURN CHAR;
+
+
+
     FUNCTION get_page_group (
         in_page_id              NUMBER      := NULL,
         in_app_id               NUMBER      := NULL
