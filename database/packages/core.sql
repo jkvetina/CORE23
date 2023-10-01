@@ -1428,12 +1428,12 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 '|' || in_arg1 || '|' || in_arg2 || '|' || in_arg3 || '|' || in_arg4 ||
                 '|' || in_arg5 || '|' || in_arg6 || '|' || in_arg7 || '|' || in_arg8,
                 '|'
-            ) || '| ' || core.get_caller_name(3, TRUE),
+            ) || CASE WHEN UPPER(core.get_user_id()) NOT IN ('NOBODY') THEN '| ' || core.get_caller_name(3, TRUE) END,
             '"', ''), '&' || 'quot;', ''),
             1, 4000);
 
         -- add backtrace for developers (or on demand) to quickly find the problem
-        IF (in_traceback OR core.is_developer()) THEN
+        IF (in_traceback OR core.is_developer()) AND UPPER(core.get_user_id()) NOT IN ('NOBODY') THEN
             v_backtrace := SUBSTR('|' || REPLACE(REPLACE(get_shorter_stack(DBMS_UTILITY.FORMAT_ERROR_BACKTRACE), '"', ''), '&' || 'quot;', ''), 1, 4000);
         END IF;
         --
