@@ -2454,19 +2454,26 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_asap                 BOOLEAN     := TRUE
     )
     AS
+        v_app_id                CONSTANT NUMBER         := COALESCE(in_app_id,  core.get_app_id(in_dont_override => 'Y'));
+        v_user_id               CONSTANT VARCHAR2(128)  := COALESCE(in_user_id, core.get_user_id());
     BEGIN
         -- https://docs.oracle.com/en/database/oracle/apex/23.1/aeapi/APEX_PWA.SEND_PUSH_NOTIFICATION-Procedure.html
-        apex_pwa.send_push_notification (
-            p_application_id    => COALESCE(in_app_id, 800),
-            p_user_name         => COALESCE(in_user_id, core.get_user_id()),
-            p_title             => in_title,
-            p_body              => in_message,
-            p_icon_url          => in_icon_url,
-            p_target_url        => in_target_url
-        );
-        --
-        IF in_asap THEN
-            apex_pwa.push_queue();
+        IF APEX_PWA.HAS_PUSH_SUBSCRIPTION (
+            p_application_id    => v_app_id,
+            p_user_name         => v_user_id
+        ) THEN
+            apex_pwa.send_push_notification (
+                p_application_id    => v_app_id,
+                p_user_name         => v_user_id,
+                p_title             => in_title,
+                p_body              => in_message,
+                p_icon_url          => in_icon_url,
+                p_target_url        => in_target_url
+            );
+            --
+            IF in_asap THEN
+                apex_pwa.push_queue();
+            END IF;
         END IF;
     EXCEPTION
     WHEN core.app_exception THEN
