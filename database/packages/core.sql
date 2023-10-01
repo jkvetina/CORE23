@@ -2444,6 +2444,39 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
+    PROCEDURE send_push_notification (
+        in_title                VARCHAR2,
+        in_message              VARCHAR2,
+        in_user_id              VARCHAR2    := NULL,
+        in_app_id               NUMBER      := NULL,
+        in_target_url           VARCHAR2    := NULL,
+        in_icon_url             VARCHAR2    := NULL,
+        in_asap                 BOOLEAN     := TRUE
+    )
+    AS
+    BEGIN
+        -- https://docs.oracle.com/en/database/oracle/apex/23.1/aeapi/APEX_PWA.SEND_PUSH_NOTIFICATION-Procedure.html
+        apex_pwa.send_push_notification (
+            p_application_id    => COALESCE(in_app_id, 800),
+            p_user_name         => COALESCE(in_user_id, core.get_user_id()),
+            p_title             => in_title,
+            p_body              => in_message,
+            p_icon_url          => in_icon_url,
+            p_target_url        => in_target_url
+        );
+        --
+        IF in_asap THEN
+            apex_pwa.push_queue();
+        END IF;
+    EXCEPTION
+    WHEN core.app_exception THEN
+        RAISE;
+    WHEN OTHERS THEN
+        core.raise_error();
+    END;
+
+
+
     PROCEDURE send_mail (
         in_to                   VARCHAR2,
         in_subject              VARCHAR2,
@@ -2630,8 +2663,10 @@ CREATE OR REPLACE PACKAGE BODY core AS
         WHEN UTL_SMTP.TRANSIENT_ERROR OR UTL_SMTP.PERMANENT_ERROR THEN
             NULL;
         END;
+    WHEN core.app_exception THEN
+        RAISE;
     WHEN OTHERS THEN
-        core.raise_error('SEND_MAIL_FAILED');
+        core.raise_error();
     END;
 
 

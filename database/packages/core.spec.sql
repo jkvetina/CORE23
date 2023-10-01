@@ -948,6 +948,18 @@ CREATE OR REPLACE PACKAGE core AS
 
 
 
+    PROCEDURE send_push_notification (
+        in_title                VARCHAR2,
+        in_message              VARCHAR2,
+        in_user_id              VARCHAR2    := NULL,
+        in_app_id               NUMBER      := NULL,
+        in_target_url           VARCHAR2    := NULL,
+        in_icon_url             VARCHAR2    := NULL,
+        in_asap                 BOOLEAN     := TRUE
+    );
+
+
+
     PROCEDURE send_mail (
         in_to                   VARCHAR2,
         in_subject              VARCHAR2,
