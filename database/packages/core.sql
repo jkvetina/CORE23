@@ -2265,14 +2265,14 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     PROCEDURE set_json_message (
-        in_message              app_user_messages.message_payload%TYPE,
-        in_type                 app_user_messages.message_type%TYPE         := NULL
+        in_message              VARCHAR2,
+        in_type                 VARCHAR2        := NULL
     )
     AS
     BEGIN
         APEX_JSON.OPEN_OBJECT();
-        APEX_JSON.WRITE('message',  CASE WHEN in_type LIKE 'WARN%' THEN 'WARNING! ' END || in_message);
-        APEX_JSON.WRITE('status',   NVL(in_type, 'SUCCESS'));           -- SUCCESS, ERROR, WARNING
+        APEX_JSON.WRITE('message',  in_message);
+        APEX_JSON.WRITE('status',   NVL(in_type, 'SUCCESS'));   -- SUCCESS, ERROR, WARNING
         APEX_JSON.CLOSE_OBJECT();
     EXCEPTION
     WHEN core.app_exception THEN
@@ -2284,7 +2284,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     PROCEDURE refresh_mviews (
-        in_name_like            VARCHAR2 := NULL
+        in_name_like            VARCHAR2        := NULL
     )
     AS
     BEGIN

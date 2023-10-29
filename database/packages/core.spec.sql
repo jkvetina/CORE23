@@ -891,14 +891,14 @@ CREATE OR REPLACE PACKAGE core AS
 
 
     PROCEDURE set_json_message (
-        in_message              app_user_messages.message_payload%TYPE,
-        in_type                 app_user_messages.message_type%TYPE         := NULL
+        in_message              VARCHAR2,
+        in_type                 VARCHAR2        := NULL
     );
 
 
 
     PROCEDURE refresh_mviews (
-        in_name_like            VARCHAR2 := NULL
+        in_name_like            VARCHAR2        := NULL
     );
 
 
