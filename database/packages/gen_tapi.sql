@@ -389,7 +389,7 @@ CREATE OR REPLACE PACKAGE BODY gen_tapi AS
     RETURN CHAR
     AS
     BEGIN
-        RETURN COALESCE(in_action, core.get_grid_action(), SUBSTR(core.get_request(), 1, 1));
+        RETURN COALESCE(in_action, core.get_grid_action());
     END;
 
 
