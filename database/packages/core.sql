@@ -2303,6 +2303,13 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 parallelism     => 1,
                 atomic_refresh  => FALSE
             );
+            --
+            DBMS_STATS.GATHER_TABLE_STATS (
+                ownname             => c.owner,
+                tabname             => c.mview_name,
+                estimate_percent    => 100,
+                granularity         => 'ALL'
+            );
         END LOOP;
     EXCEPTION
     WHEN OTHERS THEN
