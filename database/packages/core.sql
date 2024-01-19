@@ -1023,6 +1023,12 @@ CREATE OR REPLACE PACKAGE BODY core AS
         out_items       t_page_items        := t_page_items();
         out_item        type_page_items;
     BEGIN
+        --
+        -- two scenarios:
+        --     1) multiple lines with 2 columns, first = item_name, second = item_value
+        --     2) single row where column_name = item_name
+        --
+
         -- get column names
         DBMS_SQL.DESCRIBE_COLUMNS(io_cursor, l_cols, l_desc);
         --
@@ -1038,21 +1044,12 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
         -- fetch data
         WHILE DBMS_SQL.FETCH_ROWS(io_cursor) > 0 LOOP
-            FOR i IN 1 .. l_cols LOOP
-                IF l_desc(i).col_type = DBMS_SQL.NUMBER_TYPE THEN
-                    DBMS_SQL.COLUMN_VALUE(io_cursor, i, l_number);
-                    l_string := TO_CHAR(l_number);
-                ELSIF l_desc(i).col_type = DBMS_SQL.DATE_TYPE THEN
-                    DBMS_SQL.COLUMN_VALUE(io_cursor, i, l_date);
-                    l_string := TO_CHAR(l_date);
-                ELSE
-                    DBMS_SQL.COLUMN_VALUE(io_cursor, i, l_string);
-                END IF;
-
-                -- set application/page item
-                out_item.column_name    := l_desc(i).col_name;
-                out_item.item_name      := CASE WHEN in_page_id IS NOT NULL THEN 'P' || in_page_id || '_' END || l_desc(i).col_name;
-                out_item.item_value     := l_string;
+            IF l_cols = 2 AND l_desc(1).col_name LIKE '%NAME' AND l_desc(2).col_name LIKE '%VALUE' THEN
+                -- scenario 1
+                DBMS_SQL.COLUMN_VALUE(io_cursor, 1, out_item.column_name);
+                DBMS_SQL.COLUMN_VALUE(io_cursor, 2, out_item.item_value);
+                --
+                out_item.item_name := CASE WHEN in_page_id IS NOT NULL THEN 'P' || in_page_id || '_' END || out_item.column_name;
                 --
                 core.set_item (
                     in_name     => out_item.item_name,
@@ -1061,7 +1058,33 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 --
                 out_items.EXTEND;
                 out_items(out_items.LAST) := out_item;
-            END LOOP;
+            ELSE
+                -- scenario 2
+                FOR i IN 1 .. l_cols LOOP
+                    IF l_desc(i).col_type = DBMS_SQL.NUMBER_TYPE THEN
+                        DBMS_SQL.COLUMN_VALUE(io_cursor, i, l_number);
+                        l_string := TO_CHAR(l_number);
+                    ELSIF l_desc(i).col_type = DBMS_SQL.DATE_TYPE THEN
+                        DBMS_SQL.COLUMN_VALUE(io_cursor, i, l_date);
+                        l_string := TO_CHAR(l_date);
+                    ELSE
+                        DBMS_SQL.COLUMN_VALUE(io_cursor, i, l_string);
+                    END IF;
+    
+                    -- set application/page item
+                    out_item.column_name    := l_desc(i).col_name;
+                    out_item.item_name      := CASE WHEN in_page_id IS NOT NULL THEN 'P' || in_page_id || '_' END || l_desc(i).col_name;
+                    out_item.item_value     := l_string;
+                    --
+                    core.set_item (
+                        in_name     => out_item.item_name,
+                        in_value    => out_item.item_value
+                    );
+                    --
+                    out_items.EXTEND;
+                    out_items(out_items.LAST) := out_item;
+                END LOOP;
+            END IF;
         END LOOP;
 
         -- cleanup
