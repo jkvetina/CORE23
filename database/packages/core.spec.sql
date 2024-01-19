@@ -436,7 +436,7 @@ CREATE OR REPLACE PACKAGE core AS
 
 
 
-    FUNCTION get_values (
+    FUNCTION set_page_item_values (
         io_cursor           IN OUT  PLS_INTEGER,
         in_page_id                  NUMBER          := NULL
     )
