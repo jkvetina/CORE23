@@ -374,6 +374,45 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
+    PROCEDURE print_items
+    AS
+    BEGIN
+        DBMS_OUTPUT.PUT_LINE('--');
+        DBMS_OUTPUT.PUT_LINE('WORKSPACE   : ' || core.get_workspace() || ' | ' || APEX_CUSTOM_AUTH.GET_SECURITY_GROUP_ID());
+        DBMS_OUTPUT.PUT_LINE('SESSION     : ' || core.get_app_id() || ' | ' || core.get_page_id() || ' | ' || core.get_session_id() || ' | ' || core.get_user_id());
+        DBMS_OUTPUT.PUT_LINE('--');
+
+        -- print app and page items
+        FOR c IN (
+            SELECT
+                t.item_name,
+                t.item_value,
+                (FLOOR(MAX(LENGTH(t.item_name)) OVER () / 4) + 2) * 4 AS max_length
+            FROM (
+                SELECT
+                    i.item_name,
+                    core.get_item(i.item_name) AS item_value
+                FROM apex_application_items i
+                WHERE i.application_id      = core.get_app_id()
+                UNION ALL
+                SELECT
+                    i.item_name,
+                    core.get_item(i.item_name) AS item_value
+                FROM apex_application_page_items i
+                WHERE i.application_id      = core.get_app_id()
+                    AND i.page_id           = core.get_page_id()
+            ) t
+            WHERE t.item_value IS NOT NULL
+            ORDER BY 1
+        ) LOOP
+            DBMS_OUTPUT.PUT_LINE('  ' || RPAD(c.item_name || ' ', c.max_length, '.') || ' ' || c.item_value);
+        END LOOP;
+        --
+        DBMS_OUTPUT.PUT_LINE('--');
+    END;
+
+
+
     PROCEDURE set_action (
         in_action_name          VARCHAR2,
         in_module_name          VARCHAR2        := NULL
