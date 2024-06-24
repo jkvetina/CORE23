@@ -201,6 +201,11 @@ CREATE OR REPLACE PACKAGE core AS
 
 
 
+    FUNCTION get_workspace
+    RETURN VARCHAR2;
+
+
+
     FUNCTION get_client_id (
         in_user_id              VARCHAR2        := NULL
     )

@@ -399,6 +399,15 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
+    FUNCTION get_workspace
+    RETURN VARCHAR2
+    AS
+    BEGIN
+        RETURN APEX_UTIL.FIND_WORKSPACE(APEX_CUSTOM_AUTH.GET_SECURITY_GROUP_ID());
+    END;
+
+
+
     FUNCTION get_client_id (
         in_user_id              VARCHAR2        := NULL
     )
@@ -1070,7 +1079,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
                     ELSE
                         DBMS_SQL.COLUMN_VALUE(io_cursor, i, l_string);
                     END IF;
-    
+
                     -- set application/page item
                     out_item.column_name    := l_desc(i).col_name;
                     out_item.item_name      := CASE WHEN in_page_id IS NOT NULL THEN 'P' || in_page_id || '_' END || l_desc(i).col_name;
