@@ -238,104 +238,129 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
-    PROCEDURE create_session (
-        in_user_id              VARCHAR2,
-        in_app_id               NUMBER,
-        in_page_id              NUMBER      := NULL,
-        in_session_id           NUMBER      := NULL,
-        in_items                VARCHAR2    := NULL
-    ) AS
-        PRAGMA AUTONOMOUS_TRANSACTION;
-        --
-        v_workspace_id          apex_applications.workspace%TYPE;
-        v_user_name             apex_workspace_sessions.user_name%TYPE;
+    PROCEDURE create_security_context (
+        in_workspace            VARCHAR2    := NULL,
+        in_app_id               NUMBER      := NULL
+    )
+    AS
+        v_workspace             apex_applications.workspace%TYPE := in_workspace;
     BEGIN
-        -- create session from SQL Developer (not from APEX)
-        SELECT MAX(s.user_name) INTO v_user_name
-        FROM apex_workspace_sessions s
-        WHERE s.apex_session_id = COALESCE(in_session_id, core.get_session_id());
-        --
-        IF ((v_user_name = core.get_user_id() AND in_app_id = core.get_app_id()) OR in_session_id != core.get_session_id()) THEN
-            -- use existing session if possible
-            IF (in_session_id > 0 OR in_session_id IS NULL) THEN
-                BEGIN
-                    APEX_SESSION.ATTACH (
-                        p_app_id        => core.get_app_id(),
-                        p_page_id       => NVL(in_page_id, 0),
-                        p_session_id    => COALESCE(in_session_id, core.get_session_id())
-                    );
-                EXCEPTION
-                WHEN OTHERS THEN
-                    core.raise_error('ATTACH_SESSION_FAILED', in_app_id, v_user_name, COALESCE(in_session_id, core.get_session_id()));
-                END;
-            END IF;
-        ELSE
-            -- find and setup workspace
+        -- find workspace based on application id
+        IF v_workspace IS NULL AND in_app_id IS NOT NULL THEN
             BEGIN
-                SELECT a.workspace INTO v_workspace_id
+                SELECT a.workspace INTO v_workspace
                 FROM apex_applications a
                 WHERE a.application_id = in_app_id;
             EXCEPTION
             WHEN NO_DATA_FOUND THEN
                 core.raise_error('INVALID_APP', in_app_id);
             END;
-            --
-            APEX_UTIL.SET_WORKSPACE (
-                p_workspace => v_workspace_id
-            );
-            APEX_UTIL.SET_SECURITY_GROUP_ID (
-                p_security_group_id => APEX_UTIL.FIND_SECURITY_GROUP_ID(p_workspace => v_workspace_id)
-            );
         END IF;
+        --
+        APEX_UTIL.SET_WORKSPACE (
+            p_workspace => v_workspace
+        );
+        APEX_UTIL.SET_SECURITY_GROUP_ID (
+            p_security_group_id => APEX_UTIL.FIND_SECURITY_GROUP_ID(p_workspace => v_workspace)
+        );
+        --
+    EXCEPTION
+    WHEN core.app_exception THEN
+        ROLLBACK;
+        RAISE;
+    WHEN OTHERS THEN
+        ROLLBACK;
+        core.raise_error();
+    END;
 
-        -- set username
-        APEX_UTIL.SET_USERNAME (
-            p_userid    => APEX_UTIL.GET_USER_ID(v_user_name),
-            p_username  => v_user_name
+
+
+    PROCEDURE create_session (
+        in_user_id              VARCHAR2,
+        in_app_id               NUMBER,
+        in_page_id              NUMBER      := NULL,
+        in_workspace            VARCHAR2    := NULL,
+        in_postauth             BOOLEAN     := FALSE
+    ) AS
+        PRAGMA AUTONOMOUS_TRANSACTION;
+        --
+        v_user_name             apex_workspace_sessions.user_name%TYPE;
+    BEGIN
+        -- set security context
+        core.create_security_context (
+            in_workspace        => in_workspace,
+            in_app_id           => in_app_id
         );
 
         -- create new APEX session
-        IF (core.get_session_id() IS NULL OR in_session_id = 0) THEN
-            BEGIN
-                APEX_SESSION.CREATE_SESSION (
-                    p_app_id                    => in_app_id,
-                    p_page_id                   => NVL(in_page_id, 0),
-                    p_username                  => in_user_id,
-                    p_call_post_authentication  => TRUE
-                );
-            EXCEPTION
-            WHEN OTHERS THEN
-                core.raise_error('CREATE_SESSION_FAILED', in_app_id, NVL(in_page_id, 0), in_user_id);
-            END;
+        BEGIN
+            APEX_SESSION.CREATE_SESSION (
+                p_app_id                    => in_app_id,
+                p_page_id                   => NVL(in_page_id, 0),
+                p_username                  => in_user_id,
+                p_call_post_authentication  => in_postauth
+            );
+        EXCEPTION
+        WHEN OTHERS THEN
+            core.raise_error('CREATE_SESSION_FAILED', in_app_id, in_page_id, in_user_id);
+        END;
+
+        -- set username
+        IF APEX_CUSTOM_AUTH.SESSION_ID_EXISTS THEN
+            APEX_UTIL.SET_USERNAME (
+                p_userid    => APEX_UTIL.GET_USER_ID(v_user_name),
+                p_username  => v_user_name
+            );
         END IF;
         --
-        DBMS_OUTPUT.PUT_LINE('--');
-        DBMS_OUTPUT.PUT_LINE('SESSION: ' || core.get_app_id() || ' | ' || core.get_page_id() || ' | ' || core.get_session_id() || ' | ' || core.get_user_id());
-        DBMS_OUTPUT.PUT_LINE('--');
+        COMMIT;
+        --
+        core.print_items();
+        --
+    EXCEPTION
+    WHEN core.app_exception THEN
+        ROLLBACK;
+        RAISE;
+    WHEN APEX_APPLICATION.E_STOP_APEX_ENGINE THEN
+        COMMIT;
+    WHEN OTHERS THEN
+        ROLLBACK;
+        core.raise_error();
+    END;
 
-        -- print app and page items
-        FOR c IN (
-            SELECT
-                i.item_name,
-                core.get_item(i.item_name) AS item_value
-            FROM apex_application_items i
-            WHERE i.application_id      = in_app_id
-            UNION ALL
-            SELECT
-                i.item_name,
-                core.get_item(i.item_name) AS item_value
-            FROM apex_application_page_items i
-            WHERE i.application_id      = in_app_id
-                AND i.page_id           = in_page_id
-            ORDER BY 1
-        ) LOOP
-            IF c.item_value IS NOT NULL THEN
-                DBMS_OUTPUT.PUT_LINE('  ' || RPAD(c.item_name, 30) || ' = ' || c.item_value);
-            END IF;
-        END LOOP;
-        DBMS_OUTPUT.PUT_LINE('--');
+
+
+    PROCEDURE attach_session (
+        in_session_id           NUMBER,
+        in_app_id               NUMBER,
+        in_page_id              NUMBER      := NULL,
+        in_workspace            VARCHAR2    := NULL,
+        in_postauth             BOOLEAN     := FALSE
+    ) AS
+        PRAGMA AUTONOMOUS_TRANSACTION;
+    BEGIN
+        -- set security context
+        core.create_security_context (
+            in_workspace        => in_workspace,
+            in_app_id           => in_app_id
+        );
+
+        -- try to attach to the provided session
+        BEGIN
+            APEX_SESSION.ATTACH (
+                p_app_id        => in_app_id,
+                p_page_id       => in_page_id,
+                p_session_id    => in_session_id
+            );
+        EXCEPTION
+        WHEN OTHERS THEN
+            core.raise_error('ATTACH_SESSION_FAILED', in_app_id, in_page_id, in_session_id);
+        END;
         --
         COMMIT;
+        --
+        core.print_items();
+        --
     EXCEPTION
     WHEN core.app_exception THEN
         ROLLBACK;
@@ -354,13 +379,15 @@ CREATE OR REPLACE PACKAGE BODY core AS
         PRAGMA AUTONOMOUS_TRANSACTION;
     BEGIN
         DBMS_SESSION.CLEAR_IDENTIFIER();
-        --DBMS_SESSION.CLEAR_ALL_CONTEXT(namespace);
-        --DBMS_SESSION.RESET_PACKAGE;  -- avoid ORA-04068 exception
-        --
         DBMS_APPLICATION_INFO.SET_MODULE (
             module_name     => NULL,
             action_name     => NULL
         );
+        --DBMS_SESSION.CLEAR_ALL_CONTEXT(namespace);
+        --DBMS_SESSION.RESET_PACKAGE;  -- avoid ORA-04068 exception
+        --
+        --APEX_SESSION.DETACH();
+        --APEX_SESSION.DELETE_SESSION();
         --
         COMMIT;
     EXCEPTION

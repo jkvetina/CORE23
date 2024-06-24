@@ -175,12 +175,29 @@ CREATE OR REPLACE PACKAGE core AS
 
 
 
+    PROCEDURE create_security_context (
+        in_workspace            VARCHAR2    := NULL,
+        in_app_id               NUMBER      := NULL
+    );
+
+
+
     PROCEDURE create_session (
         in_user_id              VARCHAR2,
         in_app_id               NUMBER,
         in_page_id              NUMBER      := NULL,
-        in_session_id           NUMBER      := NULL,
-        in_items                VARCHAR2    := NULL
+        in_workspace            VARCHAR2    := NULL,
+        in_postauth             BOOLEAN     := FALSE
+    );
+
+
+
+    PROCEDURE attach_session (
+        in_session_id           NUMBER,
+        in_app_id               NUMBER,
+        in_page_id              NUMBER      := NULL,
+        in_workspace            VARCHAR2    := NULL,
+        in_postauth             BOOLEAN     := FALSE
     );
 
 
