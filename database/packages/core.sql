@@ -1391,7 +1391,6 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_statement            VARCHAR2,
         in_user_id              VARCHAR2        := NULL,
         in_app_id               NUMBER          := NULL,
-        in_session_id           NUMBER          := NULL,
         in_priority             PLS_INTEGER     := NULL,
         in_start_date           DATE            := NULL,
         in_enabled              BOOLEAN         := TRUE,
@@ -1409,25 +1408,27 @@ CREATE OR REPLACE PACKAGE BODY core AS
             v_job_name := DBMS_SCHEDULER.GENERATE_JOB_NAME(REPLACE(v_job_name, '?', ''));  -- create unique name
         END IF;
         --
-        v_action :=
-            --
-            -- @TODO: use APEX_STRING.FORMAT
-            --
-            'BEGIN' || CHR(10) ||
-            --
-            CASE WHEN in_user_id IS NOT NULL THEN
-                '    core.create_session ('                                                 || CHR(10) ||
-                '        in_user_id      => ''' || in_user_id || ''','                      || CHR(10) ||
-                '        in_app_id       => ' || NVL(in_app_id, core.get_app_id()) || ','   || CHR(10) ||
-                '        in_session_id   => ' || NVL(in_session_id, 0)                      || CHR(10) ||
-                '    );'                                                                    || CHR(10)
-            END ||
-            --
-            '    ' || RTRIM(in_statement, ';') || ';'                                       || CHR(10) ||
-            'EXCEPTION'                                                                     || CHR(10) ||
-            'WHEN OTHERS THEN'                                                              || CHR(10) ||
-            '    core.raise_error();'                                                       || CHR(10) ||
-            'END;';
+        v_action := RTRIM(APEX_STRING.FORMAT (
+            q'!BEGIN
+              !    DBMS_OUTPUT.PUT_LINE('%4');
+              !    IF '%1' IS NOT NULL THEN
+              !        core.create_session (
+              !            in_user_id      => '%1',
+              !            in_app_id       => %2
+              !        );
+              !    END IF;
+              !    %3;
+              !EXCEPTION
+              !WHEN OTHERS THEN
+              !    core.raise_error();
+              !END;
+              !',
+            p1          => in_user_id,
+            p2          => COALESCE(in_app_id, core.get_app_id()),
+            p3          => RTRIM(in_statement, ';'),
+            p4          => in_comments,
+            p_prefix    => '!'
+        ));
         --
         DBMS_SCHEDULER.CREATE_JOB (
             job_name        => v_job_name,
