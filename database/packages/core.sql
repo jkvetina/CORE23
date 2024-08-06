@@ -279,6 +279,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_user_id              VARCHAR2,
         in_app_id               NUMBER,
         in_page_id              NUMBER      := NULL,
+        in_session_id           NUMBER      := NULL,
         in_workspace            VARCHAR2    := NULL,
         in_postauth             BOOLEAN     := FALSE
     ) AS
@@ -292,25 +293,36 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_app_id           => in_app_id
         );
 
-        -- create new APEX session
-        BEGIN
-            APEX_SESSION.CREATE_SESSION (
-                p_app_id                    => in_app_id,
-                p_page_id                   => NVL(in_page_id, 0),
-                p_username                  => in_user_id,
-                p_call_post_authentication  => in_postauth
+        -- attach to existing session
+        IF in_session_id IS NOT NULL THEN
+            attach_session (
+                in_session_id   => in_session_id,
+                in_app_id       => in_app_id,
+                in_page_id      => NVL(in_page_id, 0),
+                in_workspace    => in_workspace,
+                in_postauth     => in_postauth
             );
-        EXCEPTION
-        WHEN OTHERS THEN
-            core.raise_error('CREATE_SESSION_FAILED', in_app_id, in_page_id, in_user_id);
-        END;
+        ELSE
+            -- create new APEX session
+            BEGIN
+                APEX_SESSION.CREATE_SESSION (
+                    p_app_id                    => in_app_id,
+                    p_page_id                   => NVL(in_page_id, 0),
+                    p_username                  => in_user_id,
+                    p_call_post_authentication  => in_postauth
+                );
+            EXCEPTION
+            WHEN OTHERS THEN
+                core.raise_error('CREATE_SESSION_FAILED', in_app_id, in_page_id, in_user_id);
+            END;
 
-        -- set username
-        IF APEX_CUSTOM_AUTH.SESSION_ID_EXISTS THEN
-            APEX_UTIL.SET_USERNAME (
-                p_userid    => APEX_UTIL.GET_USER_ID(v_user_name),
-                p_username  => v_user_name
-            );
+            -- set username
+            IF APEX_CUSTOM_AUTH.SESSION_ID_EXISTS THEN
+                APEX_UTIL.SET_USERNAME (
+                    p_userid    => APEX_UTIL.GET_USER_ID(v_user_name),
+                    p_username  => v_user_name
+                );
+            END IF;
         END IF;
         --
         COMMIT;
@@ -1391,6 +1403,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_statement            VARCHAR2,
         in_user_id              VARCHAR2        := NULL,
         in_app_id               NUMBER          := NULL,
+        in_session_id           NUMBER          := NULL,
         in_priority             PLS_INTEGER     := NULL,
         in_start_date           DATE            := NULL,
         in_enabled              BOOLEAN         := TRUE,
@@ -1414,7 +1427,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
               !    IF '%1' IS NOT NULL THEN
               !        core.create_session (
               !            in_user_id      => '%1',
-              !            in_app_id       => %2
+              !            in_app_id       => %2,
+              !            in_session_id   => %5
               !        );
               !    END IF;
               !    %3;
@@ -1427,6 +1441,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             p2          => COALESCE(in_app_id, core.get_app_id()),
             p3          => RTRIM(in_statement, ';'),
             p4          => in_comments,
+            p5          => NVL(TO_CHAR(in_session_id), 'NULL'),
             p_prefix    => '!'
         ));
         --

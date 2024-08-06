@@ -186,6 +186,7 @@ CREATE OR REPLACE PACKAGE core AS
         in_user_id              VARCHAR2,
         in_app_id               NUMBER,
         in_page_id              NUMBER      := NULL,
+        in_session_id           NUMBER      := NULL,
         in_workspace            VARCHAR2    := NULL,
         in_postauth             BOOLEAN     := FALSE
     );
@@ -565,6 +566,7 @@ CREATE OR REPLACE PACKAGE core AS
         in_statement            VARCHAR2,
         in_user_id              VARCHAR2        := NULL,
         in_app_id               NUMBER          := NULL,
+        in_session_id           NUMBER          := NULL,
         in_priority             PLS_INTEGER     := NULL,
         in_start_date           DATE            := NULL,
         in_enabled              BOOLEAN         := TRUE,
