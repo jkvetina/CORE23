@@ -1405,6 +1405,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_app_id               NUMBER          := NULL,
         in_session_id           NUMBER          := NULL,
         in_priority             PLS_INTEGER     := NULL,
+        in_schedule_name        VARCHAR2        := NULL,
         in_start_date           DATE            := NULL,
         in_enabled              BOOLEAN         := TRUE,
         in_autodrop             BOOLEAN         := TRUE,
@@ -1444,16 +1445,29 @@ CREATE OR REPLACE PACKAGE BODY core AS
             p5          => NVL(TO_CHAR(in_session_id), 'NULL'),
             p_prefix    => '!'
         ));
-        --
-        DBMS_SCHEDULER.CREATE_JOB (
-            job_name        => v_job_name,
-            job_type        => 'PLSQL_BLOCK',
-            job_action      => v_action,
-            start_date      => in_start_date,
-            enabled         => FALSE,
-            auto_drop       => in_autodrop,
-            comments        => in_comments
-        );
+
+        -- either run on schedule or at specified date
+        IF in_schedule_name IS NOT NULL THEN
+            DBMS_SCHEDULER.CREATE_JOB (
+                job_name        => v_job_name,
+                schedule_name   => in_schedule_name,
+                job_type        => 'PLSQL_BLOCK',
+                job_action      => v_action,
+                enabled         => FALSE,
+                auto_drop       => in_autodrop,
+                comments        => in_comments
+            );
+        ELSE
+            DBMS_SCHEDULER.CREATE_JOB (
+                job_name        => v_job_name,
+                job_type        => 'PLSQL_BLOCK',
+                job_action      => v_action,
+                start_date      => in_start_date,
+                enabled         => FALSE,
+                auto_drop       => in_autodrop,
+                comments        => in_comments
+            );
+        END IF;
         --
         IF in_priority IS NOT NULL THEN
             DBMS_SCHEDULER.SET_ATTRIBUTE(v_job_name, 'JOB_PRIORITY', in_priority);
