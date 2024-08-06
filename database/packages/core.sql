@@ -1431,7 +1431,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
               !            in_session_id   => %5
               !        );
               !    END IF;
-              !    %3;
+              !    %3
               !EXCEPTION
               !WHEN OTHERS THEN
               !    core.raise_error();
@@ -1439,7 +1439,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
               !',
             p1          => in_user_id,
             p2          => COALESCE(in_app_id, core.get_app_id()),
-            p3          => RTRIM(in_statement, ';'),
+            p3          => REGEXP_REPLACE(in_statement, '(\s*;\s*)$', '') || ';',
             p4          => in_comments,
             p5          => NVL(TO_CHAR(in_session_id), 'NULL'),
             p_prefix    => '!'
