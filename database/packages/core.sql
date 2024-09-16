@@ -2299,6 +2299,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         --
         v_log_id                NUMBER;                     -- log_id from your log_error function (returning most likely sequence)
         v_action_name           VARCHAR2(128);              -- short error type visible to user
+        v_log                   BOOLEAN         := TRUE;
     BEGIN
         out_result := APEX_ERROR.INIT_ERROR_RESULT(p_error => p_error);
         --
@@ -2332,23 +2333,32 @@ CREATE OR REPLACE PACKAGE BODY core AS
             v_action_name := 'UNKNOWN_ERROR';
         END IF;
 
+        -- dont log session errors
+        IF p_error.is_internal_error AND p_error.ora_sqlcode IS NULL THEN
+            IF p_error.apex_error_code NOT IN ('APEX.SESSION.EXPIRED') THEN
+                v_log := FALSE;
+            END IF;
+        END IF;
+
         -- store incident in your log
-        v_log_id := core.log_error (
-            in_action_name  => v_action_name,
-            in_arg1         => 'message',           in_arg2     => out_result.message,
-            in_arg3         => 'page',              in_arg4     => TO_CHAR(APEX_APPLICATION.G_FLOW_STEP_ID),
-            in_arg5         => 'component_type',    in_arg6     => REPLACE(p_error.component.type, 'APEX_APPLICATION_', ''),
-            in_arg7         => 'component_name',    in_arg8     => p_error.component.name,
-            in_arg9         => 'process_point',     in_arg10    => REPLACE(SYS_CONTEXT('USERENV', 'ACTION'), 'Processes - point: ', ''),
-            in_arg11        => 'page_item',         in_arg12    => out_result.page_item_name,
-            in_arg13        => 'column_alias',      in_arg14    => out_result.column_alias,
-            in_arg15        => 'error',             in_arg16    => APEX_ERROR.GET_FIRST_ORA_ERROR_TEXT(p_error => p_error),
-            in_payload      =>
-                CHR(10) || '-- DESCRIPTION:' || CHR(10) || core.get_shorter_stack(p_error.ora_sqlerrm)      ||
-                CHR(10) || '-- STATEMENT:'   || CHR(10) || core.get_shorter_stack(p_error.error_statement)  ||
-                CHR(10) || '-- BACKTRACE:'   || CHR(10) || core.get_shorter_stack(p_error.error_backtrace),
-            in_json_object  => TRUE
-        );
+        IF v_log THEN
+            v_log_id := core.log_error (
+                in_action_name  => v_action_name,
+                in_arg1         => 'message',           in_arg2     => out_result.message,
+                in_arg3         => 'page',              in_arg4     => TO_CHAR(APEX_APPLICATION.G_FLOW_STEP_ID),
+                in_arg5         => 'component_type',    in_arg6     => REPLACE(p_error.component.type, 'APEX_APPLICATION_', ''),
+                in_arg7         => 'component_name',    in_arg8     => p_error.component.name,
+                in_arg9         => 'process_point',     in_arg10    => REPLACE(SYS_CONTEXT('USERENV', 'ACTION'), 'Processes - point: ', ''),
+                in_arg11        => 'page_item',         in_arg12    => out_result.page_item_name,
+                in_arg13        => 'column_alias',      in_arg14    => out_result.column_alias,
+                in_arg15        => 'error',             in_arg16    => APEX_ERROR.GET_FIRST_ORA_ERROR_TEXT(p_error => p_error),
+                in_payload      =>
+                    CHR(10) || '-- DESCRIPTION:' || CHR(10) || core.get_shorter_stack(p_error.ora_sqlerrm)      ||
+                    CHR(10) || '-- STATEMENT:'   || CHR(10) || core.get_shorter_stack(p_error.error_statement)  ||
+                    CHR(10) || '-- BACKTRACE:'   || CHR(10) || core.get_shorter_stack(p_error.error_backtrace),
+                in_json_object  => TRUE
+            );
+        END IF;
 
         -- mark associated page item (when possible)
         IF out_result.page_item_name IS NULL AND out_result.column_alias IS NULL THEN
