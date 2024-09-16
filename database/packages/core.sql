@@ -2305,13 +2305,14 @@ CREATE OR REPLACE PACKAGE BODY core AS
         out_result.message := REPLACE(out_result.message, '&' || 'quot;', '"');  -- replace some HTML entities
 
         -- assign log_id sequence (app specific, probably from sequence)
-        IF p_error.ora_sqlcode IN (-1, -2091, -2290, -2291, -2292) THEN
+        IF p_error.ora_sqlcode IN (
+            -1,     -- ORA-00001: unique constraint violated
+            -2091,  -- ORA-02091: transaction rolled back (can hide a deferred constraint)
+            -2290,  -- ORA-02290: check constraint violated
+            -2291,  -- ORA-02291: integrity constraint violated - parent key not found
+            -2292   -- ORA-02292: integrity constraint violated - child record found
+        ) THEN
             -- handle constraint violations
-            -- ORA-00001: unique constraint violated
-            -- ORA-02091: transaction rolled back (can hide a deferred constraint)
-            -- ORA-02290: check constraint violated
-            -- ORA-02291: integrity constraint violated - parent key not found
-            -- ORA-02292: integrity constraint violated - child record found
             v_action_name := APEX_ERROR.EXTRACT_CONSTRAINT_NAME (
                 p_error             => p_error,
                 p_include_schema    => FALSE
@@ -2320,7 +2321,9 @@ CREATE OR REPLACE PACKAGE BODY core AS
             out_result.message          := 'CONSTRAINT_ERROR|' || v_action_name;
             out_result.display_location := APEX_ERROR.C_INLINE_IN_NOTIFICATION;
             --
-        ELSIF p_error.ora_sqlcode IN (-1400) THEN
+        ELSIF p_error.ora_sqlcode IN (
+            -1400   -- ORA-01400: cannot insert NULL into...
+        ) THEN
             out_result.message          := 'NOT_NULL|' || REGEXP_SUBSTR(out_result.message, '\.["]([^"]+)["]\)', 1, 1, NULL, 1);
             --
         ELSIF p_error.is_internal_error THEN
