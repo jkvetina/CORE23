@@ -973,7 +973,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             BEGIN
                 APEX_UTIL.SET_SESSION_STATE (
                     p_name      => v_item_name,
-                    p_value     => in_value,
+                    p_value     => core.get_translated(in_value),
                     p_commit    => FALSE
                 );
             EXCEPTION
