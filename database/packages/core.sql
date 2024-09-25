@@ -1486,6 +1486,54 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
+    PROCEDURE stop_job (
+        in_job_name             VARCHAR2,
+        in_app_id               NUMBER      := NULL
+    )
+    AS
+        v_job_name              VARCHAR2(256);
+    BEGIN
+        v_job_name := CASE
+            WHEN INSTR(in_job_name, '.') = 0 AND in_app_id > 0
+                THEN get_app_owner() || '.'
+                END || in_job_name;
+        --
+        DBMS_SCHEDULER.STOP_JOB (
+            job_name    => v_job_name,
+            force       => TRUE
+        );
+        --
+    EXCEPTION
+    WHEN OTHERS THEN
+        core.raise_error('STOP_JOB|' || v_job_name);
+    END;
+
+
+
+    PROCEDURE drop_job (
+        in_job_name             VARCHAR2,
+        in_app_id               NUMBER      := NULL
+    )
+    AS
+        v_job_name              VARCHAR2(256);
+    BEGIN
+        v_job_name := CASE
+            WHEN INSTR(in_job_name, '.') = 0 AND in_app_id > 0
+                THEN get_app_owner() || '.'
+                END || in_job_name;
+        --
+        DBMS_SCHEDULER.DROP_JOB (
+            job_name    => v_job_name,
+            force       => TRUE
+        );
+        --
+    EXCEPTION
+    WHEN OTHERS THEN
+        core.raise_error('DROP_JOB|' || v_job_name);
+    END;
+
+
+
     PROCEDURE raise_error (
         in_action_name          VARCHAR2    := NULL,
         in_arg1                 VARCHAR2    := NULL,
