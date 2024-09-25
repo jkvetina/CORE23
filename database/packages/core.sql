@@ -1423,8 +1423,17 @@ CREATE OR REPLACE PACKAGE BODY core AS
         END IF;
         --
         v_action := RTRIM(APEX_STRING.FORMAT (
+            -- point of the first comment is that it will be visible in scheduler additional info
             q'!BEGIN
               !    DBMS_OUTPUT.PUT_LINE('%4');
+              !    --
+              !    core.log_module('JOB_EXECUTED|%6',
+              !        'user_id',    '%1',
+              !        'app_id',     '%2',
+              !        'session_id', '%5',
+              !        'comment',    '%4'
+              !    );
+              !    --
               !    IF '%1' IS NOT NULL THEN
               !        core.create_session (
               !            in_user_id      => '%1',
@@ -1443,8 +1452,15 @@ CREATE OR REPLACE PACKAGE BODY core AS
             p3          => REGEXP_REPLACE(in_statement, '(\s*;\s*)$', '') || ';',
             p4          => in_comments,
             p5          => NVL(TO_CHAR(in_session_id), 'NULL'),
+            p6          => v_job_name,
             p_prefix    => '!'
         ));
+        --
+        core.log_debug('JOB_REQUESTED|' || v_job_name,
+            in_comments,
+            REGEXP_REPLACE(in_statement, '(\s*;\s*)$', '') || ';',              -- statement
+            in_payload => v_action
+        );
 
         -- either run on schedule or at specified date
         IF in_schedule_name IS NOT NULL THEN
@@ -1478,6 +1494,9 @@ CREATE OR REPLACE PACKAGE BODY core AS
         END IF;
         --
         COMMIT;
+        --
+        core.log_debug('JOB_CREATED|' || v_job_name);
+        --
     EXCEPTION
     WHEN OTHERS THEN
         ROLLBACK;
