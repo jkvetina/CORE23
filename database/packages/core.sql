@@ -282,7 +282,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_session_id           NUMBER      := NULL,
         in_workspace            VARCHAR2    := NULL,
         in_postauth             BOOLEAN     := FALSE
-    ) AS
+    )
+    AS
         PRAGMA AUTONOMOUS_TRANSACTION;
         --
         v_user_name             apex_workspace_sessions.user_name%TYPE;
@@ -348,7 +349,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_page_id              NUMBER      := NULL,
         in_workspace            VARCHAR2    := NULL,
         in_postauth             BOOLEAN     := FALSE
-    ) AS
+    )
+    AS
         PRAGMA AUTONOMOUS_TRANSACTION;
     BEGIN
         -- set security context
@@ -455,7 +457,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
     PROCEDURE set_action (
         in_action_name          VARCHAR2,
         in_module_name          VARCHAR2        := NULL
-    ) AS
+    )
+    AS
     BEGIN
         IF in_module_name IS NOT NULL THEN
             DBMS_APPLICATION_INFO.SET_MODULE(in_module_name, in_action_name);   -- USERENV.MODULE, USERENV.ACTION
@@ -1410,7 +1413,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_enabled              BOOLEAN         := TRUE,
         in_autodrop             BOOLEAN         := TRUE,
         in_comments             VARCHAR2        := NULL
-    ) AS
+    )
+    AS
         PRAGMA AUTONOMOUS_TRANSACTION;
         --
         v_job_name              user_scheduler_jobs.job_name%TYPE;
@@ -2719,7 +2723,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_attach_mime          VARCHAR2        := NULL,
         in_attach_data          CLOB            := NULL,
         in_compress             BOOLEAN         := FALSE
-    ) AS
+    )
+    AS
         smtp_from               VARCHAR2(256);
         smtp_username           VARCHAR2(256);
         smtp_password           VARCHAR2(256);
@@ -3086,7 +3091,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_file_name                        VARCHAR2,
         in_file_mime                        VARCHAR2,
         in_file_payload     IN OUT NOCOPY   BLOB
-    ) AS
+    )
+    AS
     BEGIN
         HTP.INIT;
         OWA_UTIL.MIME_HEADER(in_file_mime, FALSE);
@@ -3115,7 +3121,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_overload             VARCHAR2        := NULL,    -- JSON object to overload passed items/values
         in_transform            BOOLEAN         := FALSE,   -- to pass all page items to new page
         in_reset                CHAR            := NULL
-    ) AS
+    )
+    AS
         out_target              VARCHAR2(32767);
         in_app_id               CONSTANT PLS_INTEGER := get_app_id();
     BEGIN
