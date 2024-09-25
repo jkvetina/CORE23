@@ -1494,6 +1494,15 @@ CREATE OR REPLACE PACKAGE BODY core AS
         END IF;
         --
         COMMIT;
+
+        -- grant to APEX so we can drop it from APEX
+        BEGIN
+            EXECUTE IMMEDIATE
+                'GRANT ALTER ON ' || v_job_name || ' TO APEX_PUBLIC_USER';
+        EXCEPTION
+        WHEN OTHERS THEN
+            core.raise_error('GRANT_FAILED');
+        END;
         --
         core.log_debug('JOB_CREATED|' || v_job_name);
         --
