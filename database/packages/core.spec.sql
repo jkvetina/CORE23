@@ -1095,6 +1095,28 @@ CREATE OR REPLACE PACKAGE core AS
         in_region_id            VARCHAR2        := NULL
     );
 
+
+
+    FUNCTION get_constant (
+        in_package          VARCHAR2,
+        in_name             VARCHAR2,
+        in_prefix           VARCHAR2        := NULL,
+        in_private          CHAR            := NULL
+    )
+    RETURN VARCHAR2
+    RESULT_CACHE;
+
+
+
+    FUNCTION get_constant_num (
+        in_package          VARCHAR2,
+        in_name             VARCHAR2,
+        in_prefix           VARCHAR2        := NULL,
+        in_private          CHAR            := NULL
+    )
+    RETURN NUMBER
+    RESULT_CACHE;
+
 END;
 /
 

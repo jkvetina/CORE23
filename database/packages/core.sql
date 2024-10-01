@@ -3259,6 +3259,72 @@ CREATE OR REPLACE PACKAGE BODY core AS
         core.raise_error();
     END;
 
+
+
+    FUNCTION get_constant (
+        in_package          VARCHAR2,
+        in_name             VARCHAR2,
+        in_prefix           VARCHAR2        := NULL,
+        in_private          CHAR            := NULL
+    )
+    RETURN VARCHAR2
+    RESULT_CACHE
+    AS
+        out_value           VARCHAR2(4000);
+    BEGIN
+        SELECT
+            NULLIF(
+                REGEXP_REPLACE(
+                    REGEXP_REPLACE(
+                        REGEXP_REPLACE(
+                            LTRIM(SUBSTR(s.text, INSTR(s.text, ':=') + 2)),
+                            ';\s*[-]{2}.*$',
+                            ';'),
+                        '[;]\s*',
+                        ''),
+                    '(^[''])|(['']\s*$)',
+                    ''),
+                'NULL')
+        INTO out_value
+        FROM user_identifiers t
+        JOIN user_source s
+            ON s.name               = t.object_name
+            AND s.type              = t.object_type
+            AND s.line              = t.line
+        WHERE t.object_name         = UPPER(in_package)
+            AND t.object_type       = 'PACKAGE' || CASE WHEN in_private IS NOT NULL THEN ' BODY' END
+            AND t.name              = UPPER(in_prefix || in_name)
+            AND t.type              = 'CONSTANT'
+            AND t.usage             = 'DECLARATION'
+            AND t.usage_context_id  = 1;
+        --
+        RETURN out_value;
+    EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RETURN NULL;
+    END;
+
+
+
+    FUNCTION get_constant_num (
+        in_package          VARCHAR2,
+        in_name             VARCHAR2,
+        in_prefix           VARCHAR2        := NULL,
+        in_private          CHAR            := NULL
+    )
+    RETURN NUMBER
+    RESULT_CACHE
+    AS
+        out_value           NUMBER;
+    BEGIN
+        RETURN TO_NUMBER(get_constant (
+            in_package      => in_package,
+            in_name         => in_name,
+            in_prefix       => in_prefix,
+            in_private      => in_private
+        ));
+    END;
+
 END;
 /
 
