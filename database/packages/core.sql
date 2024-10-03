@@ -2450,7 +2450,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
         -- translate message (custom) just for user (not for the log)
         -- with APEX globalization - text messages - we can also auto add new messages there through APEX_LANG.CREATE_MESSAGE
-        -- for custom table out_result.message := NVL(core.get_translated_message(out_result.message), out_result.message);
+        -- for custom table out_result.message := NVL(core.get_translated(out_result.message), out_result.message);
 
         -- show only the latest error message to common users
         out_result.message := CASE WHEN v_log_id IS NOT NULL THEN '#' || TO_CHAR(v_log_id) || '<br />' END
@@ -2475,9 +2475,14 @@ CREATE OR REPLACE PACKAGE BODY core AS
     )
     RETURN VARCHAR2
     AS
+        v_message               VARCHAR2(32767) := in_message;
     BEGIN
+        IF REGEXP_LIKE(in_message, '^[A-Za-z][A-Za-z0-9_]*$') THEN
+            v_message := NVL(NULLIF(APEX_LANG.MESSAGE(in_message), UPPER(in_message)), v_message);
+        END IF;
+        --
         RETURN REPLACE(REPLACE(REPLACE(
-            NVL(NULLIF(APEX_LANG.MESSAGE(in_message), UPPER(in_message)), in_message),
+            v_message,
             '| ', '<br />'),
             '|', ' | '),
             '[', ' [');
