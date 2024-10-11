@@ -41,6 +41,8 @@ CREATE OR REPLACE PACKAGE core AS
 
     -- start error message with this
     c_assert_message            CONSTANT VARCHAR2(30)   := 'ASSERT_FAILED|';
+    c_constraint_prefix         CONSTANT VARCHAR2(30)   := 'CONSTRAINT_ERROR|';
+    c_not_null_prefix           CONSTANT VARCHAR2(30)   := 'NOT_NULL|';
 
     -- define assert exception
     c_assert_exception_code     CONSTANT PLS_INTEGER    := -20992;

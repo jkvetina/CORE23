@@ -2380,13 +2380,22 @@ CREATE OR REPLACE PACKAGE BODY core AS
         v_log_id                NUMBER;                     -- log_id from your log_error function (returning most likely sequence)
         v_action_name           VARCHAR2(128);              -- short error type visible to user
         v_log                   BOOLEAN         := TRUE;
+        v_constraint_code       PLS_INTEGER;
     BEGIN
         out_result := APEX_ERROR.INIT_ERROR_RESULT(p_error => p_error);
         --
         out_result.message := REPLACE(out_result.message, '&' || 'quot;', '"');  -- replace some HTML entities
 
+        -- get error code thown before app exception to translate constraint names
+        IF p_error.ora_sqlcode = app_exception_code THEN
+            v_constraint_code := 0 - TO_NUMBER(REGEXP_SUBSTR(
+                REPLACE(p_error.ora_sqlerrm, 'ORA' || app_exception_code || ': ', ''),
+                '^ORA-(\d+)',
+                1, 1, NULL, 1));
+        END IF;
+
         -- assign log_id sequence (app specific, probably from sequence)
-        IF p_error.ora_sqlcode IN (
+        IF NVL(v_constraint_code, p_error.ora_sqlcode) IN (
             -1,     -- ORA-00001: unique constraint violated
             -2091,  -- ORA-02091: transaction rolled back (can hide a deferred constraint)
             -2290,  -- ORA-02290: check constraint violated
@@ -2399,13 +2408,13 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 p_include_schema    => FALSE
             );
             --
-            out_result.message          := 'CONSTRAINT_ERROR|' || v_action_name;
+            out_result.message          := c_constraint_prefix || v_action_name;
             out_result.display_location := APEX_ERROR.C_INLINE_IN_NOTIFICATION;
             --
-        ELSIF p_error.ora_sqlcode IN (
+        ELSIF NVL(v_constraint_code, p_error.ora_sqlcode) IN (
             -1400   -- ORA-01400: cannot insert NULL into...
         ) THEN
-            out_result.message          := 'NOT_NULL|' || REGEXP_SUBSTR(out_result.message, '\.["]([^"]+)["]\)', 1, 1, NULL, 1);
+            out_result.message          := c_not_null_prefix || REGEXP_SUBSTR(out_result.message, '\.["]([^"]+)["]\)', 1, 1, NULL, 1);
             --
         ELSIF p_error.is_internal_error THEN
             v_action_name := 'INTERNAL_ERROR';
@@ -2477,7 +2486,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
     AS
         v_message               VARCHAR2(32767) := in_message;
     BEGIN
-        IF REGEXP_LIKE(in_message, '^[A-Za-z][A-Za-z0-9_]*$') THEN
+        IF REGEXP_LIKE(in_message, '^[A-Za-z][A-Za-z0-9_\|]*$') THEN
             v_message := NVL(NULLIF(APEX_LANG.MESSAGE(in_message), UPPER(in_message)), v_message);
         END IF;
         --
