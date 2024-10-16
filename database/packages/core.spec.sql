@@ -61,24 +61,24 @@ CREATE OR REPLACE PACKAGE core AS
     c_format_integer            CONSTANT VARCHAR2(32)   := 'FM999G999G999G999G999G990';
     c_format_integer_currency   CONSTANT VARCHAR2(32)   := 'FML999G999G999G999G999G990';
     --
-    c_app_proxy             CONSTANT VARCHAR2(128)  := '';
-    c_app_wallet            CONSTANT VARCHAR2(128)  := '';
+    c_app_proxy                 CONSTANT VARCHAR2(128)  := '';
+    c_app_wallet                CONSTANT VARCHAR2(128)  := '';
     --
-    c_smtp_from             CONSTANT VARCHAR2(128)  := '';
-    c_smtp_host             CONSTANT VARCHAR2(128)  := '';
-    c_smtp_port             CONSTANT NUMBER(8)      := NULL;
-    c_smtp_timeout          CONSTANT NUMBER(8)      := NULL;
-    c_smtp_username         CONSTANT VARCHAR2(128)  := '';
-    c_smtp_password         CONSTANT VARCHAR2(128)  := '';
+    c_smtp_from                 CONSTANT VARCHAR2(128)  := '';
+    c_smtp_host                 CONSTANT VARCHAR2(128)  := '';
+    c_smtp_port                 CONSTANT NUMBER(8)      := NULL;
+    c_smtp_timeout              CONSTANT NUMBER(8)      := NULL;
+    c_smtp_username             CONSTANT VARCHAR2(128)  := '';
+    c_smtp_password             CONSTANT VARCHAR2(128)  := '';
     --
-    c_page_item_wild        CONSTANT VARCHAR2(2)    := '$';
-    c_page_item_prefix      CONSTANT VARCHAR2(2)    := 'P';
+    c_page_item_wild            CONSTANT VARCHAR2(2)    := '$';
+    c_page_item_prefix          CONSTANT VARCHAR2(2)    := 'P';
 
     -- flags use in logging
-    flag_module             CONSTANT CHAR           := 'M';     -- start of any module (procedure/function)
-    flag_debug              CONSTANT CHAR           := 'D';     -- debug
-    flag_warning            CONSTANT CHAR           := 'W';     -- warning
-    flag_error              CONSTANT CHAR           := 'E';     -- error
+    flag_module                 CONSTANT CHAR           := 'M';     -- start of any module (procedure/function)
+    flag_debug                  CONSTANT CHAR           := 'D';     -- debug
+    flag_warning                CONSTANT CHAR           := 'W';     -- warning
+    flag_error                  CONSTANT CHAR           := 'E';     -- error
 
 
 
