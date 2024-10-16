@@ -1,5 +1,14 @@
 CREATE OR REPLACE PACKAGE BODY core AS
 
+    FUNCTION get_id
+    RETURN NUMBER
+    AS
+    BEGIN
+        RETURN TO_NUMBER(SYS_GUID(), 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
+    END;
+
+
+
     FUNCTION get_app_id (
         in_dont_override        CHAR := NULL
     )
@@ -3337,6 +3346,17 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_prefix       => in_prefix,
             in_private      => in_private
         ));
+    END;
+
+
+
+    FUNCTION generate_token (
+        in_size             NUMBER := 6
+    )
+    RETURN VARCHAR2
+    AS
+    BEGIN
+        RETURN LPAD(TO_CHAR(TRUNC(DBMS_RANDOM.VALUE(1, TO_CHAR(POWER(10, in_size) - 1)))), in_size, '0');
     END;
 
 END;

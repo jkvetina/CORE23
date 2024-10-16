@@ -95,6 +95,11 @@ CREATE OR REPLACE PACKAGE core AS
 
 
 
+    FUNCTION get_id
+    RETURN NUMBER;
+
+
+
     FUNCTION get_app_id (
         in_dont_override        CHAR := NULL
     )
@@ -1118,6 +1123,13 @@ CREATE OR REPLACE PACKAGE core AS
     )
     RETURN NUMBER
     RESULT_CACHE;
+
+
+
+    FUNCTION generate_token (
+        in_size             NUMBER := 6
+    )
+    RETURN VARCHAR2;
 
 END;
 /
