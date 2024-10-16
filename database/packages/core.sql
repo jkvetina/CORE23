@@ -3359,6 +3359,22 @@ CREATE OR REPLACE PACKAGE BODY core AS
         RETURN LPAD(TO_CHAR(TRUNC(DBMS_RANDOM.VALUE(1, TO_CHAR(POWER(10, in_size) - 1)))), in_size, '0');
     END;
 
+
+
+    FUNCTION is_authorized (
+        in_role_name    VARCHAR2
+    )
+    RETURN CHAR
+    AS
+    BEGIN
+        -- return Y/NULL so we can call this in a SQL statement
+        RETURN CASE
+            WHEN APEX_AUTHORIZATION.IS_AUTHORIZED (
+                p_authorization_name => in_role_name
+            )
+            THEN 'Y' END;
+    END;
+
 END;
 /
 

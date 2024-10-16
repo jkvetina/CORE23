@@ -1131,6 +1131,13 @@ CREATE OR REPLACE PACKAGE core AS
     )
     RETURN VARCHAR2;
 
+
+
+    FUNCTION is_authorized (
+        in_role_name    VARCHAR2
+    )
+    RETURN CHAR;
+
 END;
 /
 
