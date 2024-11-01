@@ -30,7 +30,7 @@ CREATE OR REPLACE PACKAGE core AS
      */
 
     -- code for app exception
-    app_exception_code          CONSTANT PLS_INTEGER            := -20990;
+    app_exception_code          CONSTANT PLS_INTEGER    := -20990;
     app_exception               EXCEPTION;
     --
     PRAGMA EXCEPTION_INIT(app_exception, app_exception_code);   -- as a side effect this will disable listing constants in tree on the left

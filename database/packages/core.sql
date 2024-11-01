@@ -141,7 +141,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 SELECT TO_NUMBER(REGEXP_SUBSTR(a.home_link, ':([^:]+)', 1, 1, NULL, 1))
                 INTO out_page_id
                 FROM apex_applications a
-                WHERE a.application_id      = COALESCE(in_app_id, core.get_app_id());
+                WHERE a.application_id  = COALESCE(in_app_id, core.get_app_id());
             EXCEPTION
             WHEN NO_DATA_FOUND THEN
                 NULL;
@@ -501,8 +501,10 @@ CREATE OR REPLACE PACKAGE BODY core AS
     FUNCTION get_client_id (
         in_user_id              VARCHAR2        := NULL
     )
-    RETURN VARCHAR2 AS          -- mimic APEX client_id
+    RETURN VARCHAR2
+    AS
     BEGIN
+        -- mimic APEX client_id
         RETURN
             COALESCE(in_user_id, core.get_user_id()) || ':' ||
             COALESCE(core.get_session_id(), SYS_CONTEXT('USERENV', 'SESSIONID')
