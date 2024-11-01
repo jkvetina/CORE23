@@ -1826,28 +1826,39 @@ CREATE OR REPLACE PACKAGE BODY core AS
             -- @TODO: need a switch for APEX log, logger or custom logger
             --
             WHEN flag_error THEN
-                APEX_DEBUG.ERROR (
-                    p_message       => v_message || '|' || v_arguments || '|' || in_payload || v_backtrace || v_callstack,
-                    p_max_length    => 32767
+                core_customized.log_error (
+                    in_message      => v_message,
+                    in_arguments    => v_arguments,
+                    in_payload      => in_payload,
+                    in_backtrace    => v_backtrace,
+                    in_callstack    => v_callstack
                 );
                 --
             WHEN flag_warning THEN
-                APEX_DEBUG.WARN (
-                    p_message       => v_message || '|' || v_arguments || '|' || in_payload || v_backtrace || v_callstack,
-                    p_max_length    => 32767
+                core_customized.log_warning (
+                    in_message      => v_message,
+                    in_arguments    => v_arguments,
+                    in_payload      => in_payload,
+                    in_backtrace    => v_backtrace,
+                    in_callstack    => v_callstack
                 );
                 --
             WHEN flag_debug THEN
-                APEX_DEBUG.INFO (
-                    p_message       => v_message || '|' || v_arguments || '|' || in_payload || v_backtrace || v_callstack,
-                    p_max_length    => 32767
+                core_customized.log_debug (
+                    in_message      => v_message,
+                    in_arguments    => v_arguments,
+                    in_payload      => in_payload,
+                    in_backtrace    => v_backtrace,
+                    in_callstack    => v_callstack
                 );
                 --
             WHEN flag_module THEN
-                APEX_DEBUG.MESSAGE (
-                    p_message       => v_message || '|' || v_arguments || '|' || in_payload || v_backtrace || v_callstack,
-                    p_max_length    => 32767,
-                    p_force         => TRUE
+                core_customized.log_module (
+                    in_message      => v_message,
+                    in_arguments    => v_arguments,
+                    in_payload      => in_payload,
+                    in_backtrace    => v_backtrace,
+                    in_callstack    => v_callstack
                 );
             ELSE
                 NULL;
