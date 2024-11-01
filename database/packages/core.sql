@@ -2530,7 +2530,9 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     PROCEDURE refresh_mviews (
-        in_name_like            VARCHAR2        := NULL
+        in_name_like            VARCHAR2        := NULL,
+        in_percent              NUMBER          := NULL,
+        in_method               CHAR            := NULL
     )
     AS
     BEGIN
@@ -2545,17 +2547,19 @@ CREATE OR REPLACE PACKAGE BODY core AS
         ) LOOP
             DBMS_MVIEW.REFRESH (
                 list            => c.owner || '.' || c.mview_name,
-                method          => 'C',
+                method          => NVL(in_method, 'C'),
                 parallelism     => 1,
                 atomic_refresh  => FALSE
             );
             --
-            DBMS_STATS.GATHER_TABLE_STATS (
-                ownname             => c.owner,
-                tabname             => c.mview_name,
-                estimate_percent    => 100,
-                granularity         => 'ALL'
-            );
+            IF in_percent > 0 THEN
+                DBMS_STATS.GATHER_TABLE_STATS (
+                    ownname             => c.owner,
+                    tabname             => c.mview_name,
+                    estimate_percent    => in_percent,
+                    granularity         => 'ALL'
+                );
+            END IF;
         END LOOP;
     EXCEPTION
     WHEN OTHERS THEN
