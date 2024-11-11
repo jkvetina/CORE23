@@ -3392,6 +3392,32 @@ CREATE OR REPLACE PACKAGE BODY core AS
             THEN 'Y' END;
     END;
 
+
+
+    FUNCTION get_local_date (
+        in_utc_timestamp    DATE,
+        in_timezone         VARCHAR2
+    )
+    RETURN DATE
+    DETERMINISTIC
+    AS
+    BEGIN
+        RETURN FROM_TZ(in_utc_timestamp, 'UTC') AT TIME ZONE in_timezone;
+    END;
+
+
+
+    FUNCTION get_utc_date (
+        in_timestamp        DATE,
+        in_timezone         VARCHAR2
+    )
+    RETURN DATE
+    DETERMINISTIC
+    AS
+    BEGIN
+        RETURN FROM_TZ(in_timestamp, in_timezone) AT TIME ZONE 'UTC';
+    END;
+
 END;
 /
 

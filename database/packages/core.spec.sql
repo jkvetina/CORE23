@@ -1140,6 +1140,24 @@ CREATE OR REPLACE PACKAGE core AS
     )
     RETURN CHAR;
 
+
+
+    FUNCTION get_local_date (
+        in_utc_timestamp    DATE,
+        in_timezone         VARCHAR2
+    )
+    RETURN DATE
+    DETERMINISTIC;
+
+
+
+    FUNCTION get_utc_date (
+        in_timestamp        DATE,
+        in_timezone         VARCHAR2
+    )
+    RETURN DATE
+    DETERMINISTIC;
+
 END;
 /
 
