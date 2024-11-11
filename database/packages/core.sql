@@ -1449,7 +1449,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
               !        'comment',    '%4'
               !    );
               !    --
-              !    IF '%1' IS NOT NULL THEN
+              !    IF '%1' IS NOT NULL AND %2 IS NOT NULL THEN
               !        core.create_session (
               !            in_user_id      => '%1',
               !            in_app_id       => %2,
@@ -1463,7 +1463,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
               !END;
               !',
             p1          => in_user_id,
-            p2          => COALESCE(in_app_id, core.get_app_id()),
+            p2          => NVL(TO_CHAR(COALESCE(in_app_id, core.get_app_id())), 'NULL'),
             p3          => REGEXP_REPLACE(in_statement, '(\s*;\s*)$', '') || ';',
             p4          => in_comments,
             p5          => NVL(TO_CHAR(in_session_id), 'NULL'),
