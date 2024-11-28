@@ -121,9 +121,10 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     FUNCTION get_app_homepage (
-        in_app_id               NUMBER      := NULL
+        in_app_id               NUMBER
     )
     RETURN NUMBER
+    DETERMINISTIC
     AS
         out_page_id             apex_application_pages.page_id%TYPE;
     BEGIN
@@ -134,14 +135,14 @@ CREATE OR REPLACE PACKAGE BODY core AS
             JOIN apex_application_pages p
                 ON p.application_id     = a.application_id
                 AND p.page_alias        = REGEXP_SUBSTR(a.home_link, ':([^:]+)', 1, 1, NULL, 1)
-            WHERE a.application_id      = COALESCE(in_app_id, core.get_app_id());
+            WHERE a.application_id      = in_app_id;
         EXCEPTION
         WHEN NO_DATA_FOUND THEN
             BEGIN
                 SELECT TO_NUMBER(REGEXP_SUBSTR(a.home_link, ':([^:]+)', 1, 1, NULL, 1))
                 INTO out_page_id
                 FROM apex_applications a
-                WHERE a.application_id  = COALESCE(in_app_id, core.get_app_id());
+                WHERE a.application_id  = in_app_id;
             EXCEPTION
             WHEN NO_DATA_FOUND THEN
                 NULL;
@@ -152,6 +153,32 @@ CREATE OR REPLACE PACKAGE BODY core AS
     EXCEPTION
     WHEN OTHERS THEN
         core.raise_error('GET_HOMEPAGE_FAILED', COALESCE(in_app_id, core.get_app_id()));
+    END;
+
+
+
+    FUNCTION get_app_login_url (
+        in_app_id               NUMBER
+    )
+    RETURN VARCHAR2
+    DETERMINISTIC
+    AS
+        out_url                 apex_applications.login_url%TYPE;
+    BEGIN
+        BEGIN
+            SELECT a.login_url
+            INTO out_url
+            FROM apex_applications a
+            WHERE a.application_id = in_app_id;
+        EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            NULL;
+        END;
+        --
+        RETURN out_url;
+    EXCEPTION
+    WHEN OTHERS THEN
+        core.raise_error('GET_LOGIN_FAILED', COALESCE(in_app_id, core.get_app_id()));
     END;
 
 

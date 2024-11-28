@@ -141,9 +141,18 @@ CREATE OR REPLACE PACKAGE core AS
 
 
     FUNCTION get_app_homepage (
-        in_app_id               NUMBER      := NULL
+        in_app_id               NUMBER
     )
-    RETURN NUMBER;
+    RETURN NUMBER
+    DETERMINISTIC;
+
+
+
+    FUNCTION get_app_login_url (
+        in_app_id               NUMBER
+    )
+    RETURN VARCHAR2
+    DETERMINISTIC;
 
 
 
