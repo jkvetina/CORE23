@@ -1072,10 +1072,10 @@ CREATE OR REPLACE PACKAGE core AS
 
 
     FUNCTION send_request (
-        in_url              VARCHAR2,
-        in_method           VARCHAR2    := NULL,
-        in_content_type     VARCHAR2    := NULL,
-        in_payload          VARCHAR2    := NULL
+        in_url                  VARCHAR2,
+        in_method               VARCHAR2    := NULL,
+        in_content_type         VARCHAR2    := NULL,
+        in_payload              VARCHAR2    := NULL
     )
     RETURN VARCHAR2;
 
@@ -1152,10 +1152,10 @@ CREATE OR REPLACE PACKAGE core AS
 
 
     FUNCTION get_constant (
-        in_package          VARCHAR2,
-        in_name             VARCHAR2,
-        in_prefix           VARCHAR2        := NULL,
-        in_private          CHAR            := NULL
+        in_package              VARCHAR2,
+        in_name                 VARCHAR2,
+        in_prefix               VARCHAR2        := NULL,
+        in_private              CHAR            := NULL
     )
     RETURN VARCHAR2
     RESULT_CACHE;
@@ -1163,10 +1163,10 @@ CREATE OR REPLACE PACKAGE core AS
 
 
     FUNCTION get_constant_num (
-        in_package          VARCHAR2,
-        in_name             VARCHAR2,
-        in_prefix           VARCHAR2        := NULL,
-        in_private          CHAR            := NULL
+        in_package              VARCHAR2,
+        in_name                 VARCHAR2,
+        in_prefix               VARCHAR2        := NULL,
+        in_private              CHAR            := NULL
     )
     RETURN NUMBER
     RESULT_CACHE;
@@ -1174,22 +1174,22 @@ CREATE OR REPLACE PACKAGE core AS
 
 
     FUNCTION generate_token (
-        in_size             NUMBER := 6
+        in_size                 NUMBER := 6
     )
     RETURN VARCHAR2;
 
 
 
     FUNCTION is_authorized (
-        in_role_name    VARCHAR2
+        in_auth_scheme          VARCHAR2
     )
     RETURN CHAR;
 
 
 
     FUNCTION get_local_date (
-        in_utc_timestamp    DATE,
-        in_timezone         VARCHAR2
+        in_utc_timestamp        DATE,
+        in_timezone             VARCHAR2
     )
     RETURN DATE
     DETERMINISTIC;
@@ -1197,8 +1197,8 @@ CREATE OR REPLACE PACKAGE core AS
 
 
     FUNCTION get_utc_date (
-        in_timestamp        DATE,
-        in_timezone         VARCHAR2
+        in_timestamp            DATE,
+        in_timezone             VARCHAR2
     )
     RETURN DATE
     DETERMINISTIC;
