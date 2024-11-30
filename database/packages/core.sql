@@ -1126,13 +1126,13 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     PROCEDURE set_page_items (
-        in_query            VARCHAR2,
-        in_page_id          NUMBER          := NULL
+        in_query                VARCHAR2,
+        in_page_id              NUMBER          := NULL
     )
     AS
-        l_cursor            PLS_INTEGER;
-        l_refcur            SYS_REFCURSOR;
-        l_items             t_page_items;
+        l_cursor                PLS_INTEGER;
+        l_refcur                SYS_REFCURSOR;
+        l_items                 t_page_items;
     BEGIN
         -- process cursor
         OPEN l_refcur FOR LTRIM(RTRIM(in_query));
@@ -1147,14 +1147,14 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     FUNCTION set_page_items (
-        in_query            VARCHAR2,
-        in_page_id          NUMBER          := NULL
+        in_query                VARCHAR2,
+        in_page_id              NUMBER          := NULL
     )
     RETURN t_page_items PIPELINED
     AS
-        l_cursor            PLS_INTEGER;
-        l_refcur            SYS_REFCURSOR;
-        l_items             t_page_items;
+        l_cursor                PLS_INTEGER;
+        l_refcur                SYS_REFCURSOR;
+        l_items                 t_page_items;
     BEGIN
         -- process cursor
         OPEN l_refcur FOR LTRIM(RTRIM(in_query));
@@ -1176,13 +1176,13 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     PROCEDURE set_page_items (
-        in_cursor           SYS_REFCURSOR,
-        in_page_id          NUMBER          := NULL
+        in_cursor               SYS_REFCURSOR,
+        in_page_id              NUMBER          := NULL
     )
     AS
-        l_cursor            PLS_INTEGER;
-        l_cloned_curs       SYS_REFCURSOR;
-        l_items             t_page_items;
+        l_cursor                PLS_INTEGER;
+        l_cloned_curs           SYS_REFCURSOR;
+        l_items                 t_page_items;
     BEGIN
         l_cloned_curs   := in_cursor;
         l_cursor        := get_cursor_number(l_cloned_curs);
@@ -1195,14 +1195,14 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     FUNCTION set_page_items (
-        in_cursor           SYS_REFCURSOR,
-        in_page_id          NUMBER          := NULL
+        in_cursor               SYS_REFCURSOR,
+        in_page_id              NUMBER          := NULL
     )
     RETURN t_page_items PIPELINED
     AS
-        l_cursor            PLS_INTEGER;
-        l_cloned_curs       SYS_REFCURSOR;
-        l_items             t_page_items;
+        l_cursor                PLS_INTEGER;
+        l_cloned_curs           SYS_REFCURSOR;
+        l_items                 t_page_items;
     BEGIN
         l_cloned_curs   := in_cursor;
         l_cursor        := get_cursor_number(l_cloned_curs);
@@ -1222,8 +1222,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     FUNCTION set_page_item_values (
-        io_cursor           IN OUT  PLS_INTEGER,
-        in_page_id                  NUMBER          := NULL
+        io_cursor       IN OUT  PLS_INTEGER,
+        in_page_id              NUMBER          := NULL
     )
     RETURN t_page_items
     AS
@@ -1313,7 +1313,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     FUNCTION get_cursor_number (
-        io_cursor           IN OUT SYS_REFCURSOR
+        io_cursor       IN OUT  SYS_REFCURSOR
     )
     RETURN PLS_INTEGER
     AS
@@ -1324,7 +1324,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     PROCEDURE close_cursor (
-        io_cursor           IN OUT PLS_INTEGER
+        io_cursor       IN OUT  PLS_INTEGER
     )
     AS
     BEGIN
@@ -2723,7 +2723,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     FUNCTION get_hash (
-        in_payload      VARCHAR2
+        in_payload              VARCHAR2
     )
     RETURN VARCHAR2
     RESULT_CACHE
@@ -3060,10 +3060,10 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     FUNCTION send_request (
-        in_url              VARCHAR2,
-        in_method           VARCHAR2    := NULL,
-        in_content_type     VARCHAR2    := NULL,
-        in_payload          VARCHAR2    := NULL
+        in_url                  VARCHAR2,
+        in_method               VARCHAR2    := NULL,
+        in_content_type         VARCHAR2    := NULL,
+        in_payload              VARCHAR2    := NULL
     )
     RETURN VARCHAR2
     AS
@@ -3414,15 +3414,15 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     FUNCTION get_constant (
-        in_package          VARCHAR2,
-        in_name             VARCHAR2,
-        in_prefix           VARCHAR2        := NULL,
-        in_private          CHAR            := NULL
+        in_package              VARCHAR2,
+        in_name                 VARCHAR2,
+        in_prefix               VARCHAR2        := NULL,
+        in_private              CHAR            := NULL
     )
     RETURN VARCHAR2
     RESULT_CACHE
     AS
-        out_value           VARCHAR2(4000);
+        out_value               VARCHAR2(4000);
     BEGIN
         SELECT
             NULLIF(
@@ -3459,10 +3459,10 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     FUNCTION get_constant_num (
-        in_package          VARCHAR2,
-        in_name             VARCHAR2,
-        in_prefix           VARCHAR2        := NULL,
-        in_private          CHAR            := NULL
+        in_package              VARCHAR2,
+        in_name                 VARCHAR2,
+        in_prefix               VARCHAR2        := NULL,
+        in_private              CHAR            := NULL
     )
     RETURN NUMBER
     RESULT_CACHE
@@ -3480,7 +3480,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     FUNCTION generate_token (
-        in_size             NUMBER := 6
+        in_size                 NUMBER := 6
     )
     RETURN VARCHAR2
     AS
@@ -3491,7 +3491,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     FUNCTION is_authorized (
-        in_role_name    VARCHAR2
+        in_auth_scheme          VARCHAR2
     )
     RETURN CHAR
     AS
@@ -3507,8 +3507,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     FUNCTION get_local_date (
-        in_utc_timestamp    DATE,
-        in_timezone         VARCHAR2
+        in_utc_timestamp        DATE,
+        in_timezone             VARCHAR2
     )
     RETURN DATE
     DETERMINISTIC
@@ -3520,8 +3520,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     FUNCTION get_utc_date (
-        in_timestamp        DATE,
-        in_timezone         VARCHAR2
+        in_timestamp            DATE,
+        in_timezone             VARCHAR2
     )
     RETURN DATE
     DETERMINISTIC

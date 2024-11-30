@@ -486,52 +486,52 @@ CREATE OR REPLACE PACKAGE core AS
 
 
     PROCEDURE set_page_items (
-        in_query            VARCHAR2,
-        in_page_id          NUMBER          := NULL
+        in_query                VARCHAR2,
+        in_page_id              NUMBER          := NULL
     );
 
 
 
     FUNCTION set_page_items (
-        in_query            VARCHAR2,
-        in_page_id          NUMBER          := NULL
+        in_query                VARCHAR2,
+        in_page_id              NUMBER          := NULL
     )
     RETURN t_page_items PIPELINED;
 
 
 
     PROCEDURE set_page_items (
-        in_cursor           SYS_REFCURSOR,
-        in_page_id          NUMBER          := NULL
+        in_cursor               SYS_REFCURSOR,
+        in_page_id              NUMBER          := NULL
     );
 
 
 
     FUNCTION set_page_items (
-        in_cursor           SYS_REFCURSOR,
-        in_page_id          NUMBER          := NULL
+        in_cursor               SYS_REFCURSOR,
+        in_page_id              NUMBER          := NULL
     )
     RETURN t_page_items PIPELINED;
 
 
 
     FUNCTION set_page_item_values (
-        io_cursor           IN OUT  PLS_INTEGER,
-        in_page_id                  NUMBER          := NULL
+        io_cursor       IN OUT  PLS_INTEGER,
+        in_page_id              NUMBER          := NULL
     )
     RETURN t_page_items;
 
 
 
     FUNCTION get_cursor_number (
-        io_cursor           IN OUT SYS_REFCURSOR
+        io_cursor       IN OUT  SYS_REFCURSOR
     )
     RETURN PLS_INTEGER;
 
 
 
     PROCEDURE close_cursor (
-        io_cursor           IN OUT PLS_INTEGER
+        io_cursor       IN OUT  PLS_INTEGER
     );
 
 
@@ -1015,7 +1015,7 @@ CREATE OR REPLACE PACKAGE core AS
 
 
     FUNCTION get_hash (
-        in_payload      VARCHAR2
+        in_payload              VARCHAR2
     )
     RETURN VARCHAR2
     RESULT_CACHE;
