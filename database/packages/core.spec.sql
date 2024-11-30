@@ -100,6 +100,13 @@ CREATE OR REPLACE PACKAGE core AS
 
 
 
+    FUNCTION generate_token (
+        in_size                 NUMBER := 6
+    )
+    RETURN VARCHAR2;
+
+
+
     FUNCTION get_context_id (
         in_context_name         VARCHAR2 := NULL
     )
@@ -202,6 +209,28 @@ CREATE OR REPLACE PACKAGE core AS
 
 
 
+    FUNCTION get_constant (
+        in_package              VARCHAR2,
+        in_name                 VARCHAR2,
+        in_prefix               VARCHAR2        := NULL,
+        in_private              CHAR            := NULL
+    )
+    RETURN VARCHAR2
+    RESULT_CACHE;
+
+
+
+    FUNCTION get_constant_num (
+        in_package              VARCHAR2,
+        in_name                 VARCHAR2,
+        in_prefix               VARCHAR2        := NULL,
+        in_private              CHAR            := NULL
+    )
+    RETURN NUMBER
+    RESULT_CACHE;
+
+
+
     FUNCTION is_developer (
         in_user                 VARCHAR2        := NULL
     )
@@ -216,13 +245,20 @@ CREATE OR REPLACE PACKAGE core AS
 
 
 
+    FUNCTION is_authorized (
+        in_auth_scheme          VARCHAR2
+    )
+    RETURN CHAR;
+
+
+
     FUNCTION is_debug_on
     RETURN BOOLEAN;
 
 
 
     PROCEDURE set_debug (
-        in_status               BOOLEAN                     := TRUE
+        in_status               BOOLEAN     := TRUE
     );
 
 
@@ -468,6 +504,24 @@ CREATE OR REPLACE PACKAGE core AS
         in_end                  TIMESTAMP       := NULL
     )
     RETURN VARCHAR2;
+
+
+
+    FUNCTION get_local_date (
+        in_utc_timestamp        DATE,
+        in_timezone             VARCHAR2
+    )
+    RETURN DATE
+    DETERMINISTIC;
+
+
+
+    FUNCTION get_utc_date (
+        in_timestamp            DATE,
+        in_timezone             VARCHAR2
+    )
+    RETURN DATE
+    DETERMINISTIC;
 
 
 
@@ -1148,60 +1202,6 @@ CREATE OR REPLACE PACKAGE core AS
         in_operator             VARCHAR2        := 'EQ',
         in_region_id            VARCHAR2        := NULL
     );
-
-
-
-    FUNCTION get_constant (
-        in_package              VARCHAR2,
-        in_name                 VARCHAR2,
-        in_prefix               VARCHAR2        := NULL,
-        in_private              CHAR            := NULL
-    )
-    RETURN VARCHAR2
-    RESULT_CACHE;
-
-
-
-    FUNCTION get_constant_num (
-        in_package              VARCHAR2,
-        in_name                 VARCHAR2,
-        in_prefix               VARCHAR2        := NULL,
-        in_private              CHAR            := NULL
-    )
-    RETURN NUMBER
-    RESULT_CACHE;
-
-
-
-    FUNCTION generate_token (
-        in_size                 NUMBER := 6
-    )
-    RETURN VARCHAR2;
-
-
-
-    FUNCTION is_authorized (
-        in_auth_scheme          VARCHAR2
-    )
-    RETURN CHAR;
-
-
-
-    FUNCTION get_local_date (
-        in_utc_timestamp        DATE,
-        in_timezone             VARCHAR2
-    )
-    RETURN DATE
-    DETERMINISTIC;
-
-
-
-    FUNCTION get_utc_date (
-        in_timestamp            DATE,
-        in_timezone             VARCHAR2
-    )
-    RETURN DATE
-    DETERMINISTIC;
 
 END;
 /

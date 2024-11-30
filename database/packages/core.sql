@@ -9,6 +9,17 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
+    FUNCTION generate_token (
+        in_size                 NUMBER := 6
+    )
+    RETURN VARCHAR2
+    AS
+    BEGIN
+        RETURN LPAD(TO_CHAR(TRUNC(DBMS_RANDOM.VALUE(1, TO_CHAR(POWER(10, in_size) - 1)))), in_size, '0');
+    END;
+
+
+
     FUNCTION get_context_id (
         in_context_name         VARCHAR2 := NULL
     )
@@ -294,6 +305,72 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
+    FUNCTION get_constant (
+        in_package              VARCHAR2,
+        in_name                 VARCHAR2,
+        in_prefix               VARCHAR2        := NULL,
+        in_private              CHAR            := NULL
+    )
+    RETURN VARCHAR2
+    RESULT_CACHE
+    AS
+        out_value               VARCHAR2(4000);
+    BEGIN
+        SELECT
+            NULLIF(
+                REGEXP_REPLACE(
+                    REGEXP_REPLACE(
+                        REGEXP_REPLACE(
+                            LTRIM(SUBSTR(s.text, INSTR(s.text, ':=') + 2)),
+                            ';\s*[-]{2}.*$',
+                            ';'),
+                        '[;]\s*',
+                        ''),
+                    '(^[''])|(['']\s*$)',
+                    ''),
+                'NULL')
+        INTO out_value
+        FROM user_identifiers t
+        JOIN user_source s
+            ON s.name               = t.object_name
+            AND s.type              = t.object_type
+            AND s.line              = t.line
+        WHERE t.object_name         = UPPER(in_package)
+            AND t.object_type       = 'PACKAGE' || CASE WHEN in_private IS NOT NULL THEN ' BODY' END
+            AND t.name              = UPPER(in_prefix || in_name)
+            AND t.type              = 'CONSTANT'
+            AND t.usage             = 'DECLARATION'
+            AND t.usage_context_id  = 1;
+        --
+        RETURN out_value;
+    EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RETURN NULL;
+    END;
+
+
+
+    FUNCTION get_constant_num (
+        in_package              VARCHAR2,
+        in_name                 VARCHAR2,
+        in_prefix               VARCHAR2        := NULL,
+        in_private              CHAR            := NULL
+    )
+    RETURN NUMBER
+    RESULT_CACHE
+    AS
+        out_value           NUMBER;
+    BEGIN
+        RETURN TO_NUMBER(get_constant (
+            in_package      => in_package,
+            in_name         => in_name,
+            in_prefix       => in_prefix,
+            in_private      => in_private
+        ));
+    END;
+
+
+
     FUNCTION is_developer (
         in_user                 VARCHAR2        := NULL
     )
@@ -339,6 +416,27 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
+    FUNCTION is_authorized (
+        in_auth_scheme          VARCHAR2
+    )
+    RETURN CHAR
+    AS
+    BEGIN
+        -- check scheme and procedure
+        IF (NULLIF(in_auth_scheme, '-') IS NULL OR in_auth_scheme = 'MUST_NOT_BE_PUBLIC_USER') THEN
+            RETURN 'Y';  -- no authorization or public access
+        END IF;
+
+        -- return Y/NULL so we can call this in a SQL statement
+        RETURN CASE
+            WHEN APEX_AUTHORIZATION.IS_AUTHORIZED (
+                p_authorization_name => in_auth_scheme
+            )
+            THEN 'Y' END;
+    END;
+
+
+
     FUNCTION is_debug_on
     RETURN BOOLEAN
     AS
@@ -349,7 +447,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     PROCEDURE set_debug (
-        in_status               BOOLEAN                     := TRUE
+        in_status               BOOLEAN     := TRUE
     )
     AS
     BEGIN
@@ -1082,6 +1180,32 @@ CREATE OR REPLACE PACKAGE BODY core AS
         v_end                   CONSTANT TIMESTAMP := SYSTIMESTAMP;  -- to prevent timezone shift, APEX_UTIL.GET_SESSION_TIME_ZONE
     BEGIN
         RETURN SUBSTR(TO_CHAR(COALESCE(in_end, v_end) - in_start), 12, 12);     -- keep 00:00:00.000
+    END;
+
+
+
+    FUNCTION get_local_date (
+        in_utc_timestamp        DATE,
+        in_timezone             VARCHAR2
+    )
+    RETURN DATE
+    DETERMINISTIC
+    AS
+    BEGIN
+        RETURN FROM_TZ(in_utc_timestamp, 'UTC') AT TIME ZONE in_timezone;
+    END;
+
+
+
+    FUNCTION get_utc_date (
+        in_timestamp            DATE,
+        in_timezone             VARCHAR2
+    )
+    RETURN DATE
+    DETERMINISTIC
+    AS
+    BEGIN
+        RETURN FROM_TZ(in_timestamp, in_timezone) AT TIME ZONE 'UTC';
     END;
 
 
@@ -2493,6 +2617,9 @@ CREATE OR REPLACE PACKAGE BODY core AS
     )
     AS
     BEGIN
+        --
+        -- @TODO: IMPLEMENT
+        --
         NULL;
     END;
 
@@ -3409,130 +3536,6 @@ CREATE OR REPLACE PACKAGE BODY core AS
         RAISE;
     WHEN OTHERS THEN
         core.raise_error();
-    END;
-
-
-
-    FUNCTION get_constant (
-        in_package              VARCHAR2,
-        in_name                 VARCHAR2,
-        in_prefix               VARCHAR2        := NULL,
-        in_private              CHAR            := NULL
-    )
-    RETURN VARCHAR2
-    RESULT_CACHE
-    AS
-        out_value               VARCHAR2(4000);
-    BEGIN
-        SELECT
-            NULLIF(
-                REGEXP_REPLACE(
-                    REGEXP_REPLACE(
-                        REGEXP_REPLACE(
-                            LTRIM(SUBSTR(s.text, INSTR(s.text, ':=') + 2)),
-                            ';\s*[-]{2}.*$',
-                            ';'),
-                        '[;]\s*',
-                        ''),
-                    '(^[''])|(['']\s*$)',
-                    ''),
-                'NULL')
-        INTO out_value
-        FROM user_identifiers t
-        JOIN user_source s
-            ON s.name               = t.object_name
-            AND s.type              = t.object_type
-            AND s.line              = t.line
-        WHERE t.object_name         = UPPER(in_package)
-            AND t.object_type       = 'PACKAGE' || CASE WHEN in_private IS NOT NULL THEN ' BODY' END
-            AND t.name              = UPPER(in_prefix || in_name)
-            AND t.type              = 'CONSTANT'
-            AND t.usage             = 'DECLARATION'
-            AND t.usage_context_id  = 1;
-        --
-        RETURN out_value;
-    EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-        RETURN NULL;
-    END;
-
-
-
-    FUNCTION get_constant_num (
-        in_package              VARCHAR2,
-        in_name                 VARCHAR2,
-        in_prefix               VARCHAR2        := NULL,
-        in_private              CHAR            := NULL
-    )
-    RETURN NUMBER
-    RESULT_CACHE
-    AS
-        out_value           NUMBER;
-    BEGIN
-        RETURN TO_NUMBER(get_constant (
-            in_package      => in_package,
-            in_name         => in_name,
-            in_prefix       => in_prefix,
-            in_private      => in_private
-        ));
-    END;
-
-
-
-    FUNCTION generate_token (
-        in_size                 NUMBER := 6
-    )
-    RETURN VARCHAR2
-    AS
-    BEGIN
-        RETURN LPAD(TO_CHAR(TRUNC(DBMS_RANDOM.VALUE(1, TO_CHAR(POWER(10, in_size) - 1)))), in_size, '0');
-    END;
-
-
-
-    FUNCTION is_authorized (
-        in_auth_scheme          VARCHAR2
-    )
-    RETURN CHAR
-    AS
-    BEGIN
-        -- check scheme and procedure
-        IF (NULLIF(in_auth_scheme, '-') IS NULL OR in_auth_scheme = 'MUST_NOT_BE_PUBLIC_USER') THEN
-            RETURN 'Y';  -- no authorization or public access
-        END IF;
-
-        -- return Y/NULL so we can call this in a SQL statement
-        RETURN CASE
-            WHEN APEX_AUTHORIZATION.IS_AUTHORIZED (
-                p_authorization_name => in_auth_scheme
-            )
-            THEN 'Y' END;
-    END;
-
-
-
-    FUNCTION get_local_date (
-        in_utc_timestamp        DATE,
-        in_timezone             VARCHAR2
-    )
-    RETURN DATE
-    DETERMINISTIC
-    AS
-    BEGIN
-        RETURN FROM_TZ(in_utc_timestamp, 'UTC') AT TIME ZONE in_timezone;
-    END;
-
-
-
-    FUNCTION get_utc_date (
-        in_timestamp            DATE,
-        in_timezone             VARCHAR2
-    )
-    RETURN DATE
-    DETERMINISTIC
-    AS
-    BEGIN
-        RETURN FROM_TZ(in_timestamp, in_timezone) AT TIME ZONE 'UTC';
     END;
 
 END;
