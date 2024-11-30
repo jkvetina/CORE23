@@ -40,31 +40,18 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     FUNCTION get_app_owner (
-        in_app_id               NUMBER
+        in_app_id               NUMBER      := NULL
     )
     RETURN VARCHAR2
     AS
         out_owner               apex_applications.owner%TYPE;
     BEGIN
-        SELECT a.owner
+        SELECT MIN(a.owner)
         INTO out_owner
         FROM apex_applications a
         WHERE a.application_id = COALESCE(in_app_id, core.get_app_id());
         --
-        RETURN out_owner;
-    EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-        RETURN NULL;
-    END;
-
-
-
-    FUNCTION get_app_owner
-    RETURN VARCHAR2
-    AS
-        out_owner               apex_applications.owner%TYPE;
-    BEGIN
-        RETURN COALESCE(core.get_app_owner(in_app_id => core.get_app_id()), APEX_UTIL.GET_DEFAULT_SCHEMA, USER);
+        RETURN COALESCE(out_owner, APEX_UTIL.GET_DEFAULT_SCHEMA, USER);
     END;
 
 
