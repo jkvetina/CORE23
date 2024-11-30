@@ -890,7 +890,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         v_app_id                apex_application_page_items.application_id%TYPE;
         is_valid                CHAR;
     BEGIN
-        v_app_id        := NVL(in_app_id,   core.get_app_id(in_dont_override => 'Y'));
+        v_app_id        := NVL(in_app_id,   core.get_context_id());
         v_page_id       := NVL(in_page_id,  core.get_page_id());
         v_item_name     := REPLACE(in_name, c_page_item_wild, c_page_item_prefix || v_page_id || '_');
 
@@ -2834,7 +2834,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_asap                 BOOLEAN     := TRUE
     )
     AS
-        v_app_id                CONSTANT NUMBER         := COALESCE(in_app_id,  core.get_app_id(in_dont_override => 'Y'));
+        v_app_id                CONSTANT NUMBER         := COALESCE(in_app_id,  core.get_context_id());
         v_user_id               CONSTANT VARCHAR2(128)  := COALESCE(in_user_id, core.get_user_id());
     BEGIN
         -- https://docs.oracle.com/en/database/oracle/apex/23.1/aeapi/APEX_PWA.SEND_PUSH_NOTIFICATION-Procedure.html
@@ -3499,7 +3499,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         -- return Y/NULL so we can call this in a SQL statement
         RETURN CASE
             WHEN APEX_AUTHORIZATION.IS_AUTHORIZED (
-                p_authorization_name => in_role_name
+                p_authorization_name => in_auth_scheme
             )
             THEN 'Y' END;
     END;
