@@ -209,6 +209,28 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
+    FUNCTION get_substitution (
+        in_name                 VARCHAR2,
+        in_app_id               NUMBER      := NULL
+    )
+    RETURN VARCHAR2
+    AS
+        out_value               apex_application_substitutions.substitution_value%TYPE;
+    BEGIN
+        SELECT s.substitution_value
+        INTO out_value
+        FROM apex_application_substitutions s
+        WHERE s.application_id          = COALESCE(in_app_id, core.get_context_id())
+            AND s.substitution_string   = in_name;
+        --
+        RETURN out_value;
+    EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RETURN NULL;
+    END;
+
+
+
     FUNCTION is_developer (
         in_user                 VARCHAR2        := NULL
     )

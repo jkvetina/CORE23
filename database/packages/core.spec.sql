@@ -166,6 +166,14 @@ CREATE OR REPLACE PACKAGE core AS
 
 
 
+    FUNCTION get_substitution (
+        in_name                 VARCHAR2,
+        in_app_id               NUMBER      := NULL
+    )
+    RETURN VARCHAR2;
+
+
+
     FUNCTION is_developer (
         in_user                 VARCHAR2        := NULL
     )
