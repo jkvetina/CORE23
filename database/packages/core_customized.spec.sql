@@ -1,5 +1,10 @@
 CREATE OR REPLACE PACKAGE core_customized AS
 
+    FUNCTION get_env
+    RETURN VARCHAR2;
+
+
+
     --
     -- There are several logging functions/procedures in the CORE package,
     --

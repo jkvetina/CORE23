@@ -1,5 +1,14 @@
 CREATE OR REPLACE PACKAGE BODY core_customized AS
 
+    FUNCTION get_env
+    RETURN VARCHAR2
+    AS
+    BEGIN
+        RETURN '';
+    END;
+
+
+
     PROCEDURE log_error (
         in_message          VARCHAR2,
         in_arguments        VARCHAR2,

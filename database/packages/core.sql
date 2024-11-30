@@ -723,11 +723,14 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
-    FUNCTION get_env_name
+    FUNCTION get_env
     RETURN VARCHAR2
     AS
     BEGIN
-        RETURN SYS_CONTEXT('USERENV', 'SERVER_HOST') || '/' || SYS_CONTEXT('USERENV', 'INSTANCE_NAME');
+        RETURN COALESCE (
+            core_customized.get_env(),
+            SYS_CONTEXT('USERENV', 'SERVER_HOST') || '/' || SYS_CONTEXT('USERENV', 'INSTANCE_NAME')
+        );
     END;
 
 
