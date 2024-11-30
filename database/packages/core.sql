@@ -231,6 +231,69 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
+    FUNCTION get_preference (
+        in_name                 VARCHAR2
+    )
+    RETURN VARCHAR2
+    AS
+    BEGIN
+        -- apex_workspace_preferences.preference_value%TYPE;
+        RETURN APEX_UTIL.GET_PREFERENCE (
+            p_preference    => in_name
+        );
+    EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RETURN NULL;
+    END;
+
+
+
+    PROCEDURE set_preference (
+        in_name                 VARCHAR2,
+        in_value                VARCHAR2
+    )
+    AS
+    BEGIN
+        APEX_UTIL.SET_PREFERENCE (
+            p_preference    => in_name,
+            p_value         => in_value
+        );
+    END;
+
+
+
+    FUNCTION get_app_setting (
+        in_name                 VARCHAR2
+    )
+    RETURN VARCHAR2
+    AS
+    BEGIN
+        -- apex_application_settings.value%TYPE;
+        RETURN APEX_APP_SETTING.GET_VALUE (
+            p_name      => in_name
+        );
+    EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RETURN NULL;
+    END;
+
+
+
+    PROCEDURE set_app_setting (
+        in_name                 VARCHAR2,
+        in_value                VARCHAR2
+    )
+    AS
+    BEGIN
+        APEX_APP_SETTING.SET_VALUE (
+            p_name          => in_name,
+            p_value         => in_value,
+            p_raise_error   => TRUE
+        );
+    END;
+
+
+
     FUNCTION is_developer (
         in_user                 VARCHAR2        := NULL
     )

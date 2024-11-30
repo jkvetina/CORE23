@@ -174,6 +174,34 @@ CREATE OR REPLACE PACKAGE core AS
 
 
 
+    FUNCTION get_preference (
+        in_name                 VARCHAR2
+    )
+    RETURN VARCHAR2;
+
+
+
+    PROCEDURE set_preference (
+        in_name                 VARCHAR2,
+        in_value                VARCHAR2
+    );
+
+
+
+    FUNCTION get_app_setting (
+        in_name                 VARCHAR2
+    )
+    RETURN VARCHAR2;
+
+
+
+    PROCEDURE set_app_setting (
+        in_name                 VARCHAR2,
+        in_value                VARCHAR2
+    );
+
+
+
     FUNCTION is_developer (
         in_user                 VARCHAR2        := NULL
     )
