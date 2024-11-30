@@ -9,18 +9,31 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
-    FUNCTION get_app_id (
-        in_dont_override        CHAR := NULL
+    FUNCTION get_context_id (
+        in_context_name         VARCHAR2 := NULL
     )
     RETURN NUMBER
     AS
     BEGIN
         RETURN COALESCE (
-            CASE WHEN in_dont_override IS NULL THEN TO_NUMBER(APEX_UTIL.GET_SESSION_STATE('G_APP_ID')) END,
+            CASE WHEN in_context_name IS NOT NULL
+                THEN TO_NUMBER(APEX_UTIL.GET_SESSION_STATE(in_context_name))
+                END,
+            TO_NUMBER(APEX_UTIL.GET_SESSION_STATE('G_CONTEXT_ID')),
+            TO_NUMBER(APEX_UTIL.GET_SESSION_STATE('G_APP_ID')),
             APEX_APPLICATION.G_FLOW_ID
         );
     EXCEPTION
     WHEN OTHERS THEN
+        RETURN NULL;
+    END;
+
+
+
+    FUNCTION get_app_id
+    RETURN NUMBER
+    AS
+    BEGIN
         RETURN APEX_APPLICATION.G_FLOW_ID;
     END;
 

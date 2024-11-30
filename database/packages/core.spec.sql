@@ -100,8 +100,8 @@ CREATE OR REPLACE PACKAGE core AS
 
 
 
-    FUNCTION get_app_id (
-        in_dont_override        CHAR := NULL
+    FUNCTION get_context_id (
+        in_context_name         VARCHAR2 := NULL
     )
     RETURN NUMBER;
 
@@ -111,6 +111,8 @@ CREATE OR REPLACE PACKAGE core AS
         in_app_id               NUMBER
     )
     RETURN VARCHAR2;
+    FUNCTION get_app_id
+    RETURN NUMBER;
 
 
 
