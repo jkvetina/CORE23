@@ -3496,6 +3496,11 @@ CREATE OR REPLACE PACKAGE BODY core AS
     RETURN CHAR
     AS
     BEGIN
+        -- check scheme and procedure
+        IF (NULLIF(in_auth_scheme, '-') IS NULL OR in_auth_scheme = 'MUST_NOT_BE_PUBLIC_USER') THEN
+            RETURN 'Y';  -- no authorization or public access
+        END IF;
+
         -- return Y/NULL so we can call this in a SQL statement
         RETURN CASE
             WHEN APEX_AUTHORIZATION.IS_AUTHORIZED (
