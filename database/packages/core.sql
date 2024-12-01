@@ -269,6 +269,10 @@ CREATE OR REPLACE PACKAGE BODY core AS
             p_preference    => in_name,
             p_value         => in_value
         );
+        --
+    EXCEPTION
+    WHEN OTHERS THEN
+        core.raise_error('SET_PREFERENCE|' || in_name || '|' || in_value);
     END;
 
 
@@ -301,6 +305,10 @@ CREATE OR REPLACE PACKAGE BODY core AS
             p_value         => in_value,
             p_raise_error   => TRUE
         );
+        --
+    EXCEPTION
+    WHEN OTHERS THEN
+        core.raise_error('SET_SETTING|' || in_name || '|' || in_value);
     END;
 
 
@@ -437,22 +445,41 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
-    FUNCTION is_debug_on
-    RETURN BOOLEAN
+    FUNCTION get_debug_level (
+        in_session_id           NUMBER      := NULL
+    )
+    RETURN NUMBER
     AS
+        out_level               NUMBER(1);
     BEGIN
-        RETURN APEX_APPLICATION.G_DEBUG;
+        SELECT s.session_debug_level
+        INTO out_level
+        FROM apex_workspace_sessions s
+        WHERE s.apex_session_id = COALESCE(in_session_id, core.get_session_id());
+        --    
+        RETURN NULLIF(out_level, 0);
+    EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RETURN NULL;
     END;
 
 
 
     PROCEDURE set_debug (
-        in_status               BOOLEAN     := TRUE
+        in_level                NUMBER      := NULL,
+        in_session_id           NUMBER      := NULL
     )
     AS
     BEGIN
-        APEX_APPLICATION.G_DEBUG := in_status;
-        DBMS_OUTPUT.PUT_LINE('DEBUG: ' || CASE WHEN core.is_debug_on() THEN 'ON' ELSE 'OFF' END);
+        --APEX_APPLICATION.G_DEBUG := in_level;
+        APEX_SESSION.SET_DEBUG (
+            p_session_id    => COALESCE(in_session_id, core.get_session_id()),
+            p_level         => COALESCE(in_level, 4)
+        );
+        --
+    EXCEPTION
+    WHEN OTHERS THEN
+        core.raise_error('SET_DEBUG|' || in_session_id);
     END;
 
 

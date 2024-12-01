@@ -254,13 +254,16 @@ AS
 
 
 
-    FUNCTION is_debug_on
-    RETURN BOOLEAN;
+    FUNCTION get_debug_level (
+        in_session_id           NUMBER      := NULL
+    )
+    RETURN NUMBER;
 
 
 
     PROCEDURE set_debug (
-        in_status               BOOLEAN     := TRUE
+        in_level                NUMBER      := NULL,
+        in_session_id           NUMBER      := NULL
     );
 
 
