@@ -186,7 +186,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             NULL;
         END;
         --
-        RETURN out_url;
+        RETURN REPLACE(out_url, '&' || 'APP_ID.', in_app_id);
     EXCEPTION
     WHEN OTHERS THEN
         core.raise_error('GET_LOGIN_FAILED', COALESCE(in_app_id, core.get_app_id()));
@@ -456,7 +456,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         INTO out_level
         FROM apex_workspace_sessions s
         WHERE s.apex_session_id = COALESCE(in_session_id, core.get_session_id());
-        --    
+        --
         RETURN NULLIF(out_level, 0);
     EXCEPTION
     WHEN NO_DATA_FOUND THEN
