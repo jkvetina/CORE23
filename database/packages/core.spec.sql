@@ -100,7 +100,7 @@ CREATE OR REPLACE PACKAGE core AS
 
 
 
-    FUNCTION generate_token (
+    FUNCTION get_token (
         in_size                 NUMBER := 6
     )
     RETURN VARCHAR2;
