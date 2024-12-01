@@ -1,4 +1,6 @@
-CREATE OR REPLACE PACKAGE core AS
+CREATE OR REPLACE PACKAGE core
+AUTHID current_user
+AS
 
     /**
      * This package is part of the CORE project under MIT licence.
