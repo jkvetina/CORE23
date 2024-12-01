@@ -699,6 +699,13 @@ AS
 
 
 
+    PROCEDURE run_job (
+        in_job_name             VARCHAR2,
+        in_app_id               NUMBER      := NULL
+    );
+
+
+
     PROCEDURE raise_error (
         in_action_name          VARCHAR2    := NULL,
         in_arg1                 VARCHAR2    := NULL,

@@ -1816,6 +1816,30 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
+    PROCEDURE run_job (
+        in_job_name             VARCHAR2,
+        in_app_id               NUMBER      := NULL
+    )
+    AS
+        v_job_name              VARCHAR2(256);
+    BEGIN
+        v_job_name := CASE
+            WHEN INSTR(in_job_name, '.') = 0 AND in_app_id > 0
+                THEN get_app_owner() || '.'
+                END || in_job_name;
+        --
+        DBMS_SCHEDULER.RUN_JOB (
+            job_name            => v_job_name,
+            use_current_session => FALSE
+        );
+        --
+    EXCEPTION
+    WHEN OTHERS THEN
+        core.raise_error('RUN_JOB|' || v_job_name);
+    END;
+
+
+
     PROCEDURE raise_error (
         in_action_name          VARCHAR2    := NULL,
         in_arg1                 VARCHAR2    := NULL,
