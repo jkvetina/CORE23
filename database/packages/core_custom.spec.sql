@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE core_customized AS
+CREATE OR REPLACE PACKAGE core_custom AS
 
     FUNCTION get_env
     RETURN VARCHAR2;

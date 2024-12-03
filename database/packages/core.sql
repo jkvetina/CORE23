@@ -2125,7 +2125,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             -- @TODO: need a switch for APEX log, logger or custom logger
             --
             WHEN flag_error THEN
-                core_customized.log_error (
+                core_custom.log_error (
                     in_message      => v_message,
                     in_arguments    => v_arguments,
                     in_payload      => in_payload,
@@ -2134,7 +2134,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 );
                 --
             WHEN flag_warning THEN
-                core_customized.log_warning (
+                core_custom.log_warning (
                     in_message      => v_message,
                     in_arguments    => v_arguments,
                     in_payload      => in_payload,
@@ -2143,7 +2143,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 );
                 --
             WHEN flag_debug THEN
-                core_customized.log_debug (
+                core_custom.log_debug (
                     in_message      => v_message,
                     in_arguments    => v_arguments,
                     in_payload      => in_payload,
@@ -2152,7 +2152,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 );
                 --
             WHEN flag_module THEN
-                core_customized.log_module (
+                core_custom.log_module (
                     in_message      => v_message,
                     in_arguments    => v_arguments,
                     in_payload      => in_payload,
