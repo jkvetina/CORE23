@@ -1301,7 +1301,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
         OPEN l_refcur FOR LTRIM(RTRIM(in_query));
         --
         l_cursor    := DBMS_SQL.TO_CURSOR_NUMBER(l_refcur);
-        l_items     := set_page_item_values(l_cursor , in_page_id);
+        l_items     := set_page_items__(l_cursor , in_page_id);
+        --
     EXCEPTION
     WHEN OTHERS THEN
         RAISE;
@@ -1323,7 +1324,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         OPEN l_refcur FOR LTRIM(RTRIM(in_query));
         --
         l_cursor    := DBMS_SQL.TO_CURSOR_NUMBER(l_refcur);
-        l_items     := set_page_item_values(l_cursor , in_page_id);
+        l_items     := set_page_items__(l_cursor , in_page_id);
         --
         FOR i IN l_items.FIRST .. l_items.LAST LOOP
             PIPE ROW (l_items(i));
@@ -1349,7 +1350,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
     BEGIN
         l_cloned_curs   := in_cursor;
         l_cursor        := get_cursor_number(l_cloned_curs);
-        l_items         := set_page_item_values(l_cursor , in_page_id);
+        l_items         := set_page_items__(l_cursor , in_page_id);
+        --
     EXCEPTION
     WHEN OTHERS THEN
         RAISE;
@@ -1369,7 +1371,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
     BEGIN
         l_cloned_curs   := in_cursor;
         l_cursor        := get_cursor_number(l_cloned_curs);
-        l_items         := set_page_item_values(l_cursor , in_page_id);
+        l_items         := set_page_items__(l_cursor , in_page_id);
         --
         FOR i IN l_items.FIRST .. l_items.LAST LOOP
             PIPE ROW (l_items(i));
@@ -1384,7 +1386,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
-    FUNCTION set_page_item_values (
+    FUNCTION set_page_items__ (
         io_cursor       IN OUT  PLS_INTEGER,
         in_page_id              NUMBER          := NULL
     )

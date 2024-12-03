@@ -590,7 +590,7 @@ AS
 
 
 
-    FUNCTION set_page_item_values (
+    FUNCTION set_page_items__ (
         io_cursor       IN OUT  PLS_INTEGER,
         in_page_id              NUMBER          := NULL
     )
