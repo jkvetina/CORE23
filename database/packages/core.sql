@@ -826,34 +826,43 @@ CREATE OR REPLACE PACKAGE BODY core AS
     FUNCTION get_page_name (
         in_page_id              NUMBER      := NULL,
         in_app_id               NUMBER      := NULL,
-        in_name                 VARCHAR2    := NULL
+        in_name                 VARCHAR2    := NULL,
+        in_replace              CHAR        := NULL
     )
     RETURN VARCHAR2
     AS
-        out_name                apex_application_pages.page_name%TYPE       := in_name;
-        out_search              apex_application_pages.page_name%TYPE;
+        v_name          VARCHAR2(2000)      := in_name;
+        v_search        VARCHAR2(2000);
     BEGIN
-        IF out_name IS NULL THEN
-            SELECT p.page_name INTO out_name
-            FROM apex_application_pages p
-            WHERE p.application_id      = COALESCE(in_app_id,   core.get_app_id())
-                AND p.page_id           = COALESCE(in_page_id,  core.get_page_id());
+        IF v_name IS NULL THEN
+            BEGIN
+                SELECT p.page_name INTO v_name
+                FROM apex_application_pages p
+                WHERE p.application_id      = COALESCE(in_app_id,   core.get_app_id())
+                    AND p.page_id           = COALESCE(in_page_id,  core.get_page_id());
+            EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                RETURN NULL;
+            END;
         END IF;
 
         -- transform icons
-        FOR i IN 1 .. NVL(REGEXP_COUNT(out_name, '(#fa-)'), 0) + 1 LOOP
-            out_search  := REGEXP_SUBSTR(out_name, '(#fa-[[:alnum:]+_-]+\s*)+');
-            out_name    := REPLACE (
-                out_name,
-                out_search,
-                ' &' || 'nbsp; <span class="fa' || REPLACE(REPLACE(out_search, '#fa-', '+'), '+', ' fa-') || '"></span> &' || 'nbsp; '
+        FOR i IN 1 .. NVL(REGEXP_COUNT(v_name, '(#fa-)'), 0) + 1 LOOP
+            v_search  := REGEXP_SUBSTR(v_name, '(#fa-[[:alnum:]+_-]+\s*)+');
+            v_name    := REPLACE (
+                v_name,
+                v_search,
+                ' &' || 'nbsp; <span class="fa' || REPLACE(REPLACE(v_search, '#fa-', '+'), '+', ' fa-') || '"></span> &' || 'nbsp; '
             );
         END LOOP;
+
+        -- replace page items with values
+        IF in_replace IS NOT NULL THEN
+            v_name := REPLACE(v_name, '&' || 'APP_NAME.', core.get_app_name(COALESCE(in_app_id, core.get_context_app())));
+            v_name := APEX_PLUGIN_UTIL.REPLACE_SUBSTITUTIONS(v_name);
+        END IF;
         --
-        RETURN REGEXP_REPLACE(out_name, '((^\s*&' || 'nbsp;\s*)|(\s*&' || 'nbsp;\s*$))', '');  -- trim hard spaces
-    EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-        RETURN NULL;
+        RETURN REGEXP_REPLACE(v_name, '((^\s*&' || 'nbsp;\s*)|(\s*&' || 'nbsp;\s*$))', '');  -- trim hard spaces
     END;
 
 

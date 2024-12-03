@@ -373,7 +373,8 @@ AS
     FUNCTION get_page_name (
         in_page_id              NUMBER      := NULL,
         in_app_id               NUMBER      := NULL,
-        in_name                 VARCHAR2    := NULL
+        in_name                 VARCHAR2    := NULL,
+        in_replace              CHAR        := NULL
     )
     RETURN VARCHAR2;
 
