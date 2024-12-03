@@ -20,23 +20,58 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
-    FUNCTION get_context_id (
+    FUNCTION get_context_app (
         in_context_name         VARCHAR2 := NULL
     )
     RETURN NUMBER
     AS
     BEGIN
         RETURN COALESCE (
-            CASE WHEN in_context_name IS NOT NULL
-                THEN TO_NUMBER(APEX_UTIL.GET_SESSION_STATE(in_context_name))
-                END,
-            TO_NUMBER(APEX_UTIL.GET_SESSION_STATE('G_CONTEXT_ID')),
-            TO_NUMBER(APEX_UTIL.GET_SESSION_STATE('G_APP_ID')),
+            core.get_number_item(NVL(in_context_name, c_context_name_app)),
             APEX_APPLICATION.G_FLOW_ID
         );
+    END;
+
+
+
+    FUNCTION get_context_page (
+        in_context_name         VARCHAR2 := NULL
+    )
+    RETURN NUMBER
+    AS
+    BEGIN
+        RETURN COALESCE (
+            core.get_number_item(NVL(in_context_name, c_context_name_page)),
+            APEX_APPLICATION.G_FLOW_STEP_ID
+        );
+    END;
+
+
+
+    PROCEDURE set_contexts (
+        in_context_name_app     VARCHAR2 := NULL,
+        in_context_name_page    VARCHAR2 := NULL
+    )
+    AS
+        v_proceed BOOLEAN;
+    BEGIN
+        v_proceed := INSTR(UPPER(core.get_request_url()), c_context_name_app) = 0;
+        --
+        core.log_module('SET_CONTEXT|' || CASE WHEN v_proceed THEN 'Y' ELSE 'N' END, in_context_name_app, in_context_name_page);
+        --
+        -- in the Master app these CONTEXT items have to be unprotected,
+        -- because we have to pass them in the navigation links for Master pages,
+        -- because without this when using multiple tabs with different apps
+        -- it will override the navigation with recent app
+        --
+        -- set only if there is no CONTEXT_APP item referenced in the url address
+        IF v_proceed THEN
+            core.set_item(NVL(in_context_name_app,  c_context_name_app),    core.get_app_id());
+            core.set_item(NVL(in_context_name_page, c_context_name_page),   core.get_page_id());
+        END IF;
     EXCEPTION
     WHEN OTHERS THEN
-        RETURN NULL;
+        core.raise_error();
     END;
 
 
@@ -63,32 +98,6 @@ CREATE OR REPLACE PACKAGE BODY core AS
         WHERE a.application_id = COALESCE(in_app_id, core.get_app_id());
         --
         RETURN COALESCE(out_owner, APEX_UTIL.GET_DEFAULT_SCHEMA, USER);
-    END;
-
-
-
-    FUNCTION get_app_prefix (
-        in_app_id               NUMBER      := NULL
-    )
-    RETURN VARCHAR2
-    AS
-        out_prefix              VARCHAR2(30);
-    BEGIN
-        SELECT NVL(s.value, b.substitution_value)
-        INTO out_prefix
-        FROM apex_applications a
-        LEFT JOIN apex_application_settings s
-            ON s.application_id         = a.application_id
-            AND s.name                  = 'APP_PREFIX'
-        LEFT JOIN apex_application_substitutions b
-            ON b.application_id         = a.application_id
-            AND b.substitution_string   = 'APP_PREFIX'
-        WHERE a.application_id = COALESCE(in_app_id, core.get_app_id());
-        --
-        RETURN out_prefix;
-    EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-        RETURN NULL;
     END;
 
 
@@ -231,7 +240,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         SELECT s.substitution_value
         INTO out_value
         FROM apex_application_substitutions s
-        WHERE s.application_id          = COALESCE(in_app_id, core.get_context_id())
+        WHERE s.application_id          = COALESCE(in_app_id, core.get_context_app())
             AND s.substitution_string   = in_name;
         --
         RETURN out_value;
@@ -3015,7 +3024,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_asap                 BOOLEAN     := TRUE
     )
     AS
-        v_app_id                CONSTANT NUMBER         := COALESCE(in_app_id,  core.get_context_id());
+        v_app_id                CONSTANT NUMBER         := COALESCE(in_app_id,  core.get_context_app());
         v_user_id               CONSTANT VARCHAR2(128)  := COALESCE(in_user_id, core.get_user_id());
     BEGIN
         -- https://docs.oracle.com/en/database/oracle/apex/23.1/aeapi/APEX_PWA.SEND_PUSH_NOTIFICATION-Procedure.html

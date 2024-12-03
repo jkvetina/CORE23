@@ -45,6 +45,9 @@ AS
     c_assert_message            CONSTANT VARCHAR2(30)   := 'ASSERT_FAILED|';
     c_constraint_prefix         CONSTANT VARCHAR2(30)   := 'CONSTRAINT_ERROR|';
     c_not_null_prefix           CONSTANT VARCHAR2(30)   := 'NOT_NULL|';
+    -- global items to hold application + page context
+    c_context_name_app          CONSTANT VARCHAR2(30)   := app_constants.global_context_app;
+    c_context_name_page         CONSTANT VARCHAR2(30)   := app_constants.global_context_page;
 
     -- define assert exception
     c_assert_exception_code     CONSTANT PLS_INTEGER    := -20992;
@@ -109,10 +112,24 @@ AS
 
 
 
-    FUNCTION get_context_id (
+    FUNCTION get_context_app (
         in_context_name         VARCHAR2 := NULL
     )
     RETURN NUMBER;
+
+
+
+    FUNCTION get_context_page (
+        in_context_name         VARCHAR2 := NULL
+    )
+    RETURN NUMBER;
+
+
+
+    PROCEDURE set_contexts (
+        in_context_name_app     VARCHAR2 := NULL,
+        in_context_name_page    VARCHAR2 := NULL
+    );
 
 
 
@@ -122,13 +139,6 @@ AS
 
 
     FUNCTION get_app_owner (
-        in_app_id               NUMBER      := NULL
-    )
-    RETURN VARCHAR2;
-
-
-
-    FUNCTION get_app_prefix (
         in_app_id               NUMBER      := NULL
     )
     RETURN VARCHAR2;
