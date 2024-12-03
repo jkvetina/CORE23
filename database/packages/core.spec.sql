@@ -1,5 +1,5 @@
 CREATE OR REPLACE PACKAGE core
-AUTHID current_user
+AUTHID CURRENT_USER
 AS
 
     /**
@@ -31,51 +31,33 @@ AS
      *
      */
 
-    -- code for app exception
-    app_exception_code          CONSTANT PLS_INTEGER    := -20990;
-    app_exception               EXCEPTION;
-    --
-    PRAGMA EXCEPTION_INIT(app_exception, app_exception_code);   -- as a side effect this will disable listing constants in tree on the left
+    -- package name holding constants, used as get_constant() default
+    c_constants                 CONSTANT VARCHAR2(30)   := 'APP_CONSTANTS';
 
-    -- possible exception when parsing call stack
-    BAD_DEPTH EXCEPTION;
-    PRAGMA EXCEPTION_INIT(BAD_DEPTH, -64610);
-
-    -- start error message with this
-    c_assert_message            CONSTANT VARCHAR2(30)   := 'ASSERT_FAILED|';
-    c_constraint_prefix         CONSTANT VARCHAR2(30)   := 'CONSTRAINT_ERROR|';
-    c_not_null_prefix           CONSTANT VARCHAR2(30)   := 'NOT_NULL|';
     -- global items to hold application + page context
     c_context_name_app          CONSTANT VARCHAR2(30)   := app_constants.global_context_app;
     c_context_name_page         CONSTANT VARCHAR2(30)   := app_constants.global_context_page;
 
-    -- define assert exception
-    c_assert_exception_code     CONSTANT PLS_INTEGER    := -20992;
-    assert_exception            EXCEPTION;
-    --
-    PRAGMA EXCEPTION_INIT(assert_exception, c_assert_exception_code);
+    -- code for app exception
+    app_exception_code          CONSTANT PLS_INTEGER    := -20990;
+    assert_exception_code       CONSTANT PLS_INTEGER    := -20992;
 
     -- some constants, used also in APEX app substitutions
-    c_format_date               CONSTANT VARCHAR2(32)   := 'YYYY-MM-DD';
-    c_format_date_time          CONSTANT VARCHAR2(32)   := 'YYYY-MM-DD HH24:MI:SS';
-    c_format_date_short         CONSTANT VARCHAR2(32)   := 'YYYY-MM-DD HH24:MI';
-    c_format_time               CONSTANT VARCHAR2(32)   := 'HH24:MI:SS';
-    c_format_time_short         CONSTANT VARCHAR2(32)   := 'HH24:MI';
-    c_format_number             CONSTANT VARCHAR2(32)   := 'FM999G999G999G999G999G990D00';
-    c_format_number_currency    CONSTANT VARCHAR2(32)   := 'FML999G999G999G999G999G990D00';
-    c_format_integer            CONSTANT VARCHAR2(32)   := 'FM999G999G999G999G999G990';
-    c_format_integer_currency   CONSTANT VARCHAR2(32)   := 'FML999G999G999G999G999G990';
+    c_format_date               CONSTANT VARCHAR2(32)   := app_constants.format_date;
+    c_format_date_time          CONSTANT VARCHAR2(32)   := app_constants.format_date_time;
+    c_format_date_short         CONSTANT VARCHAR2(32)   := app_constants.format_date_short;
     --
-    c_app_proxy                 CONSTANT VARCHAR2(128)  := '';
-    c_app_wallet                CONSTANT VARCHAR2(128)  := '';
+    c_app_proxy                 CONSTANT VARCHAR2(128)  := app_constants.global_app_proxy;
+    c_app_wallet                CONSTANT VARCHAR2(128)  := app_constants.global_app_wallet;
     --
-    c_smtp_from                 CONSTANT VARCHAR2(128)  := '';
-    c_smtp_host                 CONSTANT VARCHAR2(128)  := '';
-    c_smtp_port                 CONSTANT NUMBER(8)      := NULL;
-    c_smtp_timeout              CONSTANT NUMBER(8)      := NULL;
-    c_smtp_username             CONSTANT VARCHAR2(128)  := '';
-    c_smtp_password             CONSTANT VARCHAR2(128)  := '';
-    --
+    c_smtp_from                 CONSTANT VARCHAR2(128)  := app_constants.global_smtp_from;
+    c_smtp_host                 CONSTANT VARCHAR2(128)  := app_constants.global_smtp_host;
+    c_smtp_port                 CONSTANT NUMBER(8)      := app_constants.global_smtp_port;
+    c_smtp_timeout              CONSTANT NUMBER(8)      := app_constants.global_smtp_timeout;
+    c_smtp_username             CONSTANT VARCHAR2(128)  := app_constants.global_smtp_username;
+    c_smtp_password             CONSTANT VARCHAR2(128)  := app_constants.global_smtp_password;
+
+    -- for dynamic page items
     c_page_item_wild            CONSTANT VARCHAR2(2)    := '$';
     c_page_item_prefix          CONSTANT VARCHAR2(2)    := 'P';
 
@@ -85,7 +67,31 @@ AS
     flag_warning                CONSTANT CHAR           := 'W';     -- warning
     flag_error                  CONSTANT CHAR           := 'E';     -- error
 
+    -- start assert messages with these prefixes
+    c_assert_message            CONSTANT VARCHAR2(30)   := 'ASSERT_FAILED|';
+    c_constraint_prefix         CONSTANT VARCHAR2(30)   := 'CONSTRAINT_ERROR|';
+    c_not_null_prefix           CONSTANT VARCHAR2(30)   := 'NOT_NULL|';
 
+
+
+    --
+    -- EXCEPTIONS
+    --
+
+    -- application exception used to propagate message to the user
+    app_exception       EXCEPTION; PRAGMA EXCEPTION_INIT(app_exception, app_exception_code);
+
+    -- define assert exception
+    assert_exception    EXCEPTION; PRAGMA EXCEPTION_INIT(assert_exception, assert_exception_code);
+
+    -- possible exception when parsing call stack
+    bad_depth           EXCEPTION; PRAGMA EXCEPTION_INIT(bad_depth, -64610);
+
+
+
+    --
+    -- CUSTOM TYPES
+    --
 
     -- for bulk set_item(s)
     TYPE type_page_items IS RECORD (

@@ -352,7 +352,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             ON s.name               = t.object_name
             AND s.type              = t.object_type
             AND s.line              = t.line
-        WHERE t.object_name         = UPPER(in_package)
+        WHERE t.object_name         = UPPER(NVL(in_package, c_constants))
             AND t.object_type       = 'PACKAGE' || CASE WHEN in_private IS NOT NULL THEN ' BODY' END
             AND t.name              = UPPER(in_prefix || in_name)
             AND t.type              = 'CONSTANT'
@@ -3516,7 +3516,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
     AS
     BEGIN
         IF in_bool_expression THEN
-            RAISE_APPLICATION_ERROR(c_assert_exception_code, c_assert_message || in_error_message);
+            RAISE_APPLICATION_ERROR(assert_exception_code, c_assert_message || in_error_message);
         END IF;
     END;
 
@@ -3529,7 +3529,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
     AS
     BEGIN
         IF NOT in_bool_expression THEN
-            RAISE_APPLICATION_ERROR(c_assert_exception_code, c_assert_message || in_error_message);
+            RAISE_APPLICATION_ERROR(assert_exception_code, c_assert_message || in_error_message);
         END IF;
     END;
 
@@ -3542,7 +3542,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
     AS
     BEGIN
         IF in_value IS NULL THEN
-            RAISE_APPLICATION_ERROR(c_assert_exception_code, c_assert_message || in_error_message);
+            RAISE_APPLICATION_ERROR(assert_exception_code, c_assert_message || in_error_message);
         END IF;
     END;
 
