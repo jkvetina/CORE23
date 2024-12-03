@@ -323,8 +323,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     FUNCTION get_constant (
-        in_package              VARCHAR2,
         in_name                 VARCHAR2,
+        in_package              VARCHAR2        := NULL,
         in_prefix               VARCHAR2        := NULL,
         in_private              CHAR            := NULL
     )
@@ -368,8 +368,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     FUNCTION get_constant_num (
-        in_package              VARCHAR2,
         in_name                 VARCHAR2,
+        in_package              VARCHAR2        := NULL,
         in_prefix               VARCHAR2        := NULL,
         in_private              CHAR            := NULL
     )
