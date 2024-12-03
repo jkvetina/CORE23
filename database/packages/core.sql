@@ -172,7 +172,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         RETURN out_page_id;
     EXCEPTION
     WHEN OTHERS THEN
-        core.raise_error('GET_HOMEPAGE_FAILED', COALESCE(in_app_id, core.get_app_id()));
+        core.raise_error();
     END;
 
 
@@ -198,7 +198,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         RETURN REPLACE(out_url, '&' || 'APP_ID.', in_app_id);
     EXCEPTION
     WHEN OTHERS THEN
-        core.raise_error('GET_LOGIN_FAILED', COALESCE(in_app_id, core.get_app_id()));
+        core.raise_error();
     END;
 
 
@@ -261,9 +261,6 @@ CREATE OR REPLACE PACKAGE BODY core AS
         RETURN APEX_UTIL.GET_PREFERENCE (
             p_preference    => in_name
         );
-    EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-        RETURN NULL;
     END;
 
 
@@ -274,6 +271,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
     )
     AS
     BEGIN
+        core.log_module('SET_PREFERENCE', in_name, in_value);
+        --
         APEX_UTIL.SET_PREFERENCE (
             p_preference    => in_name,
             p_value         => in_value
@@ -281,7 +280,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         --
     EXCEPTION
     WHEN OTHERS THEN
-        core.raise_error('SET_PREFERENCE|' || in_name || '|' || in_value);
+        core.raise_error();
     END;
 
 
@@ -309,6 +308,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
     )
     AS
     BEGIN
+        core.log_module('SET_APP_SETTING', in_name, in_value);
+        --
         APEX_APP_SETTING.SET_VALUE (
             p_name          => in_name,
             p_value         => in_value,
@@ -480,6 +481,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
     )
     AS
     BEGIN
+        core.log_module('SET_DEBUG', in_level, in_session_id);
+        --
         --APEX_APPLICATION.G_DEBUG := in_level;
         APEX_SESSION.SET_DEBUG (
             p_session_id    => COALESCE(in_session_id, core.get_session_id()),
@@ -488,7 +491,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         --
     EXCEPTION
     WHEN OTHERS THEN
-        core.raise_error('SET_DEBUG|' || in_session_id);
+        core.raise_error();
     END;
 
 
@@ -715,6 +718,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
     )
     AS
     BEGIN
+        core.log_module('SET_ACTION', in_action_name, in_module_name);
+        --
         IF in_module_name IS NOT NULL THEN
             DBMS_APPLICATION_INFO.SET_MODULE(in_module_name, in_action_name);   -- USERENV.MODULE, USERENV.ACTION
         END IF;
@@ -764,7 +769,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
     AS
     BEGIN
         RETURN COALESCE (
-            core_customized.get_env(),
+            core_custom.get_env(),
             SYS_CONTEXT('USERENV', 'SERVER_HOST') || '/' || SYS_CONTEXT('USERENV', 'INSTANCE_NAME')
         );
     END;
@@ -812,7 +817,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
     BEGIN
         SELECT p.page_group INTO out_name
         FROM apex_application_pages p
-        WHERE p.application_id      = COALESCE(in_app_id, core.get_app_id())
+        WHERE p.application_id      = COALESCE(in_app_id,  core.get_app_id())
             AND p.page_id           = COALESCE(in_page_id, core.get_page_id());
         --
         RETURN out_name;
@@ -1015,6 +1020,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
     )
     AS
     BEGIN
+        --core.log_module('SET_GRID_DATA', in_column_name, in_value);
+        --
         APEX_UTIL.SET_SESSION_STATE (
             p_name      => in_column_name,
             p_value     => in_value,
@@ -1031,34 +1038,16 @@ CREATE OR REPLACE PACKAGE BODY core AS
     )
     RETURN VARCHAR2
     AS
-        v_item_name             apex_application_page_items.item_name%TYPE;
-        v_page_id               apex_application_page_items.page_id%TYPE;
-        v_app_id                apex_application_page_items.application_id%TYPE;
-        is_valid                CHAR;
+        v_page_id       apex_application_page_items.page_id%TYPE;
+        v_item_name     apex_application_page_items.item_name%TYPE;
     BEGIN
-        v_app_id        := NVL(in_app_id,   core.get_context_id());
-        v_page_id       := NVL(in_page_id,  core.get_page_id());
-        v_item_name     := REPLACE(in_name, c_page_item_wild, c_page_item_prefix || v_page_id || '_');
+        v_page_id       := COALESCE(in_page_id, core.get_page_id());
+        v_item_name     := REPLACE(in_name, c_page_item_wild, c_page_item_prefix || TO_CHAR(v_page_id) || '_');
 
-        -- check if item exists
-        BEGIN
-            SELECT 'Y' INTO is_valid
-            FROM apex_application_page_items p
-            WHERE p.application_id      = v_app_id
-                AND p.page_id           IN (0, v_page_id)
-                AND p.item_name         = v_item_name;
-        EXCEPTION
-        WHEN NO_DATA_FOUND THEN
-            BEGIN
-                SELECT 'Y' INTO is_valid
-                FROM apex_application_items g
-                WHERE g.application_id      = v_app_id
-                    AND g.item_name         = in_name;
-            EXCEPTION
-            WHEN NO_DATA_FOUND THEN
-                RETURN NULL;
-            END;
-        END;
+        -- check if page item exists
+        IF APEX_CUSTOM_AUTH.APPLICATION_PAGE_ITEM_EXISTS(v_item_name) THEN
+            RETURN v_item_name;
+        END IF;
         --
         RETURN v_item_name;
     END;
@@ -1265,6 +1254,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
     AS
         v_item_name             apex_application_page_items.item_name%TYPE;
     BEGIN
+        --core.log_module('SET_ITEM', in_name, in_value);
+        --
         v_item_name := core.get_item_name(in_name);
         --
         IF v_item_name IS NOT NULL THEN
@@ -1306,6 +1297,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
         l_refcur                SYS_REFCURSOR;
         l_items                 t_page_items;
     BEGIN
+        core.log_module('SET_PAGE_ITEMS', in_query, in_page_id);
+
         -- process cursor
         OPEN l_refcur FOR LTRIM(RTRIM(in_query));
         --
@@ -1314,7 +1307,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         --
     EXCEPTION
     WHEN OTHERS THEN
-        RAISE;
+        core.raise_error();
     END;
 
 
@@ -1329,6 +1322,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
         l_refcur                SYS_REFCURSOR;
         l_items                 t_page_items;
     BEGIN
+        core.log_module('SET_PAGE_ITEMS', in_query, in_page_id);
+
         -- process cursor
         OPEN l_refcur FOR LTRIM(RTRIM(in_query));
         --
@@ -1342,7 +1337,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         RETURN;
     EXCEPTION
     WHEN OTHERS THEN
-        RAISE;
+        core.raise_error();
         RETURN;
     END;
 
@@ -1357,13 +1352,15 @@ CREATE OR REPLACE PACKAGE BODY core AS
         l_cloned_curs           SYS_REFCURSOR;
         l_items                 t_page_items;
     BEGIN
+        core.log_module('SET_PAGE_ITEMS', in_page_id);
+        --
         l_cloned_curs   := in_cursor;
         l_cursor        := get_cursor_number(l_cloned_curs);
         l_items         := set_page_items__(l_cursor , in_page_id);
         --
     EXCEPTION
     WHEN OTHERS THEN
-        RAISE;
+        core.raise_error();
     END;
 
 
@@ -1378,6 +1375,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
         l_cloned_curs           SYS_REFCURSOR;
         l_items                 t_page_items;
     BEGIN
+        core.log_module('SET_PAGE_ITEMS', in_page_id);
+        --
         l_cloned_curs   := in_cursor;
         l_cursor        := get_cursor_number(l_cloned_curs);
         l_items         := set_page_items__(l_cursor , in_page_id);
@@ -1389,7 +1388,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         RETURN;
     EXCEPTION
     WHEN OTHERS THEN
-        RAISE;
+        core.raise_error();
         RETURN;
     END;
 
@@ -1481,7 +1480,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
     EXCEPTION
     WHEN OTHERS THEN
         close_cursor(io_cursor);
-        RAISE;
+        core.raise_error();
     END;
 
 
@@ -2128,6 +2127,11 @@ CREATE OR REPLACE PACKAGE BODY core AS
         -- add call stack
         IF (SQLCODE != 0 OR in_action_type IN (flag_error, flag_warning, flag_module)) THEN
             v_callstack := CHR(10) || '-- CALLSTACK:' || CHR(10) || core.get_shorter_stack(core.get_call_stack());
+        END IF;
+
+        -- skip empty logs
+        IF SQLCODE = 0 AND v_message LIKE 'ORA-0000: %' THEN
+            RETURN NULL;
         END IF;
 
         -- finally store the log
