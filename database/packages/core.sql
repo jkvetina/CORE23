@@ -1823,14 +1823,14 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_args_as_list         BOOLEAN     := FALSE
+        in_as_list              BOOLEAN     := FALSE
     )
     RETURN VARCHAR2
     AS
         v_obj                   JSON_OBJECT_T;
     BEGIN
         -- construct a list of arguments
-        IF in_args_as_list THEN
+        IF in_as_list THEN
             RETURN NULLIF(REGEXP_REPLACE(
                 REGEXP_REPLACE(
                     NULLIF(JSON_ARRAY(
@@ -1920,7 +1920,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
         in_payload              CLOB        := NULL,
         in_rollback             BOOLEAN     := TRUE,
-        in_args_as_list         BOOLEAN     := FALSE
+        in_as_list              BOOLEAN     := FALSE
     )
     AS
         v_caller                VARCHAR2(256);
@@ -1959,7 +1959,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_name18       => in_name18,       in_value18  => in_value18,
             in_name19       => in_name19,       in_value19  => in_value19,
             in_name20       => in_name20,       in_value20  => in_value20,
-            in_args_as_list => in_args_as_list
+            in_as_list      => in_as_list
         );
 
         -- log raised error
@@ -2061,7 +2061,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         --
         in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
         in_payload              CLOB        := NULL,
-        in_args_as_list         BOOLEAN     := FALSE
+        in_as_list              BOOLEAN     := FALSE
     )
     RETURN NUMBER
     AS
@@ -2089,7 +2089,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_name18       => in_name18,       in_value18  => in_value18,
             in_name19       => in_name19,       in_value19  => in_value19,
             in_name20       => in_name20,       in_value20  => in_value20,
-            in_args_as_list => in_args_as_list
+            in_as_list      => in_as_list
         );
         --
         RETURN core.log__ (
@@ -2128,7 +2128,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         --
         in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
         in_payload              CLOB        := NULL,
-        in_args_as_list         BOOLEAN     := FALSE
+        in_as_list              BOOLEAN     := FALSE
     )
     AS
         v_id NUMBER;
@@ -2157,7 +2157,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             --
             in_context_id   => in_context_id,
             in_payload      => in_payload,
-            in_args_as_list => in_args_as_list
+            in_as_list      => in_as_list
         );
     END;
 
@@ -2187,7 +2187,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         --
         in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
         in_payload              CLOB        := NULL,
-        in_args_as_list         BOOLEAN     := FALSE
+        in_as_list              BOOLEAN     := FALSE
     )
     RETURN NUMBER
     AS
@@ -2215,7 +2215,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_name18       => in_name18,       in_value18  => in_value18,
             in_name19       => in_name19,       in_value19  => in_value19,
             in_name20       => in_name20,       in_value20  => in_value20,
-            in_args_as_list => in_args_as_list
+            in_as_list      => in_as_list
         );
         --
         RETURN core.log__ (
@@ -2254,7 +2254,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         --
         in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
         in_payload              CLOB        := NULL,
-        in_args_as_list         BOOLEAN     := FALSE
+        in_as_list              BOOLEAN     := FALSE
     )
     AS
         v_id NUMBER;
@@ -2283,7 +2283,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             --
             in_context_id   => in_context_id,
             in_payload      => in_payload,
-            in_args_as_list => in_args_as_list
+            in_as_list      => in_as_list
         );
     END;
 
@@ -2313,7 +2313,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         --
         in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
         in_payload              CLOB        := NULL,
-        in_args_as_list         BOOLEAN     := FALSE
+        in_as_list              BOOLEAN     := FALSE
     )
     RETURN NUMBER
     AS
@@ -2341,7 +2341,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_name18       => in_name18,       in_value18  => in_value18,
             in_name19       => in_name19,       in_value19  => in_value19,
             in_name20       => in_name20,       in_value20  => in_value20,
-            in_args_as_list => in_args_as_list
+            in_as_list      => in_as_list
         );
         --
         RETURN core.log__ (
@@ -2380,7 +2380,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         --
         in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
         in_payload              CLOB        := NULL,
-        in_args_as_list         BOOLEAN     := FALSE
+        in_as_list              BOOLEAN     := FALSE
     )
     AS
         v_id NUMBER;
@@ -2409,7 +2409,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             --
             in_context_id   => in_context_id,
             in_payload      => in_payload,
-            in_args_as_list => in_args_as_list
+            in_as_list      => in_as_list
         );
     END;
 
@@ -2439,7 +2439,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         --
         in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
         in_payload              CLOB        := NULL,
-        in_args_as_list         BOOLEAN     := FALSE
+        in_as_list              BOOLEAN     := FALSE
     )
     RETURN NUMBER
     AS
@@ -2467,7 +2467,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_name18       => in_name18,       in_value18  => in_value18,
             in_name19       => in_name19,       in_value19  => in_value19,
             in_name20       => in_name20,       in_value20  => in_value20,
-            in_args_as_list => in_args_as_list
+            in_as_list      => in_as_list
         );
         --
         RETURN core.log__ (
@@ -2506,7 +2506,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         --
         in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
         in_payload              CLOB        := NULL,
-        in_args_as_list         BOOLEAN     := FALSE
+        in_as_list              BOOLEAN     := FALSE
     )
     AS
         v_id NUMBER;
@@ -2535,7 +2535,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             --
             in_context_id   => in_context_id,
             in_payload      => in_payload,
-            in_args_as_list => in_args_as_list
+            in_as_list      => in_as_list
         );
     END;
 
@@ -2565,7 +2565,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         --
         in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
         in_payload              CLOB        := NULL,
-        in_args_as_list         BOOLEAN     := FALSE
+        in_as_list              BOOLEAN     := FALSE
     )
     RETURN NUMBER
     AS
@@ -2593,7 +2593,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_name18       => in_name18,       in_value18  => in_value18,
             in_name19       => in_name19,       in_value19  => in_value19,
             in_name20       => in_name20,       in_value20  => in_value20,
-            in_args_as_list => in_args_as_list
+            in_as_list      => in_as_list
         );
         --
         RETURN core.log__ (
@@ -2632,7 +2632,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         --
         in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
         in_payload              CLOB        := NULL,
-        in_args_as_list         BOOLEAN     := FALSE
+        in_as_list              BOOLEAN     := FALSE
     )
     AS
         v_id NUMBER;
@@ -2661,7 +2661,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             --
             in_context_id   => in_context_id,
             in_payload      => in_payload,
-            in_args_as_list => in_args_as_list
+            in_as_list      => in_as_list
         );
     END;
 
