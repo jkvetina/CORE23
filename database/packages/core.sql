@@ -567,7 +567,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         );
 
         -- attach to existing session
-        IF in_session_id IS NOT NULL THEN
+        IF NULLIF(in_session_id, 0) IS NOT NULL THEN
             attach_session (
                 in_session_id   => in_session_id,
                 in_app_id       => in_app_id,
