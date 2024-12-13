@@ -53,11 +53,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_context_name_page    VARCHAR2 := NULL
     )
     AS
-        v_proceed BOOLEAN;
     BEGIN
-        v_proceed := INSTR(UPPER(core.get_request_url()), c_context_name_app) = 0;
-        --
-        core.log_module('SET_CONTEXT|' || CASE WHEN v_proceed THEN 'Y' ELSE 'N' END, in_context_name_app, in_context_name_page);
         --
         -- in the Master app these CONTEXT items have to be unprotected,
         -- because we have to pass them in the navigation links for Master pages,
@@ -65,7 +61,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         -- it will override the navigation with recent app
         --
         -- set only if there is no CONTEXT_APP item referenced in the url address
-        IF v_proceed THEN
+        IF INSTR(UPPER(core.get_request_url()), c_context_name_app) = 0 THEN
             core.set_item(NVL(in_context_name_app,  c_context_name_app),    core.get_app_id());
             core.set_item(NVL(in_context_name_page, c_context_name_page),   core.get_page_id());
         END IF;
@@ -1661,13 +1657,16 @@ CREATE OR REPLACE PACKAGE BODY core AS
               !    core.raise_error();
               !END;
               !',
-            p1          => in_user_id,
-            p2          => NVL(TO_CHAR(COALESCE(in_app_id, core.get_app_id())), 'NULL'),
-            p3          => REGEXP_REPLACE(in_statement, '(\s*;\s*)$', '') || ';',
-            p4          => in_comments,
-            p5          => NVL(TO_CHAR(in_session_id), 'NULL'),
-            p6          => v_job_name,
-            p_prefix    => '!'
+            --
+            p1  => in_user_id,
+            p2  => NVL(TO_CHAR(COALESCE(in_app_id, core.get_app_id())), 'NULL'),
+            p3  => REGEXP_REPLACE(in_statement, '(\s*;\s*)$', '') || ';',
+            p4  => in_comments,
+            p5  => NVL(TO_CHAR(in_session_id), 'NULL'),
+            p6  => v_job_name,
+            --
+            p_max_length    => 32767,
+            p_prefix        => '!'
         ));
         --
         core.log_start (
