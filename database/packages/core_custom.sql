@@ -30,20 +30,25 @@ CREATE OR REPLACE PACKAGE BODY core_custom AS
     )
     RETURN NUMBER
     AS
+        PRAGMA AUTONOMOUS_TRANSACTION;
+        --
         v_level     PLS_INTEGER;
         v_flag      VARCHAR2(16);
     BEGIN
         CASE in_type
             WHEN core.flag_error THEN
                 APEX_DEBUG.ERROR (
-                    p_message       => in_message || '|' || in_arguments || '|' || in_payload || in_backtrace || in_callstack,
+                    p_message       => in_message
+                                        || CASE WHEN in_arguments IS NOT NULL THEN CHR(10) || '^ARGS: '         || in_arguments END
+                                        || CASE WHEN in_backtrace IS NOT NULL THEN CHR(10) || '^BACKTRACE: '    || in_backtrace END,
                     p_max_length    => 32767
                 );
                 --
             WHEN core.flag_warning THEN
                 --APEX_DEBUG.WARN (
                 APEX_DEBUG.MESSAGE (
-                    p_message       => in_message || '|' || in_arguments || '|' || in_payload || in_backtrace || in_callstack,
+                    p_message       => in_message
+                                        || CASE WHEN in_arguments IS NOT NULL THEN CHR(10) || '^ARGS: '         || in_arguments END,
                     p_level         => 2,
                     p_max_length    => 32767,
                     p_force         => TRUE
@@ -52,18 +57,19 @@ CREATE OR REPLACE PACKAGE BODY core_custom AS
                 -- prepare proper flags
                 CASE in_type
                     WHEN core.flag_start THEN
-                        v_level := 5;
-                        v_flag  := '[START] ';
+                        v_level := 4;
+                        v_flag  := ' [START] ';
                     WHEN core.flag_end THEN
-                        v_level := 5;
-                        v_flag  := '[END] ';
+                        v_level := 4;
+                        v_flag  := ' [END] ';
                     ELSE
                         v_level := 6;
                         v_flag  := '';
                     END CASE;
                 --
                 APEX_DEBUG.MESSAGE (
-                    p_message       => v_flag || in_message || '|' || in_arguments || '|' || in_payload,
+                    p_message       => in_message || v_flag
+                                        || CASE WHEN in_arguments IS NOT NULL THEN CHR(10) || '^ARGS: '         || in_arguments END,
                     p_max_length    => 32767,
                     p_level         => v_level,
                                     -- 1 = c_log_level_error            critical error
@@ -75,17 +81,23 @@ CREATE OR REPLACE PACKAGE BODY core_custom AS
                                     -- 9 = c_log_level_engine_trace     APEX engine: other messages within procedures/functions
                     p_force         => TRUE
                 );
-                /*
+                --
                 logger.log (
-                    p_text    => in_message || ' LEN:' || LENGTH(in_payload),
-                    p_scope   => '',
-                    p_extra   => in_payload
-                    --p_params  in tab_param default logger.gc_empty_tab_param);
+                    p_text    => in_message
+                                        || CASE WHEN in_arguments IS NOT NULL THEN CHR(10) || '^ARGS: '         || in_arguments END,
+                    p_scope   => ''
+                    --p_extra   => in_payload
+                    --p_params  in tab_param default logger.gc_empty_tab_param
                 );
-                */
             END CASE;
         --
+        COMMIT;
+        --
         RETURN APEX_DEBUG.GET_LAST_MESSAGE_ID();
+    EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        RAISE;
     END;
 
 END;
