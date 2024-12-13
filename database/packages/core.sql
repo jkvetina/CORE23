@@ -3446,13 +3446,12 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
     PROCEDURE download_file (
         in_file_name                        VARCHAR2,
-        in_file_mime                        VARCHAR2,
         in_file_payload     IN OUT NOCOPY   BLOB
     )
     AS
     BEGIN
         HTP.INIT;
-        OWA_UTIL.MIME_HEADER(in_file_mime, FALSE);
+        --OWA_UTIL.MIME_HEADER(in_file_mime, FALSE);
         --
         HTP.P('Content-Type: application/octet-stream');
         HTP.P('Content-Length: ' || DBMS_LOB.GETLENGTH(in_file_payload));
