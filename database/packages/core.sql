@@ -1946,8 +1946,9 @@ CREATE OR REPLACE PACKAGE BODY core AS
             ROLLBACK;
         END IF;
 
-        -- get caller (procedure name and line)
-        v_caller := core.get_caller_name(3, TRUE);
+        -- construct message for user: source_procedure|message_or_source_line
+        v_caller    := core.get_caller_name(3, TRUE);
+        v_message   := REGEXP_REPLACE(v_caller, '\[\d+\]', '') || '|' || COALESCE(in_message, REGEXP_SUBSTR(v_caller, '\[(\d+)\]', 1, 1, NULL, 1));
 
         -- convert passed arguments
         v_arguments := core.get_arguments (
@@ -1976,31 +1977,34 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
         -- log raised error
         v_id := core.log__ (
-            in_type             => 'E',
-            in_message          => in_message,
+            in_type             => core.flag_error,
+            in_message          => v_message,
             in_arguments        => v_arguments,
             in_payload          => in_payload,
             in_context_id       => in_context_id,
             in_caller           => v_caller
         );
 
-        -- construct message for user
-        v_message := SUBSTR(REPLACE(REPLACE(
-            COALESCE(in_message, SQLERRM)
-            || NULLIF(' [' || TO_CHAR(v_id) || ']', ' []')
-            || CASE WHEN (core.get_debug_level() >= 1 OR core.is_developer()) THEN ' |ARGS: ' || v_arguments END
-            || CASE WHEN (core.get_debug_level() >= 1 OR core.is_developer()) THEN ' |CALLER: ' || v_caller END,
-            '"', ''), '&' || 'quot;', ''),
+        -- append #log_id, args and error message
+        v_message := SUBSTR(v_message
+            || NULLIF(' #' || TO_CHAR(v_id) || '', ' #')
+            || CASE WHEN v_arguments IS NOT NULL        THEN CHR(10) || '^ARGS: ' || v_arguments END
+            || CASE WHEN SQLERRM NOT LIKE 'ORA-0000:%'  THEN CHR(10) || '^ERR: ' || SQLERRM END
+            || CHR(10) || '-- ',
             1, 32767);
 
         -- add backtrace to the message (in debug mode) to quickly find the problem
         IF core.get_debug_level() >= 4 THEN
-            v_backtrace := SUBSTR(' |BACKTRACE: '
-                || REPLACE(REPLACE(get_shorter_stack(DBMS_UTILITY.FORMAT_ERROR_BACKTRACE), '"', ''), '&' || 'quot;', ''),
+            v_backtrace := SUBSTR(
+                CHR(10) || '^BACKTRACE: ' || get_shorter_stack(DBMS_UTILITY.FORMAT_ERROR_BACKTRACE),
                 1, 32767);
         END IF;
         --
-        RAISE_APPLICATION_ERROR(core.app_exception_code, v_message || v_backtrace, TRUE);
+        RAISE_APPLICATION_ERROR (
+            core.app_exception_code,
+            REPLACE(REPLACE(v_message || v_backtrace, '"', ''), '&' || 'quot;', ''),
+            TRUE
+        );
     END;
 
 
@@ -2016,12 +2020,15 @@ CREATE OR REPLACE PACKAGE BODY core AS
     RETURN NUMBER
     AS
         v_caller                VARCHAR2(256);
+        v_message               VARCHAR2(32767);
     BEGIN
-        v_caller                := COALESCE(v_caller, core.get_caller_name(3, TRUE));       -- ....... VERIFY OFFSET + FROM APEX_HANDLER...
+        -- construct message for user: source_procedure|message_or_source_line
+        v_caller    := COALESCE(in_caller, core.get_caller_name(5, TRUE));
+        v_message   := COALESCE(in_message, REGEXP_REPLACE(v_caller, '\[\d+\]', '') || '|' || REGEXP_SUBSTR(v_caller, '\[(\d+)\]', 1, 1, NULL, 1));
         --
         RETURN core_custom.log__ (
             in_type         => in_type,
-            in_message      => NVL(in_message, v_caller),
+            in_message      => v_message,
             in_arguments    => in_arguments,
             in_payload      => in_payload,
             in_context_id   => in_context_id,
@@ -2109,8 +2116,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_message      => NULL,
             in_arguments    => v_arguments,
             in_payload      => in_payload,
-            in_context_id   => in_context_id,
-            in_caller       => core.get_caller_name(3, TRUE)
+            in_context_id   => in_context_id
         );
     END;
 
@@ -2235,8 +2241,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_message      => NULL,
             in_arguments    => v_arguments,
             in_payload      => in_payload,
-            in_context_id   => in_context_id,
-            in_caller       => core.get_caller_name(3, TRUE)
+            in_context_id   => in_context_id
         );
     END;
 
@@ -2361,8 +2366,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_message      => NULL,
             in_arguments    => v_arguments,
             in_payload      => in_payload,
-            in_context_id   => in_context_id,
-            in_caller       => core.get_caller_name(3, TRUE)
+            in_context_id   => in_context_id
         );
     END;
 
@@ -2487,8 +2491,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_message      => NULL,
             in_arguments    => v_arguments,
             in_payload      => in_payload,
-            in_context_id   => in_context_id,
-            in_caller       => core.get_caller_name(3, TRUE)
+            in_context_id   => in_context_id
         );
     END;
 
@@ -2613,8 +2616,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_message      => NULL,
             in_arguments    => v_arguments,
             in_payload      => in_payload,
-            in_context_id   => in_context_id,
-            in_caller       => core.get_caller_name(3, TRUE)
+            in_context_id   => in_context_id
         );
     END;
 
@@ -2745,9 +2747,9 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 'error',            APEX_ERROR.GET_FIRST_ORA_ERROR_TEXT(p_error => p_error),
                 --
                 in_payload => ''
-                    || ' |DESCRIPTION: ' || core.get_shorter_stack(p_error.ora_sqlerrm)
-                    || ' |STATEMENT: '   || core.get_shorter_stack(p_error.error_statement)
-                    || ' |BACKTRACE: '   || core.get_shorter_stack(p_error.error_backtrace)
+                    || CHR(10) || '^DESCRIPTION: ' || core.get_shorter_stack(p_error.ora_sqlerrm)
+                    || CHR(10) || '^STATEMENT: '   || core.get_shorter_stack(p_error.error_statement)
+                    || CHR(10) || '^BACKTRACE: '   || core.get_shorter_stack(p_error.error_backtrace)
             );
         END IF;
 
