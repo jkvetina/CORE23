@@ -2670,8 +2670,6 @@ CREATE OR REPLACE PACKAGE BODY core AS
         --  column_alias        varchar2(255)               -- Associated tabular form column alias
         --
         v_log_id                NUMBER;                     -- log_id from your log_error function (returning most likely sequence)
-        v_action_name           VARCHAR2(128);              -- short error type visible to user
-        v_log                   BOOLEAN         := TRUE;
         v_constraint_code       PLS_INTEGER;
     BEGIN
         out_result := APEX_ERROR.INIT_ERROR_RESULT(p_error => p_error);
@@ -2695,49 +2693,38 @@ CREATE OR REPLACE PACKAGE BODY core AS
             -2292   -- ORA-02292: integrity constraint violated - child record found
         ) THEN
             -- handle constraint violations
-            v_action_name := APEX_ERROR.EXTRACT_CONSTRAINT_NAME (
+            out_result.message := c_constraint_prefix || APEX_ERROR.EXTRACT_CONSTRAINT_NAME (
                 p_error             => p_error,
                 p_include_schema    => FALSE
             );
-            --
-            out_result.message          := c_constraint_prefix || v_action_name;
             out_result.display_location := APEX_ERROR.C_INLINE_IN_NOTIFICATION;
             --
         ELSIF NVL(v_constraint_code, p_error.ora_sqlcode) IN (
             -1400   -- ORA-01400: cannot insert NULL into...
         ) THEN
-            out_result.message          := c_not_null_prefix || REGEXP_SUBSTR(out_result.message, '\.["]([^"]+)["]\)', 1, 1, NULL, 1);
+            out_result.message := c_not_null_prefix || REGEXP_SUBSTR(out_result.message, '\.["]([^"]+)["]\)', 1, 1, NULL, 1);
             --
-        ELSIF p_error.is_internal_error THEN
-            v_action_name := 'INTERNAL_ERROR';
-        ELSE
-            v_action_name := 'UNKNOWN_ERROR';
-        END IF;
-
-        -- dont log session errors
-        IF p_error.is_internal_error AND p_error.ora_sqlcode IS NULL THEN
-            IF p_error.apex_error_code NOT IN ('APEX.SESSION.EXPIRED') THEN
-                v_log := FALSE;
-            END IF;
         END IF;
 
         -- store incident in your log
-        IF v_log THEN
+        IF p_error.is_internal_error AND p_error.ora_sqlcode IS NULL AND p_error.apex_error_code NOT IN ('APEX.SESSION.EXPIRED') THEN
+            -- dont log session errors
+            NULL;
+        ELSE
             v_log_id := core.log_error (
-                in_action_name  => v_action_name,
-                in_arg1         => 'message',           in_arg2     => out_result.message,
-                in_arg3         => 'page',              in_arg4     => TO_CHAR(APEX_APPLICATION.G_FLOW_STEP_ID),
-                in_arg5         => 'component_type',    in_arg6     => REPLACE(p_error.component.type, 'APEX_APPLICATION_', ''),
-                in_arg7         => 'component_name',    in_arg8     => p_error.component.name,
-                in_arg9         => 'process_point',     in_arg10    => REPLACE(SYS_CONTEXT('USERENV', 'ACTION'), 'Processes - point: ', ''),
-                in_arg11        => 'page_item',         in_arg12    => out_result.page_item_name,
-                in_arg13        => 'column_alias',      in_arg14    => out_result.column_alias,
-                in_arg15        => 'error',             in_arg16    => APEX_ERROR.GET_FIRST_ORA_ERROR_TEXT(p_error => p_error),
-                in_payload      =>
-                    CHR(10) || '-- DESCRIPTION:' || CHR(10) || core.get_shorter_stack(p_error.ora_sqlerrm)      ||
-                    CHR(10) || '-- STATEMENT:'   || CHR(10) || core.get_shorter_stack(p_error.error_statement)  ||
-                    CHR(10) || '-- BACKTRACE:'   || CHR(10) || core.get_shorter_stack(p_error.error_backtrace),
-                in_json_object  => TRUE
+                'message',          out_result.message,
+                'page',             TO_CHAR(APEX_APPLICATION.G_FLOW_STEP_ID),
+                'component_type',   REPLACE(p_error.component.type, 'APEX_APPLICATION_', ''),
+                'component_name',   p_error.component.name,
+                'process_point',    REPLACE(SYS_CONTEXT('USERENV', 'ACTION'), 'Processes - point: ', ''),
+                'page_item',        out_result.page_item_name,
+                'column_alias',     out_result.column_alias,
+                'error',            APEX_ERROR.GET_FIRST_ORA_ERROR_TEXT(p_error => p_error),
+                --
+                in_payload => ''
+                    || ' |DESCRIPTION: ' || core.get_shorter_stack(p_error.ora_sqlerrm)
+                    || ' |STATEMENT: '   || core.get_shorter_stack(p_error.error_statement)
+                    || ' |BACKTRACE: '   || core.get_shorter_stack(p_error.error_backtrace)
             );
         END IF;
 
@@ -2764,8 +2751,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
     EXCEPTION
     WHEN OTHERS THEN
         core.raise_error (
-            in_action_name  => v_action_name,
-            in_arg1         => APEX_ERROR.GET_FIRST_ORA_ERROR_TEXT(p_error => p_error)
+            in_name01       => APEX_ERROR.GET_FIRST_ORA_ERROR_TEXT(p_error => p_error)
         );
     END;
 
