@@ -1883,306 +1883,138 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     PROCEDURE raise_error (
-        in_action_name          VARCHAR2    := NULL,
-        in_arg1                 VARCHAR2    := NULL,
-        in_arg2                 VARCHAR2    := NULL,
-        in_arg3                 VARCHAR2    := NULL,
-        in_arg4                 VARCHAR2    := NULL,
-        in_arg5                 VARCHAR2    := NULL,
-        in_arg6                 VARCHAR2    := NULL,
-        in_arg7                 VARCHAR2    := NULL,
-        in_arg8                 VARCHAR2    := NULL,
-        in_arg9                 VARCHAR2    := NULL,
-        in_arg10                VARCHAR2    := NULL,
-        in_arg11                VARCHAR2    := NULL,
-        in_arg12                VARCHAR2    := NULL,
-        in_arg13                VARCHAR2    := NULL,
-        in_arg14                VARCHAR2    := NULL,
-        in_arg15                VARCHAR2    := NULL,
-        in_arg16                VARCHAR2    := NULL,
-        in_arg17                VARCHAR2    := NULL,
-        in_arg18                VARCHAR2    := NULL,
-        in_arg19                VARCHAR2    := NULL,
-        in_arg20                VARCHAR2    := NULL,
-        in_payload              VARCHAR2    := NULL,
-        in_json_object          BOOLEAN     := FALSE,
-        in_rollback             BOOLEAN     := FALSE,
-        in_traceback            BOOLEAN     := FALSE
+        in_message              VARCHAR2    := NULL,            -- message for user, translatable
+        --
+        in_name01               VARCHAR2    := NULL,            in_value01  VARCHAR2 := NULL,
+        in_name02               VARCHAR2    := NULL,            in_value02  VARCHAR2 := NULL,
+        in_name03               VARCHAR2    := NULL,            in_value03  VARCHAR2 := NULL,
+        in_name04               VARCHAR2    := NULL,            in_value04  VARCHAR2 := NULL,
+        in_name05               VARCHAR2    := NULL,            in_value05  VARCHAR2 := NULL,
+        in_name06               VARCHAR2    := NULL,            in_value06  VARCHAR2 := NULL,
+        in_name07               VARCHAR2    := NULL,            in_value07  VARCHAR2 := NULL,
+        in_name08               VARCHAR2    := NULL,            in_value08  VARCHAR2 := NULL,
+        in_name09               VARCHAR2    := NULL,            in_value09  VARCHAR2 := NULL,
+        in_name10               VARCHAR2    := NULL,            in_value10  VARCHAR2 := NULL,
+        in_name11               VARCHAR2    := NULL,            in_value11  VARCHAR2 := NULL,
+        in_name12               VARCHAR2    := NULL,            in_value12  VARCHAR2 := NULL,
+        in_name13               VARCHAR2    := NULL,            in_value13  VARCHAR2 := NULL,
+        in_name14               VARCHAR2    := NULL,            in_value14  VARCHAR2 := NULL,
+        in_name15               VARCHAR2    := NULL,            in_value15  VARCHAR2 := NULL,
+        in_name16               VARCHAR2    := NULL,            in_value16  VARCHAR2 := NULL,
+        in_name17               VARCHAR2    := NULL,            in_value17  VARCHAR2 := NULL,
+        in_name18               VARCHAR2    := NULL,            in_value18  VARCHAR2 := NULL,
+        in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
+        in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
+        --
+        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_payload              CLOB        := NULL,
+        in_rollback             BOOLEAN     := TRUE,
+        in_args_as_list         BOOLEAN     := FALSE
     )
     AS
-        v_message               VARCHAR2(4000);
-        v_backtrace             VARCHAR2(4000);
+        v_caller                VARCHAR2(256);
+        v_id                    NUMBER;
+        v_arguments             VARCHAR2(32767);
+        v_message               VARCHAR2(32767);
+        v_backtrace             VARCHAR2(32767);
     BEGIN
         -- rollback transaction if requested (cant do this from trigger)
         IF in_rollback THEN
             ROLLBACK;
         END IF;
 
-        -- always log raised error
-        core.log_error (
-            in_action_name      => in_action_name,
-            in_arg1             => in_arg1,
-            in_arg2             => in_arg2,
-            in_arg3             => in_arg3,
-            in_arg4             => in_arg4,
-            in_arg5             => in_arg5,
-            in_arg6             => in_arg6,
-            in_arg7             => in_arg7,
-            in_arg8             => in_arg8,
-            in_arg9             => in_arg9,
-            in_arg10            => in_arg10,
-            in_arg11            => in_arg11,
-            in_arg12            => in_arg12,
-            in_arg13            => in_arg13,
-            in_arg14            => in_arg14,
-            in_arg15            => in_arg15,
-            in_arg16            => in_arg16,
-            in_arg17            => in_arg17,
-            in_arg18            => in_arg18,
-            in_arg19            => in_arg19,
-            in_arg20            => in_arg20,
+        -- get caller (procedure name and line)
+        v_caller := core.get_caller_name(3, TRUE);
+
+        -- convert passed arguments
+        v_arguments := core.get_arguments (
+            in_name01       => in_name01,       in_value01  => in_value01,
+            in_name02       => in_name02,       in_value02  => in_value02,
+            in_name03       => in_name03,       in_value03  => in_value03,
+            in_name04       => in_name04,       in_value04  => in_value04,
+            in_name05       => in_name05,       in_value05  => in_value05,
+            in_name06       => in_name06,       in_value06  => in_value06,
+            in_name07       => in_name07,       in_value07  => in_value07,
+            in_name08       => in_name08,       in_value08  => in_value08,
+            in_name09       => in_name09,       in_value09  => in_value09,
+            in_name10       => in_name10,       in_value10  => in_value10,
+            in_name11       => in_name11,       in_value11  => in_value11,
+            in_name12       => in_name12,       in_value12  => in_value12,
+            in_name13       => in_name13,       in_value13  => in_value13,
+            in_name14       => in_name14,       in_value14  => in_value14,
+            in_name15       => in_name15,       in_value15  => in_value15,
+            in_name16       => in_name16,       in_value16  => in_value16,
+            in_name17       => in_name17,       in_value17  => in_value17,
+            in_name18       => in_name18,       in_value18  => in_value18,
+            in_name19       => in_name19,       in_value19  => in_value19,
+            in_name20       => in_name20,       in_value20  => in_value20,
+            in_args_as_list => in_args_as_list
+        );
+
+        -- log raised error
+        v_id := core.log__ (
+            in_type             => 'E',
+            in_message          => in_message,
+            in_arguments        => v_arguments,
             in_payload          => in_payload,
-            in_json_object      => in_json_object
+            in_context_id       => in_context_id,
+            in_caller           => v_caller
         );
 
         -- construct message for user
         v_message := SUBSTR(REPLACE(REPLACE(
-            COALESCE(in_action_name, SQLERRM) ||
-            RTRIM(
-                '|' || in_arg1 || '|' || in_arg2 || '|' || in_arg3 || '|' || in_arg4 ||
-                '|' || in_arg5 || '|' || in_arg6 || '|' || in_arg7 || '|' || in_arg8,
-                '|'
-            ) || CASE WHEN UPPER(core.get_user_id()) NOT IN ('NOBODY') THEN '| ' || core.get_caller_name(3, TRUE) END,
+            COALESCE(in_message, SQLERRM)
+            || NULLIF(' [' || TO_CHAR(v_id) || ']', ' []')
+            || CASE WHEN (core.get_debug_level() >= 1 OR core.is_developer()) THEN ' |ARGS: ' || v_arguments END
+            || CASE WHEN (core.get_debug_level() >= 1 OR core.is_developer()) THEN ' |CALLER: ' || v_caller END,
             '"', ''), '&' || 'quot;', ''),
-            1, 4000);
+            1, 32767);
 
-        -- add backtrace for developers (or on demand) to quickly find the problem
-        IF (in_traceback OR core.is_developer()) AND UPPER(core.get_user_id()) NOT IN ('NOBODY') THEN
-            v_backtrace := SUBSTR('|' || REPLACE(REPLACE(get_shorter_stack(DBMS_UTILITY.FORMAT_ERROR_BACKTRACE), '"', ''), '&' || 'quot;', ''), 1, 4000);
+        -- add backtrace to the message (in debug mode) to quickly find the problem
+        IF core.get_debug_level() >= 4 THEN
+            v_backtrace := SUBSTR(' |BACKTRACE: '
+                || REPLACE(REPLACE(get_shorter_stack(DBMS_UTILITY.FORMAT_ERROR_BACKTRACE), '"', ''), '&' || 'quot;', ''),
+                1, 32767);
         END IF;
         --
-        RAISE_APPLICATION_ERROR(core.app_exception_code, v_message || RTRIM(v_backtrace, '|'), TRUE);
-    END;
-
-
-
-    PROCEDURE log__ (
-        in_action_type          CHAR,
-        in_action_name          VARCHAR2,
-        in_arg1                 VARCHAR2    := NULL,
-        in_arg2                 VARCHAR2    := NULL,
-        in_arg3                 VARCHAR2    := NULL,
-        in_arg4                 VARCHAR2    := NULL,
-        in_arg5                 VARCHAR2    := NULL,
-        in_arg6                 VARCHAR2    := NULL,
-        in_arg7                 VARCHAR2    := NULL,
-        in_arg8                 VARCHAR2    := NULL,
-        in_arg9                 VARCHAR2    := NULL,
-        in_arg10                VARCHAR2    := NULL,
-        in_arg11                VARCHAR2    := NULL,
-        in_arg12                VARCHAR2    := NULL,
-        in_arg13                VARCHAR2    := NULL,
-        in_arg14                VARCHAR2    := NULL,
-        in_arg15                VARCHAR2    := NULL,
-        in_arg16                VARCHAR2    := NULL,
-        in_arg17                VARCHAR2    := NULL,
-        in_arg18                VARCHAR2    := NULL,
-        in_arg19                VARCHAR2    := NULL,
-        in_arg20                VARCHAR2    := NULL,
-        in_payload              VARCHAR2    := NULL,
-        in_json_object          BOOLEAN     := FALSE
-    )
-    AS
-        v_log_id                NUMBER;
-    BEGIN
-        v_log_id := core.log__ (
-            in_action_type      => in_action_type,
-            in_action_name      => in_action_name,
-            in_arg1             => in_arg1,
-            in_arg2             => in_arg2,
-            in_arg3             => in_arg3,
-            in_arg4             => in_arg4,
-            in_arg5             => in_arg5,
-            in_arg6             => in_arg6,
-            in_arg7             => in_arg7,
-            in_arg8             => in_arg8,
-            in_arg9             => in_arg9,
-            in_arg10            => in_arg10,
-            in_arg11            => in_arg11,
-            in_arg12            => in_arg12,
-            in_arg13            => in_arg13,
-            in_arg14            => in_arg14,
-            in_arg15            => in_arg15,
-            in_arg16            => in_arg16,
-            in_arg17            => in_arg17,
-            in_arg18            => in_arg18,
-            in_arg19            => in_arg19,
-            in_arg20            => in_arg20,
-            in_payload          => in_payload,
-            in_json_object      => in_json_object
-        );
+        RAISE_APPLICATION_ERROR(core.app_exception_code, v_message || v_backtrace, TRUE);
     END;
 
 
 
     FUNCTION log__ (
-        in_action_type          CHAR,
-        in_action_name          VARCHAR2,
-        in_arg1                 VARCHAR2    := NULL,
-        in_arg2                 VARCHAR2    := NULL,
-        in_arg3                 VARCHAR2    := NULL,
-        in_arg4                 VARCHAR2    := NULL,
-        in_arg5                 VARCHAR2    := NULL,
-        in_arg6                 VARCHAR2    := NULL,
-        in_arg7                 VARCHAR2    := NULL,
-        in_arg8                 VARCHAR2    := NULL,
-        in_arg9                 VARCHAR2    := NULL,
-        in_arg10                VARCHAR2    := NULL,
-        in_arg11                VARCHAR2    := NULL,
-        in_arg12                VARCHAR2    := NULL,
-        in_arg13                VARCHAR2    := NULL,
-        in_arg14                VARCHAR2    := NULL,
-        in_arg15                VARCHAR2    := NULL,
-        in_arg16                VARCHAR2    := NULL,
-        in_arg17                VARCHAR2    := NULL,
-        in_arg18                VARCHAR2    := NULL,
-        in_arg19                VARCHAR2    := NULL,
-        in_arg20                VARCHAR2    := NULL,
-        in_payload              VARCHAR2    := NULL,
-        in_json_object          BOOLEAN     := FALSE
+        in_type                 CHAR,
+        in_message              VARCHAR2,
+        in_arguments            VARCHAR2,
+        in_payload              CLOB        := NULL,
+        in_context_id           NUMBER      := NULL,
+        in_caller               VARCHAR2    := NULL
     )
     RETURN NUMBER
     AS
-        PRAGMA AUTONOMOUS_TRANSACTION;
-        --
-        out_log_id              NUMBER;
-        --
-        v_message               VARCHAR2(32767);
-        v_arguments             VARCHAR2(32767);
-        v_callstack             VARCHAR2(32767);
-        v_backtrace             VARCHAR2(32767);
+        v_caller                VARCHAR2(256);
     BEGIN
-        -- gather usefull info:
-        --      app, page, user, session    | these should be covered by default
-        --      action_name                 | short and unique error message
-        --      module_name + line          | source of the error
-        --      arguments + payload         | arguments passed
-        --      error_backtrace             | cleaned error backtrace
-        --      callback                    | cleaned callstack
+        v_caller                := COALESCE(v_caller, core.get_caller_name(3, TRUE));       -- ....... VERIFY OFFSET + FROM APEX_HANDLER...
         --
-        -- in custom logger we would have multiple columns in log table
-        -- but to be able to use Logger or APEX logs, we have to concat these
-        --
-        v_message := COALESCE(in_action_name, SQLERRM) || '|' || core.get_caller_name(3, TRUE);
-
-        -- convert arguments to JSON list or object
-        v_arguments := CASE
-            WHEN in_json_object THEN
-                core.get_json_object (
-                    in_name01   => in_arg1,     in_value01  => in_arg2,
-                    in_name02   => in_arg3,     in_value02  => in_arg4,
-                    in_name03   => in_arg5,     in_value03  => in_arg6,
-                    in_name04   => in_arg7,     in_value04  => in_arg8,
-                    in_name05   => in_arg9,     in_value05  => in_arg10,
-                    in_name06   => in_arg11,    in_value06  => in_arg12,
-                    in_name07   => in_arg13,    in_value07  => in_arg14,
-                    in_name08   => in_arg15,    in_value08  => in_arg16,
-                    in_name09   => in_arg17,    in_value09  => in_arg18,
-                    in_name10   => in_arg19,    in_value10  => in_arg20
-                )
-            ELSE
-                core.get_json_list (
-                    in_arg1     => in_arg1,
-                    in_arg2     => in_arg2,
-                    in_arg3     => in_arg3,
-                    in_arg4     => in_arg4,
-                    in_arg5     => in_arg5,
-                    in_arg6     => in_arg6,
-                    in_arg7     => in_arg7,
-                    in_arg8     => in_arg8,
-                    in_arg9     => in_arg9,
-                    in_arg10    => in_arg10,
-                    in_arg11    => in_arg11,
-                    in_arg12    => in_arg12,
-                    in_arg13    => in_arg13,
-                    in_arg14    => in_arg14,
-                    in_arg15    => in_arg15,
-                    in_arg16    => in_arg16,
-                    in_arg17    => in_arg17,
-                    in_arg18    => in_arg18,
-                    in_arg19    => in_arg19,
-                    in_arg20    => in_arg20
-                )
-            END;
-
-        -- add error stack
-        IF SQLCODE != 0 THEN
-            v_backtrace := CHR(10) || '-- BACKTRACE:' || CHR(10) || core.get_shorter_stack(core.get_error_stack());
-        END IF;
-
-        -- add call stack
-        IF (SQLCODE != 0 OR in_action_type IN (flag_error, flag_warning, flag_module)) THEN
-            v_callstack := CHR(10) || '-- CALLSTACK:' || CHR(10) || core.get_shorter_stack(core.get_call_stack());
-        END IF;
-
-        -- skip empty logs
-        IF SQLCODE = 0 AND v_message LIKE 'ORA-0000: %' THEN
-            RETURN NULL;
-        END IF;
-
-        -- finally store the log
-        CASE in_action_type
+        RETURN core_custom.log__ (
+            in_type         => in_type,
+            in_message      => NVL(in_message, v_caller),
+            in_arguments    => in_arguments,
+            in_payload      => in_payload,
+            in_context_id   => in_context_id,
             --
-            -- @TODO: need a switch for APEX log, logger or custom logger
+            in_app_id       => core.get_app_id(),
+            in_page_id      => core.get_page_id(),
+            in_user_id      => core.get_user_id(),
+            in_session_id   => core.get_session_id(),
             --
-            WHEN flag_error THEN
-                core_custom.log_error (
-                    in_message      => v_message,
-                    in_arguments    => v_arguments,
-                    in_payload      => in_payload,
-                    in_backtrace    => v_backtrace,
-                    in_callstack    => v_callstack
-                );
-                --
-            WHEN flag_warning THEN
-                core_custom.log_warning (
-                    in_message      => v_message,
-                    in_arguments    => v_arguments,
-                    in_payload      => in_payload,
-                    in_backtrace    => v_backtrace,
-                    in_callstack    => v_callstack
-                );
-                --
-            WHEN flag_debug THEN
-                core_custom.log_debug (
-                    in_message      => v_message,
-                    in_arguments    => v_arguments,
-                    in_payload      => in_payload,
-                    in_backtrace    => v_backtrace,
-                    in_callstack    => v_callstack
-                );
-                --
-            WHEN flag_module THEN
-                core_custom.log_module (
-                    in_message      => v_message,
-                    in_arguments    => v_arguments,
-                    in_payload      => in_payload,
-                    in_backtrace    => v_backtrace,
-                    in_callstack    => v_callstack
-                );
-            ELSE
-                NULL;
-            END CASE;
+            in_caller       => v_caller,
+            in_backtrace    => CASE WHEN SQLCODE != 0 THEN core.get_shorter_stack(core.get_error_stack()) END,
+            in_callstack    => CASE WHEN (SQLCODE != 0 OR in_type IN (flag_error, flag_warning)) THEN core.get_shorter_stack(core.get_call_stack()) END
+        );
         --
-        COMMIT;
-        --
-        --out_log_id := APEX_DEBUG.GET_LAST_MESSAGE_ID();
-        --
-        RETURN out_log_id;
     EXCEPTION
     WHEN OTHERS THEN
-        COMMIT;         -- just this log call
-        --
         DBMS_OUTPUT.PUT_LINE('-- NOT LOGGED ERROR:');
         DBMS_OUTPUT.PUT_LINE(DBMS_UTILITY.FORMAT_ERROR_STACK);
         DBMS_OUTPUT.PUT_LINE(DBMS_UTILITY.FORMAT_ERROR_BACKTRACE);
@@ -2194,507 +2026,632 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
-    PROCEDURE log_error (
-        in_action_name          VARCHAR2    := NULL,
-        in_arg1                 VARCHAR2    := NULL,
-        in_arg2                 VARCHAR2    := NULL,
-        in_arg3                 VARCHAR2    := NULL,
-        in_arg4                 VARCHAR2    := NULL,
-        in_arg5                 VARCHAR2    := NULL,
-        in_arg6                 VARCHAR2    := NULL,
-        in_arg7                 VARCHAR2    := NULL,
-        in_arg8                 VARCHAR2    := NULL,
-        in_arg9                 VARCHAR2    := NULL,
-        in_arg10                VARCHAR2    := NULL,
-        in_arg11                VARCHAR2    := NULL,
-        in_arg12                VARCHAR2    := NULL,
-        in_arg13                VARCHAR2    := NULL,
-        in_arg14                VARCHAR2    := NULL,
-        in_arg15                VARCHAR2    := NULL,
-        in_arg16                VARCHAR2    := NULL,
-        in_arg17                VARCHAR2    := NULL,
-        in_arg18                VARCHAR2    := NULL,
-        in_arg19                VARCHAR2    := NULL,
-        in_arg20                VARCHAR2    := NULL,
-        in_payload              VARCHAR2    := NULL,
-        in_json_object          BOOLEAN     := FALSE
-    )
-    AS
-    BEGIN
-        core.log__ (
-            in_action_type      => core.flag_error,
-            in_action_name      => in_action_name,
-            in_arg1             => in_arg1,
-            in_arg2             => in_arg2,
-            in_arg3             => in_arg3,
-            in_arg4             => in_arg4,
-            in_arg5             => in_arg5,
-            in_arg6             => in_arg6,
-            in_arg7             => in_arg7,
-            in_arg8             => in_arg8,
-            in_arg9             => in_arg9,
-            in_arg10            => in_arg10,
-            in_arg11            => in_arg11,
-            in_arg12            => in_arg12,
-            in_arg13            => in_arg13,
-            in_arg14            => in_arg14,
-            in_arg15            => in_arg15,
-            in_arg16            => in_arg16,
-            in_arg17            => in_arg17,
-            in_arg18            => in_arg18,
-            in_arg19            => in_arg19,
-            in_arg20            => in_arg20,
-            in_payload          => in_payload,
-            in_json_object      => in_json_object
-        );
-    END;
-
-
-
     FUNCTION log_error (
-        in_action_name          VARCHAR2    := NULL,
-        in_arg1                 VARCHAR2    := NULL,
-        in_arg2                 VARCHAR2    := NULL,
-        in_arg3                 VARCHAR2    := NULL,
-        in_arg4                 VARCHAR2    := NULL,
-        in_arg5                 VARCHAR2    := NULL,
-        in_arg6                 VARCHAR2    := NULL,
-        in_arg7                 VARCHAR2    := NULL,
-        in_arg8                 VARCHAR2    := NULL,
-        in_arg9                 VARCHAR2    := NULL,
-        in_arg10                VARCHAR2    := NULL,
-        in_arg11                VARCHAR2    := NULL,
-        in_arg12                VARCHAR2    := NULL,
-        in_arg13                VARCHAR2    := NULL,
-        in_arg14                VARCHAR2    := NULL,
-        in_arg15                VARCHAR2    := NULL,
-        in_arg16                VARCHAR2    := NULL,
-        in_arg17                VARCHAR2    := NULL,
-        in_arg18                VARCHAR2    := NULL,
-        in_arg19                VARCHAR2    := NULL,
-        in_arg20                VARCHAR2    := NULL,
-        in_payload              VARCHAR2    := NULL,
-        in_json_object          BOOLEAN     := FALSE
+        in_name01               VARCHAR2    := NULL,            in_value01  VARCHAR2 := NULL,
+        in_name02               VARCHAR2    := NULL,            in_value02  VARCHAR2 := NULL,
+        in_name03               VARCHAR2    := NULL,            in_value03  VARCHAR2 := NULL,
+        in_name04               VARCHAR2    := NULL,            in_value04  VARCHAR2 := NULL,
+        in_name05               VARCHAR2    := NULL,            in_value05  VARCHAR2 := NULL,
+        in_name06               VARCHAR2    := NULL,            in_value06  VARCHAR2 := NULL,
+        in_name07               VARCHAR2    := NULL,            in_value07  VARCHAR2 := NULL,
+        in_name08               VARCHAR2    := NULL,            in_value08  VARCHAR2 := NULL,
+        in_name09               VARCHAR2    := NULL,            in_value09  VARCHAR2 := NULL,
+        in_name10               VARCHAR2    := NULL,            in_value10  VARCHAR2 := NULL,
+        in_name11               VARCHAR2    := NULL,            in_value11  VARCHAR2 := NULL,
+        in_name12               VARCHAR2    := NULL,            in_value12  VARCHAR2 := NULL,
+        in_name13               VARCHAR2    := NULL,            in_value13  VARCHAR2 := NULL,
+        in_name14               VARCHAR2    := NULL,            in_value14  VARCHAR2 := NULL,
+        in_name15               VARCHAR2    := NULL,            in_value15  VARCHAR2 := NULL,
+        in_name16               VARCHAR2    := NULL,            in_value16  VARCHAR2 := NULL,
+        in_name17               VARCHAR2    := NULL,            in_value17  VARCHAR2 := NULL,
+        in_name18               VARCHAR2    := NULL,            in_value18  VARCHAR2 := NULL,
+        in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
+        in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
+        --
+        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_payload              CLOB        := NULL,
+        in_args_as_list         BOOLEAN     := FALSE
     )
     RETURN NUMBER
     AS
+        v_arguments             VARCHAR2(32767);
     BEGIN
+        -- convert passed arguments
+        v_arguments := core.get_arguments (
+            in_name01       => in_name01,       in_value01  => in_value01,
+            in_name02       => in_name02,       in_value02  => in_value02,
+            in_name03       => in_name03,       in_value03  => in_value03,
+            in_name04       => in_name04,       in_value04  => in_value04,
+            in_name05       => in_name05,       in_value05  => in_value05,
+            in_name06       => in_name06,       in_value06  => in_value06,
+            in_name07       => in_name07,       in_value07  => in_value07,
+            in_name08       => in_name08,       in_value08  => in_value08,
+            in_name09       => in_name09,       in_value09  => in_value09,
+            in_name10       => in_name10,       in_value10  => in_value10,
+            in_name11       => in_name11,       in_value11  => in_value11,
+            in_name12       => in_name12,       in_value12  => in_value12,
+            in_name13       => in_name13,       in_value13  => in_value13,
+            in_name14       => in_name14,       in_value14  => in_value14,
+            in_name15       => in_name15,       in_value15  => in_value15,
+            in_name16       => in_name16,       in_value16  => in_value16,
+            in_name17       => in_name17,       in_value17  => in_value17,
+            in_name18       => in_name18,       in_value18  => in_value18,
+            in_name19       => in_name19,       in_value19  => in_value19,
+            in_name20       => in_name20,       in_value20  => in_value20,
+            in_args_as_list => in_args_as_list
+        );
+        --
         RETURN core.log__ (
-            in_action_type      => core.flag_error,
-            in_action_name      => in_action_name,
-            in_arg1             => in_arg1,
-            in_arg2             => in_arg2,
-            in_arg3             => in_arg3,
-            in_arg4             => in_arg4,
-            in_arg5             => in_arg5,
-            in_arg6             => in_arg6,
-            in_arg7             => in_arg7,
-            in_arg8             => in_arg8,
-            in_arg9             => in_arg9,
-            in_arg10            => in_arg10,
-            in_arg11            => in_arg11,
-            in_arg12            => in_arg12,
-            in_arg13            => in_arg13,
-            in_arg14            => in_arg14,
-            in_arg15            => in_arg15,
-            in_arg16            => in_arg16,
-            in_arg17            => in_arg17,
-            in_arg18            => in_arg18,
-            in_arg19            => in_arg19,
-            in_arg20            => in_arg20,
-            in_payload          => in_payload,
-            in_json_object      => in_json_object
+            in_type         => core.flag_error,
+            in_message      => NULL,
+            in_arguments    => v_arguments,
+            in_payload      => in_payload,
+            in_context_id   => in_context_id,
+            in_caller       => core.get_caller_name(3, TRUE)
         );
     END;
 
 
 
-    PROCEDURE log_warning (
-        in_action_name          VARCHAR2    := NULL,
-        in_arg1                 VARCHAR2    := NULL,
-        in_arg2                 VARCHAR2    := NULL,
-        in_arg3                 VARCHAR2    := NULL,
-        in_arg4                 VARCHAR2    := NULL,
-        in_arg5                 VARCHAR2    := NULL,
-        in_arg6                 VARCHAR2    := NULL,
-        in_arg7                 VARCHAR2    := NULL,
-        in_arg8                 VARCHAR2    := NULL,
-        in_arg9                 VARCHAR2    := NULL,
-        in_arg10                VARCHAR2    := NULL,
-        in_arg11                VARCHAR2    := NULL,
-        in_arg12                VARCHAR2    := NULL,
-        in_arg13                VARCHAR2    := NULL,
-        in_arg14                VARCHAR2    := NULL,
-        in_arg15                VARCHAR2    := NULL,
-        in_arg16                VARCHAR2    := NULL,
-        in_arg17                VARCHAR2    := NULL,
-        in_arg18                VARCHAR2    := NULL,
-        in_arg19                VARCHAR2    := NULL,
-        in_arg20                VARCHAR2    := NULL,
-        in_payload              VARCHAR2    := NULL,
-        in_json_object          BOOLEAN     := FALSE
+    PROCEDURE log_error (
+        in_name01               VARCHAR2    := NULL,            in_value01  VARCHAR2 := NULL,
+        in_name02               VARCHAR2    := NULL,            in_value02  VARCHAR2 := NULL,
+        in_name03               VARCHAR2    := NULL,            in_value03  VARCHAR2 := NULL,
+        in_name04               VARCHAR2    := NULL,            in_value04  VARCHAR2 := NULL,
+        in_name05               VARCHAR2    := NULL,            in_value05  VARCHAR2 := NULL,
+        in_name06               VARCHAR2    := NULL,            in_value06  VARCHAR2 := NULL,
+        in_name07               VARCHAR2    := NULL,            in_value07  VARCHAR2 := NULL,
+        in_name08               VARCHAR2    := NULL,            in_value08  VARCHAR2 := NULL,
+        in_name09               VARCHAR2    := NULL,            in_value09  VARCHAR2 := NULL,
+        in_name10               VARCHAR2    := NULL,            in_value10  VARCHAR2 := NULL,
+        in_name11               VARCHAR2    := NULL,            in_value11  VARCHAR2 := NULL,
+        in_name12               VARCHAR2    := NULL,            in_value12  VARCHAR2 := NULL,
+        in_name13               VARCHAR2    := NULL,            in_value13  VARCHAR2 := NULL,
+        in_name14               VARCHAR2    := NULL,            in_value14  VARCHAR2 := NULL,
+        in_name15               VARCHAR2    := NULL,            in_value15  VARCHAR2 := NULL,
+        in_name16               VARCHAR2    := NULL,            in_value16  VARCHAR2 := NULL,
+        in_name17               VARCHAR2    := NULL,            in_value17  VARCHAR2 := NULL,
+        in_name18               VARCHAR2    := NULL,            in_value18  VARCHAR2 := NULL,
+        in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
+        in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
+        --
+        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_payload              CLOB        := NULL,
+        in_args_as_list         BOOLEAN     := FALSE
     )
     AS
+        v_id NUMBER;
     BEGIN
-        core.log__ (
-            in_action_type      => core.flag_warning,
-            in_action_name      => in_action_name,
-            in_arg1             => in_arg1,
-            in_arg2             => in_arg2,
-            in_arg3             => in_arg3,
-            in_arg4             => in_arg4,
-            in_arg5             => in_arg5,
-            in_arg6             => in_arg6,
-            in_arg7             => in_arg7,
-            in_arg8             => in_arg8,
-            in_arg9             => in_arg9,
-            in_arg10            => in_arg10,
-            in_arg11            => in_arg11,
-            in_arg12            => in_arg12,
-            in_arg13            => in_arg13,
-            in_arg14            => in_arg14,
-            in_arg15            => in_arg15,
-            in_arg16            => in_arg16,
-            in_arg17            => in_arg17,
-            in_arg18            => in_arg18,
-            in_arg19            => in_arg19,
-            in_arg20            => in_arg20,
-            in_payload          => in_payload,
-            in_json_object      => in_json_object
+        v_id := core.log_error (
+            in_name01       => in_name01,       in_value01  => in_value01,
+            in_name02       => in_name02,       in_value02  => in_value02,
+            in_name03       => in_name03,       in_value03  => in_value03,
+            in_name04       => in_name04,       in_value04  => in_value04,
+            in_name05       => in_name05,       in_value05  => in_value05,
+            in_name06       => in_name06,       in_value06  => in_value06,
+            in_name07       => in_name07,       in_value07  => in_value07,
+            in_name08       => in_name08,       in_value08  => in_value08,
+            in_name09       => in_name09,       in_value09  => in_value09,
+            in_name10       => in_name10,       in_value10  => in_value10,
+            in_name11       => in_name11,       in_value11  => in_value11,
+            in_name12       => in_name12,       in_value12  => in_value12,
+            in_name13       => in_name13,       in_value13  => in_value13,
+            in_name14       => in_name14,       in_value14  => in_value14,
+            in_name15       => in_name15,       in_value15  => in_value15,
+            in_name16       => in_name16,       in_value16  => in_value16,
+            in_name17       => in_name17,       in_value17  => in_value17,
+            in_name18       => in_name18,       in_value18  => in_value18,
+            in_name19       => in_name19,       in_value19  => in_value19,
+            in_name20       => in_name20,       in_value20  => in_value20,
+            --
+            in_context_id   => in_context_id,
+            in_payload      => in_payload,
+            in_args_as_list => in_args_as_list
         );
     END;
 
 
 
     FUNCTION log_warning (
-        in_action_name          VARCHAR2    := NULL,
-        in_arg1                 VARCHAR2    := NULL,
-        in_arg2                 VARCHAR2    := NULL,
-        in_arg3                 VARCHAR2    := NULL,
-        in_arg4                 VARCHAR2    := NULL,
-        in_arg5                 VARCHAR2    := NULL,
-        in_arg6                 VARCHAR2    := NULL,
-        in_arg7                 VARCHAR2    := NULL,
-        in_arg8                 VARCHAR2    := NULL,
-        in_arg9                 VARCHAR2    := NULL,
-        in_arg10                VARCHAR2    := NULL,
-        in_arg11                VARCHAR2    := NULL,
-        in_arg12                VARCHAR2    := NULL,
-        in_arg13                VARCHAR2    := NULL,
-        in_arg14                VARCHAR2    := NULL,
-        in_arg15                VARCHAR2    := NULL,
-        in_arg16                VARCHAR2    := NULL,
-        in_arg17                VARCHAR2    := NULL,
-        in_arg18                VARCHAR2    := NULL,
-        in_arg19                VARCHAR2    := NULL,
-        in_arg20                VARCHAR2    := NULL,
-        in_payload              VARCHAR2    := NULL,
-        in_json_object          BOOLEAN     := FALSE
+        in_name01               VARCHAR2    := NULL,            in_value01  VARCHAR2 := NULL,
+        in_name02               VARCHAR2    := NULL,            in_value02  VARCHAR2 := NULL,
+        in_name03               VARCHAR2    := NULL,            in_value03  VARCHAR2 := NULL,
+        in_name04               VARCHAR2    := NULL,            in_value04  VARCHAR2 := NULL,
+        in_name05               VARCHAR2    := NULL,            in_value05  VARCHAR2 := NULL,
+        in_name06               VARCHAR2    := NULL,            in_value06  VARCHAR2 := NULL,
+        in_name07               VARCHAR2    := NULL,            in_value07  VARCHAR2 := NULL,
+        in_name08               VARCHAR2    := NULL,            in_value08  VARCHAR2 := NULL,
+        in_name09               VARCHAR2    := NULL,            in_value09  VARCHAR2 := NULL,
+        in_name10               VARCHAR2    := NULL,            in_value10  VARCHAR2 := NULL,
+        in_name11               VARCHAR2    := NULL,            in_value11  VARCHAR2 := NULL,
+        in_name12               VARCHAR2    := NULL,            in_value12  VARCHAR2 := NULL,
+        in_name13               VARCHAR2    := NULL,            in_value13  VARCHAR2 := NULL,
+        in_name14               VARCHAR2    := NULL,            in_value14  VARCHAR2 := NULL,
+        in_name15               VARCHAR2    := NULL,            in_value15  VARCHAR2 := NULL,
+        in_name16               VARCHAR2    := NULL,            in_value16  VARCHAR2 := NULL,
+        in_name17               VARCHAR2    := NULL,            in_value17  VARCHAR2 := NULL,
+        in_name18               VARCHAR2    := NULL,            in_value18  VARCHAR2 := NULL,
+        in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
+        in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
+        --
+        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_payload              CLOB        := NULL,
+        in_args_as_list         BOOLEAN     := FALSE
     )
     RETURN NUMBER
     AS
+        v_arguments             VARCHAR2(32767);
     BEGIN
+        -- convert passed arguments
+        v_arguments := core.get_arguments (
+            in_name01       => in_name01,       in_value01  => in_value01,
+            in_name02       => in_name02,       in_value02  => in_value02,
+            in_name03       => in_name03,       in_value03  => in_value03,
+            in_name04       => in_name04,       in_value04  => in_value04,
+            in_name05       => in_name05,       in_value05  => in_value05,
+            in_name06       => in_name06,       in_value06  => in_value06,
+            in_name07       => in_name07,       in_value07  => in_value07,
+            in_name08       => in_name08,       in_value08  => in_value08,
+            in_name09       => in_name09,       in_value09  => in_value09,
+            in_name10       => in_name10,       in_value10  => in_value10,
+            in_name11       => in_name11,       in_value11  => in_value11,
+            in_name12       => in_name12,       in_value12  => in_value12,
+            in_name13       => in_name13,       in_value13  => in_value13,
+            in_name14       => in_name14,       in_value14  => in_value14,
+            in_name15       => in_name15,       in_value15  => in_value15,
+            in_name16       => in_name16,       in_value16  => in_value16,
+            in_name17       => in_name17,       in_value17  => in_value17,
+            in_name18       => in_name18,       in_value18  => in_value18,
+            in_name19       => in_name19,       in_value19  => in_value19,
+            in_name20       => in_name20,       in_value20  => in_value20,
+            in_args_as_list => in_args_as_list
+        );
+        --
         RETURN core.log__ (
-            in_action_type      => core.flag_warning,
-            in_action_name      => in_action_name,
-            in_arg1             => in_arg1,
-            in_arg2             => in_arg2,
-            in_arg3             => in_arg3,
-            in_arg4             => in_arg4,
-            in_arg5             => in_arg5,
-            in_arg6             => in_arg6,
-            in_arg7             => in_arg7,
-            in_arg8             => in_arg8,
-            in_arg9             => in_arg9,
-            in_arg10            => in_arg10,
-            in_arg11            => in_arg11,
-            in_arg12            => in_arg12,
-            in_arg13            => in_arg13,
-            in_arg14            => in_arg14,
-            in_arg15            => in_arg15,
-            in_arg16            => in_arg16,
-            in_arg17            => in_arg17,
-            in_arg18            => in_arg18,
-            in_arg19            => in_arg19,
-            in_arg20            => in_arg20,
-            in_payload          => in_payload,
-            in_json_object      => in_json_object
+            in_type         => core.flag_warning,
+            in_message      => NULL,
+            in_arguments    => v_arguments,
+            in_payload      => in_payload,
+            in_context_id   => in_context_id,
+            in_caller       => core.get_caller_name(3, TRUE)
         );
     END;
 
 
 
-    PROCEDURE log_debug (
-        in_action_name          VARCHAR2    := NULL,
-        in_arg1                 VARCHAR2    := NULL,
-        in_arg2                 VARCHAR2    := NULL,
-        in_arg3                 VARCHAR2    := NULL,
-        in_arg4                 VARCHAR2    := NULL,
-        in_arg5                 VARCHAR2    := NULL,
-        in_arg6                 VARCHAR2    := NULL,
-        in_arg7                 VARCHAR2    := NULL,
-        in_arg8                 VARCHAR2    := NULL,
-        in_arg9                 VARCHAR2    := NULL,
-        in_arg10                VARCHAR2    := NULL,
-        in_arg11                VARCHAR2    := NULL,
-        in_arg12                VARCHAR2    := NULL,
-        in_arg13                VARCHAR2    := NULL,
-        in_arg14                VARCHAR2    := NULL,
-        in_arg15                VARCHAR2    := NULL,
-        in_arg16                VARCHAR2    := NULL,
-        in_arg17                VARCHAR2    := NULL,
-        in_arg18                VARCHAR2    := NULL,
-        in_arg19                VARCHAR2    := NULL,
-        in_arg20                VARCHAR2    := NULL,
-        in_payload              VARCHAR2    := NULL,
-        in_json_object          BOOLEAN     := FALSE
+    PROCEDURE log_warning (
+        in_name01               VARCHAR2    := NULL,            in_value01  VARCHAR2 := NULL,
+        in_name02               VARCHAR2    := NULL,            in_value02  VARCHAR2 := NULL,
+        in_name03               VARCHAR2    := NULL,            in_value03  VARCHAR2 := NULL,
+        in_name04               VARCHAR2    := NULL,            in_value04  VARCHAR2 := NULL,
+        in_name05               VARCHAR2    := NULL,            in_value05  VARCHAR2 := NULL,
+        in_name06               VARCHAR2    := NULL,            in_value06  VARCHAR2 := NULL,
+        in_name07               VARCHAR2    := NULL,            in_value07  VARCHAR2 := NULL,
+        in_name08               VARCHAR2    := NULL,            in_value08  VARCHAR2 := NULL,
+        in_name09               VARCHAR2    := NULL,            in_value09  VARCHAR2 := NULL,
+        in_name10               VARCHAR2    := NULL,            in_value10  VARCHAR2 := NULL,
+        in_name11               VARCHAR2    := NULL,            in_value11  VARCHAR2 := NULL,
+        in_name12               VARCHAR2    := NULL,            in_value12  VARCHAR2 := NULL,
+        in_name13               VARCHAR2    := NULL,            in_value13  VARCHAR2 := NULL,
+        in_name14               VARCHAR2    := NULL,            in_value14  VARCHAR2 := NULL,
+        in_name15               VARCHAR2    := NULL,            in_value15  VARCHAR2 := NULL,
+        in_name16               VARCHAR2    := NULL,            in_value16  VARCHAR2 := NULL,
+        in_name17               VARCHAR2    := NULL,            in_value17  VARCHAR2 := NULL,
+        in_name18               VARCHAR2    := NULL,            in_value18  VARCHAR2 := NULL,
+        in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
+        in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
+        --
+        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_payload              CLOB        := NULL,
+        in_args_as_list         BOOLEAN     := FALSE
     )
     AS
+        v_id NUMBER;
     BEGIN
-        core.log__ (
-            in_action_type      => core.flag_debug,
-            in_action_name      => in_action_name,
-            in_arg1             => in_arg1,
-            in_arg2             => in_arg2,
-            in_arg3             => in_arg3,
-            in_arg4             => in_arg4,
-            in_arg5             => in_arg5,
-            in_arg6             => in_arg6,
-            in_arg7             => in_arg7,
-            in_arg8             => in_arg8,
-            in_arg9             => in_arg9,
-            in_arg10            => in_arg10,
-            in_arg11            => in_arg11,
-            in_arg12            => in_arg12,
-            in_arg13            => in_arg13,
-            in_arg14            => in_arg14,
-            in_arg15            => in_arg15,
-            in_arg16            => in_arg16,
-            in_arg17            => in_arg17,
-            in_arg18            => in_arg18,
-            in_arg19            => in_arg19,
-            in_arg20            => in_arg20,
-            in_payload          => in_payload,
-            in_json_object      => in_json_object
+        v_id := core.log_warning (
+            in_name01       => in_name01,       in_value01  => in_value01,
+            in_name02       => in_name02,       in_value02  => in_value02,
+            in_name03       => in_name03,       in_value03  => in_value03,
+            in_name04       => in_name04,       in_value04  => in_value04,
+            in_name05       => in_name05,       in_value05  => in_value05,
+            in_name06       => in_name06,       in_value06  => in_value06,
+            in_name07       => in_name07,       in_value07  => in_value07,
+            in_name08       => in_name08,       in_value08  => in_value08,
+            in_name09       => in_name09,       in_value09  => in_value09,
+            in_name10       => in_name10,       in_value10  => in_value10,
+            in_name11       => in_name11,       in_value11  => in_value11,
+            in_name12       => in_name12,       in_value12  => in_value12,
+            in_name13       => in_name13,       in_value13  => in_value13,
+            in_name14       => in_name14,       in_value14  => in_value14,
+            in_name15       => in_name15,       in_value15  => in_value15,
+            in_name16       => in_name16,       in_value16  => in_value16,
+            in_name17       => in_name17,       in_value17  => in_value17,
+            in_name18       => in_name18,       in_value18  => in_value18,
+            in_name19       => in_name19,       in_value19  => in_value19,
+            in_name20       => in_name20,       in_value20  => in_value20,
+            --
+            in_context_id   => in_context_id,
+            in_payload      => in_payload,
+            in_args_as_list => in_args_as_list
         );
     END;
 
 
 
     FUNCTION log_debug (
-        in_action_name          VARCHAR2    := NULL,
-        in_arg1                 VARCHAR2    := NULL,
-        in_arg2                 VARCHAR2    := NULL,
-        in_arg3                 VARCHAR2    := NULL,
-        in_arg4                 VARCHAR2    := NULL,
-        in_arg5                 VARCHAR2    := NULL,
-        in_arg6                 VARCHAR2    := NULL,
-        in_arg7                 VARCHAR2    := NULL,
-        in_arg8                 VARCHAR2    := NULL,
-        in_arg9                 VARCHAR2    := NULL,
-        in_arg10                VARCHAR2    := NULL,
-        in_arg11                VARCHAR2    := NULL,
-        in_arg12                VARCHAR2    := NULL,
-        in_arg13                VARCHAR2    := NULL,
-        in_arg14                VARCHAR2    := NULL,
-        in_arg15                VARCHAR2    := NULL,
-        in_arg16                VARCHAR2    := NULL,
-        in_arg17                VARCHAR2    := NULL,
-        in_arg18                VARCHAR2    := NULL,
-        in_arg19                VARCHAR2    := NULL,
-        in_arg20                VARCHAR2    := NULL,
-        in_payload              VARCHAR2    := NULL,
-        in_json_object          BOOLEAN     := FALSE
+        in_name01               VARCHAR2    := NULL,            in_value01  VARCHAR2 := NULL,
+        in_name02               VARCHAR2    := NULL,            in_value02  VARCHAR2 := NULL,
+        in_name03               VARCHAR2    := NULL,            in_value03  VARCHAR2 := NULL,
+        in_name04               VARCHAR2    := NULL,            in_value04  VARCHAR2 := NULL,
+        in_name05               VARCHAR2    := NULL,            in_value05  VARCHAR2 := NULL,
+        in_name06               VARCHAR2    := NULL,            in_value06  VARCHAR2 := NULL,
+        in_name07               VARCHAR2    := NULL,            in_value07  VARCHAR2 := NULL,
+        in_name08               VARCHAR2    := NULL,            in_value08  VARCHAR2 := NULL,
+        in_name09               VARCHAR2    := NULL,            in_value09  VARCHAR2 := NULL,
+        in_name10               VARCHAR2    := NULL,            in_value10  VARCHAR2 := NULL,
+        in_name11               VARCHAR2    := NULL,            in_value11  VARCHAR2 := NULL,
+        in_name12               VARCHAR2    := NULL,            in_value12  VARCHAR2 := NULL,
+        in_name13               VARCHAR2    := NULL,            in_value13  VARCHAR2 := NULL,
+        in_name14               VARCHAR2    := NULL,            in_value14  VARCHAR2 := NULL,
+        in_name15               VARCHAR2    := NULL,            in_value15  VARCHAR2 := NULL,
+        in_name16               VARCHAR2    := NULL,            in_value16  VARCHAR2 := NULL,
+        in_name17               VARCHAR2    := NULL,            in_value17  VARCHAR2 := NULL,
+        in_name18               VARCHAR2    := NULL,            in_value18  VARCHAR2 := NULL,
+        in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
+        in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
+        --
+        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_payload              CLOB        := NULL,
+        in_args_as_list         BOOLEAN     := FALSE
     )
     RETURN NUMBER
     AS
+        v_arguments             VARCHAR2(32767);
     BEGIN
+        -- convert passed arguments
+        v_arguments := core.get_arguments (
+            in_name01       => in_name01,       in_value01  => in_value01,
+            in_name02       => in_name02,       in_value02  => in_value02,
+            in_name03       => in_name03,       in_value03  => in_value03,
+            in_name04       => in_name04,       in_value04  => in_value04,
+            in_name05       => in_name05,       in_value05  => in_value05,
+            in_name06       => in_name06,       in_value06  => in_value06,
+            in_name07       => in_name07,       in_value07  => in_value07,
+            in_name08       => in_name08,       in_value08  => in_value08,
+            in_name09       => in_name09,       in_value09  => in_value09,
+            in_name10       => in_name10,       in_value10  => in_value10,
+            in_name11       => in_name11,       in_value11  => in_value11,
+            in_name12       => in_name12,       in_value12  => in_value12,
+            in_name13       => in_name13,       in_value13  => in_value13,
+            in_name14       => in_name14,       in_value14  => in_value14,
+            in_name15       => in_name15,       in_value15  => in_value15,
+            in_name16       => in_name16,       in_value16  => in_value16,
+            in_name17       => in_name17,       in_value17  => in_value17,
+            in_name18       => in_name18,       in_value18  => in_value18,
+            in_name19       => in_name19,       in_value19  => in_value19,
+            in_name20       => in_name20,       in_value20  => in_value20,
+            in_args_as_list => in_args_as_list
+        );
+        --
         RETURN core.log__ (
-            in_action_type      => core.flag_debug,
-            in_action_name      => in_action_name,
-            in_arg1             => in_arg1,
-            in_arg2             => in_arg2,
-            in_arg3             => in_arg3,
-            in_arg4             => in_arg4,
-            in_arg5             => in_arg5,
-            in_arg6             => in_arg6,
-            in_arg7             => in_arg7,
-            in_arg8             => in_arg8,
-            in_arg9             => in_arg9,
-            in_arg10            => in_arg10,
-            in_arg11            => in_arg11,
-            in_arg12            => in_arg12,
-            in_arg13            => in_arg13,
-            in_arg14            => in_arg14,
-            in_arg15            => in_arg15,
-            in_arg16            => in_arg16,
-            in_arg17            => in_arg17,
-            in_arg18            => in_arg18,
-            in_arg19            => in_arg19,
-            in_arg20            => in_arg20,
-            in_payload          => in_payload,
-            in_json_object      => in_json_object
+            in_type         => core.flag_debug,
+            in_message      => NULL,
+            in_arguments    => v_arguments,
+            in_payload      => in_payload,
+            in_context_id   => in_context_id,
+            in_caller       => core.get_caller_name(3, TRUE)
         );
     END;
 
 
 
-    PROCEDURE log_request
-    AS
-        v_args                  VARCHAR2(32767);
-    BEGIN
-        -- parse arguments
-        v_args := core.get_request_url(in_arguments_only => TRUE);
+    PROCEDURE log_debug (
+        in_name01               VARCHAR2    := NULL,            in_value01  VARCHAR2 := NULL,
+        in_name02               VARCHAR2    := NULL,            in_value02  VARCHAR2 := NULL,
+        in_name03               VARCHAR2    := NULL,            in_value03  VARCHAR2 := NULL,
+        in_name04               VARCHAR2    := NULL,            in_value04  VARCHAR2 := NULL,
+        in_name05               VARCHAR2    := NULL,            in_value05  VARCHAR2 := NULL,
+        in_name06               VARCHAR2    := NULL,            in_value06  VARCHAR2 := NULL,
+        in_name07               VARCHAR2    := NULL,            in_value07  VARCHAR2 := NULL,
+        in_name08               VARCHAR2    := NULL,            in_value08  VARCHAR2 := NULL,
+        in_name09               VARCHAR2    := NULL,            in_value09  VARCHAR2 := NULL,
+        in_name10               VARCHAR2    := NULL,            in_value10  VARCHAR2 := NULL,
+        in_name11               VARCHAR2    := NULL,            in_value11  VARCHAR2 := NULL,
+        in_name12               VARCHAR2    := NULL,            in_value12  VARCHAR2 := NULL,
+        in_name13               VARCHAR2    := NULL,            in_value13  VARCHAR2 := NULL,
+        in_name14               VARCHAR2    := NULL,            in_value14  VARCHAR2 := NULL,
+        in_name15               VARCHAR2    := NULL,            in_value15  VARCHAR2 := NULL,
+        in_name16               VARCHAR2    := NULL,            in_value16  VARCHAR2 := NULL,
+        in_name17               VARCHAR2    := NULL,            in_value17  VARCHAR2 := NULL,
+        in_name18               VARCHAR2    := NULL,            in_value18  VARCHAR2 := NULL,
+        in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
+        in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        IF v_args IS NOT NULL THEN
-            BEGIN
-                SELECT JSON_OBJECTAGG (
-                    REGEXP_REPLACE(REGEXP_SUBSTR(v_args, '[^&]+', 1, LEVEL), '[=].*$', '')
-                    VALUE REGEXP_REPLACE(REGEXP_SUBSTR(v_args, '[^&]+', 1, LEVEL), '^[^=]+[=]', '')
-                )
-                INTO v_args
-                FROM DUAL
-                CONNECT BY LEVEL <= REGEXP_COUNT(v_args, '&') + 1
-                ORDER BY LEVEL;
-            EXCEPTION
-            WHEN OTHERS THEN
-                core.log_error('JSON_ERROR', v_args);
-            END;
-        END IF;
-        --
-        core.log_debug (
-            in_action_name      => 'REQUEST',
-            in_arg1             => v_args,
-            in_arg2             => core.get_request()
-        );
-    END;
-
-
-
-    PROCEDURE log_module (
-        in_action_name          VARCHAR2    := NULL,
-        in_arg1                 VARCHAR2    := NULL,
-        in_arg2                 VARCHAR2    := NULL,
-        in_arg3                 VARCHAR2    := NULL,
-        in_arg4                 VARCHAR2    := NULL,
-        in_arg5                 VARCHAR2    := NULL,
-        in_arg6                 VARCHAR2    := NULL,
-        in_arg7                 VARCHAR2    := NULL,
-        in_arg8                 VARCHAR2    := NULL,
-        in_arg9                 VARCHAR2    := NULL,
-        in_arg10                VARCHAR2    := NULL,
-        in_arg11                VARCHAR2    := NULL,
-        in_arg12                VARCHAR2    := NULL,
-        in_arg13                VARCHAR2    := NULL,
-        in_arg14                VARCHAR2    := NULL,
-        in_arg15                VARCHAR2    := NULL,
-        in_arg16                VARCHAR2    := NULL,
-        in_arg17                VARCHAR2    := NULL,
-        in_arg18                VARCHAR2    := NULL,
-        in_arg19                VARCHAR2    := NULL,
-        in_arg20                VARCHAR2    := NULL,
-        in_payload              VARCHAR2    := NULL,
-        in_json_object          BOOLEAN     := FALSE
+        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_payload              CLOB        := NULL,
+        in_args_as_list         BOOLEAN     := FALSE
     )
     AS
+        v_id NUMBER;
     BEGIN
-        core.log__ (
-            in_action_type      => core.flag_module,
-            in_action_name      => in_action_name,
-            in_arg1             => in_arg1,
-            in_arg2             => in_arg2,
-            in_arg3             => in_arg3,
-            in_arg4             => in_arg4,
-            in_arg5             => in_arg5,
-            in_arg6             => in_arg6,
-            in_arg7             => in_arg7,
-            in_arg8             => in_arg8,
-            in_arg9             => in_arg9,
-            in_arg10            => in_arg10,
-            in_arg11            => in_arg11,
-            in_arg12            => in_arg12,
-            in_arg13            => in_arg13,
-            in_arg14            => in_arg14,
-            in_arg15            => in_arg15,
-            in_arg16            => in_arg16,
-            in_arg17            => in_arg17,
-            in_arg18            => in_arg18,
-            in_arg19            => in_arg19,
-            in_arg20            => in_arg20,
-            in_payload          => in_payload,
-            in_json_object      => in_json_object
+        v_id := core.log_debug (
+            in_name01       => in_name01,       in_value01  => in_value01,
+            in_name02       => in_name02,       in_value02  => in_value02,
+            in_name03       => in_name03,       in_value03  => in_value03,
+            in_name04       => in_name04,       in_value04  => in_value04,
+            in_name05       => in_name05,       in_value05  => in_value05,
+            in_name06       => in_name06,       in_value06  => in_value06,
+            in_name07       => in_name07,       in_value07  => in_value07,
+            in_name08       => in_name08,       in_value08  => in_value08,
+            in_name09       => in_name09,       in_value09  => in_value09,
+            in_name10       => in_name10,       in_value10  => in_value10,
+            in_name11       => in_name11,       in_value11  => in_value11,
+            in_name12       => in_name12,       in_value12  => in_value12,
+            in_name13       => in_name13,       in_value13  => in_value13,
+            in_name14       => in_name14,       in_value14  => in_value14,
+            in_name15       => in_name15,       in_value15  => in_value15,
+            in_name16       => in_name16,       in_value16  => in_value16,
+            in_name17       => in_name17,       in_value17  => in_value17,
+            in_name18       => in_name18,       in_value18  => in_value18,
+            in_name19       => in_name19,       in_value19  => in_value19,
+            in_name20       => in_name20,       in_value20  => in_value20,
+            --
+            in_context_id   => in_context_id,
+            in_payload      => in_payload,
+            in_args_as_list => in_args_as_list
         );
     END;
 
 
 
-    FUNCTION log_module (
-        in_action_name          VARCHAR2    := NULL,
-        in_arg1                 VARCHAR2    := NULL,
-        in_arg2                 VARCHAR2    := NULL,
-        in_arg3                 VARCHAR2    := NULL,
-        in_arg4                 VARCHAR2    := NULL,
-        in_arg5                 VARCHAR2    := NULL,
-        in_arg6                 VARCHAR2    := NULL,
-        in_arg7                 VARCHAR2    := NULL,
-        in_arg8                 VARCHAR2    := NULL,
-        in_arg9                 VARCHAR2    := NULL,
-        in_arg10                VARCHAR2    := NULL,
-        in_arg11                VARCHAR2    := NULL,
-        in_arg12                VARCHAR2    := NULL,
-        in_arg13                VARCHAR2    := NULL,
-        in_arg14                VARCHAR2    := NULL,
-        in_arg15                VARCHAR2    := NULL,
-        in_arg16                VARCHAR2    := NULL,
-        in_arg17                VARCHAR2    := NULL,
-        in_arg18                VARCHAR2    := NULL,
-        in_arg19                VARCHAR2    := NULL,
-        in_arg20                VARCHAR2    := NULL,
-        in_payload              VARCHAR2    := NULL,
-        in_json_object          BOOLEAN     := FALSE
+    FUNCTION log_start (
+        in_name01               VARCHAR2    := NULL,            in_value01  VARCHAR2 := NULL,
+        in_name02               VARCHAR2    := NULL,            in_value02  VARCHAR2 := NULL,
+        in_name03               VARCHAR2    := NULL,            in_value03  VARCHAR2 := NULL,
+        in_name04               VARCHAR2    := NULL,            in_value04  VARCHAR2 := NULL,
+        in_name05               VARCHAR2    := NULL,            in_value05  VARCHAR2 := NULL,
+        in_name06               VARCHAR2    := NULL,            in_value06  VARCHAR2 := NULL,
+        in_name07               VARCHAR2    := NULL,            in_value07  VARCHAR2 := NULL,
+        in_name08               VARCHAR2    := NULL,            in_value08  VARCHAR2 := NULL,
+        in_name09               VARCHAR2    := NULL,            in_value09  VARCHAR2 := NULL,
+        in_name10               VARCHAR2    := NULL,            in_value10  VARCHAR2 := NULL,
+        in_name11               VARCHAR2    := NULL,            in_value11  VARCHAR2 := NULL,
+        in_name12               VARCHAR2    := NULL,            in_value12  VARCHAR2 := NULL,
+        in_name13               VARCHAR2    := NULL,            in_value13  VARCHAR2 := NULL,
+        in_name14               VARCHAR2    := NULL,            in_value14  VARCHAR2 := NULL,
+        in_name15               VARCHAR2    := NULL,            in_value15  VARCHAR2 := NULL,
+        in_name16               VARCHAR2    := NULL,            in_value16  VARCHAR2 := NULL,
+        in_name17               VARCHAR2    := NULL,            in_value17  VARCHAR2 := NULL,
+        in_name18               VARCHAR2    := NULL,            in_value18  VARCHAR2 := NULL,
+        in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
+        in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
+        --
+        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_payload              CLOB        := NULL,
+        in_args_as_list         BOOLEAN     := FALSE
     )
     RETURN NUMBER
     AS
+        v_arguments             VARCHAR2(32767);
     BEGIN
+        -- convert passed arguments
+        v_arguments := core.get_arguments (
+            in_name01       => in_name01,       in_value01  => in_value01,
+            in_name02       => in_name02,       in_value02  => in_value02,
+            in_name03       => in_name03,       in_value03  => in_value03,
+            in_name04       => in_name04,       in_value04  => in_value04,
+            in_name05       => in_name05,       in_value05  => in_value05,
+            in_name06       => in_name06,       in_value06  => in_value06,
+            in_name07       => in_name07,       in_value07  => in_value07,
+            in_name08       => in_name08,       in_value08  => in_value08,
+            in_name09       => in_name09,       in_value09  => in_value09,
+            in_name10       => in_name10,       in_value10  => in_value10,
+            in_name11       => in_name11,       in_value11  => in_value11,
+            in_name12       => in_name12,       in_value12  => in_value12,
+            in_name13       => in_name13,       in_value13  => in_value13,
+            in_name14       => in_name14,       in_value14  => in_value14,
+            in_name15       => in_name15,       in_value15  => in_value15,
+            in_name16       => in_name16,       in_value16  => in_value16,
+            in_name17       => in_name17,       in_value17  => in_value17,
+            in_name18       => in_name18,       in_value18  => in_value18,
+            in_name19       => in_name19,       in_value19  => in_value19,
+            in_name20       => in_name20,       in_value20  => in_value20,
+            in_args_as_list => in_args_as_list
+        );
+        --
         RETURN core.log__ (
-            in_action_type      => core.flag_module,
-            in_action_name      => in_action_name,
-            in_arg1             => in_arg1,
-            in_arg2             => in_arg2,
-            in_arg3             => in_arg3,
-            in_arg4             => in_arg4,
-            in_arg5             => in_arg5,
-            in_arg6             => in_arg6,
-            in_arg7             => in_arg7,
-            in_arg8             => in_arg8,
-            in_arg9             => in_arg9,
-            in_arg10            => in_arg10,
-            in_arg11            => in_arg11,
-            in_arg12            => in_arg12,
-            in_arg13            => in_arg13,
-            in_arg14            => in_arg14,
-            in_arg15            => in_arg15,
-            in_arg16            => in_arg16,
-            in_arg17            => in_arg17,
-            in_arg18            => in_arg18,
-            in_arg19            => in_arg19,
-            in_arg20            => in_arg20,
-            in_payload          => in_payload,
-            in_json_object      => in_json_object
+            in_type         => core.flag_start,
+            in_message      => NULL,
+            in_arguments    => v_arguments,
+            in_payload      => in_payload,
+            in_context_id   => in_context_id,
+            in_caller       => core.get_caller_name(3, TRUE)
         );
     END;
 
 
 
-    PROCEDURE log_success (
-        in_log_id               NUMBER
+    PROCEDURE log_start (
+        in_name01               VARCHAR2    := NULL,            in_value01  VARCHAR2 := NULL,
+        in_name02               VARCHAR2    := NULL,            in_value02  VARCHAR2 := NULL,
+        in_name03               VARCHAR2    := NULL,            in_value03  VARCHAR2 := NULL,
+        in_name04               VARCHAR2    := NULL,            in_value04  VARCHAR2 := NULL,
+        in_name05               VARCHAR2    := NULL,            in_value05  VARCHAR2 := NULL,
+        in_name06               VARCHAR2    := NULL,            in_value06  VARCHAR2 := NULL,
+        in_name07               VARCHAR2    := NULL,            in_value07  VARCHAR2 := NULL,
+        in_name08               VARCHAR2    := NULL,            in_value08  VARCHAR2 := NULL,
+        in_name09               VARCHAR2    := NULL,            in_value09  VARCHAR2 := NULL,
+        in_name10               VARCHAR2    := NULL,            in_value10  VARCHAR2 := NULL,
+        in_name11               VARCHAR2    := NULL,            in_value11  VARCHAR2 := NULL,
+        in_name12               VARCHAR2    := NULL,            in_value12  VARCHAR2 := NULL,
+        in_name13               VARCHAR2    := NULL,            in_value13  VARCHAR2 := NULL,
+        in_name14               VARCHAR2    := NULL,            in_value14  VARCHAR2 := NULL,
+        in_name15               VARCHAR2    := NULL,            in_value15  VARCHAR2 := NULL,
+        in_name16               VARCHAR2    := NULL,            in_value16  VARCHAR2 := NULL,
+        in_name17               VARCHAR2    := NULL,            in_value17  VARCHAR2 := NULL,
+        in_name18               VARCHAR2    := NULL,            in_value18  VARCHAR2 := NULL,
+        in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
+        in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
+        --
+        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_payload              CLOB        := NULL,
+        in_args_as_list         BOOLEAN     := FALSE
     )
     AS
+        v_id NUMBER;
     BEGIN
+        v_id := core.log_start (
+            in_name01       => in_name01,       in_value01  => in_value01,
+            in_name02       => in_name02,       in_value02  => in_value02,
+            in_name03       => in_name03,       in_value03  => in_value03,
+            in_name04       => in_name04,       in_value04  => in_value04,
+            in_name05       => in_name05,       in_value05  => in_value05,
+            in_name06       => in_name06,       in_value06  => in_value06,
+            in_name07       => in_name07,       in_value07  => in_value07,
+            in_name08       => in_name08,       in_value08  => in_value08,
+            in_name09       => in_name09,       in_value09  => in_value09,
+            in_name10       => in_name10,       in_value10  => in_value10,
+            in_name11       => in_name11,       in_value11  => in_value11,
+            in_name12       => in_name12,       in_value12  => in_value12,
+            in_name13       => in_name13,       in_value13  => in_value13,
+            in_name14       => in_name14,       in_value14  => in_value14,
+            in_name15       => in_name15,       in_value15  => in_value15,
+            in_name16       => in_name16,       in_value16  => in_value16,
+            in_name17       => in_name17,       in_value17  => in_value17,
+            in_name18       => in_name18,       in_value18  => in_value18,
+            in_name19       => in_name19,       in_value19  => in_value19,
+            in_name20       => in_name20,       in_value20  => in_value20,
+            --
+            in_context_id   => in_context_id,
+            in_payload      => in_payload,
+            in_args_as_list => in_args_as_list
+        );
+    END;
+
+
+
+    FUNCTION log_end (
+        in_name01               VARCHAR2    := NULL,            in_value01  VARCHAR2 := NULL,
+        in_name02               VARCHAR2    := NULL,            in_value02  VARCHAR2 := NULL,
+        in_name03               VARCHAR2    := NULL,            in_value03  VARCHAR2 := NULL,
+        in_name04               VARCHAR2    := NULL,            in_value04  VARCHAR2 := NULL,
+        in_name05               VARCHAR2    := NULL,            in_value05  VARCHAR2 := NULL,
+        in_name06               VARCHAR2    := NULL,            in_value06  VARCHAR2 := NULL,
+        in_name07               VARCHAR2    := NULL,            in_value07  VARCHAR2 := NULL,
+        in_name08               VARCHAR2    := NULL,            in_value08  VARCHAR2 := NULL,
+        in_name09               VARCHAR2    := NULL,            in_value09  VARCHAR2 := NULL,
+        in_name10               VARCHAR2    := NULL,            in_value10  VARCHAR2 := NULL,
+        in_name11               VARCHAR2    := NULL,            in_value11  VARCHAR2 := NULL,
+        in_name12               VARCHAR2    := NULL,            in_value12  VARCHAR2 := NULL,
+        in_name13               VARCHAR2    := NULL,            in_value13  VARCHAR2 := NULL,
+        in_name14               VARCHAR2    := NULL,            in_value14  VARCHAR2 := NULL,
+        in_name15               VARCHAR2    := NULL,            in_value15  VARCHAR2 := NULL,
+        in_name16               VARCHAR2    := NULL,            in_value16  VARCHAR2 := NULL,
+        in_name17               VARCHAR2    := NULL,            in_value17  VARCHAR2 := NULL,
+        in_name18               VARCHAR2    := NULL,            in_value18  VARCHAR2 := NULL,
+        in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
+        in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        -- @TODO: IMPLEMENT
+        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_payload              CLOB        := NULL,
+        in_args_as_list         BOOLEAN     := FALSE
+    )
+    RETURN NUMBER
+    AS
+        v_arguments             VARCHAR2(32767);
+    BEGIN
+        -- convert passed arguments
+        v_arguments := core.get_arguments (
+            in_name01       => in_name01,       in_value01  => in_value01,
+            in_name02       => in_name02,       in_value02  => in_value02,
+            in_name03       => in_name03,       in_value03  => in_value03,
+            in_name04       => in_name04,       in_value04  => in_value04,
+            in_name05       => in_name05,       in_value05  => in_value05,
+            in_name06       => in_name06,       in_value06  => in_value06,
+            in_name07       => in_name07,       in_value07  => in_value07,
+            in_name08       => in_name08,       in_value08  => in_value08,
+            in_name09       => in_name09,       in_value09  => in_value09,
+            in_name10       => in_name10,       in_value10  => in_value10,
+            in_name11       => in_name11,       in_value11  => in_value11,
+            in_name12       => in_name12,       in_value12  => in_value12,
+            in_name13       => in_name13,       in_value13  => in_value13,
+            in_name14       => in_name14,       in_value14  => in_value14,
+            in_name15       => in_name15,       in_value15  => in_value15,
+            in_name16       => in_name16,       in_value16  => in_value16,
+            in_name17       => in_name17,       in_value17  => in_value17,
+            in_name18       => in_name18,       in_value18  => in_value18,
+            in_name19       => in_name19,       in_value19  => in_value19,
+            in_name20       => in_name20,       in_value20  => in_value20,
+            in_args_as_list => in_args_as_list
+        );
         --
-        NULL;
+        RETURN core.log__ (
+            in_type         => core.flag_end,
+            in_message      => NULL,
+            in_arguments    => v_arguments,
+            in_payload      => in_payload,
+            in_context_id   => in_context_id,
+            in_caller       => core.get_caller_name(3, TRUE)
+        );
+    END;
+
+
+
+    PROCEDURE log_end (
+        in_name01               VARCHAR2    := NULL,            in_value01  VARCHAR2 := NULL,
+        in_name02               VARCHAR2    := NULL,            in_value02  VARCHAR2 := NULL,
+        in_name03               VARCHAR2    := NULL,            in_value03  VARCHAR2 := NULL,
+        in_name04               VARCHAR2    := NULL,            in_value04  VARCHAR2 := NULL,
+        in_name05               VARCHAR2    := NULL,            in_value05  VARCHAR2 := NULL,
+        in_name06               VARCHAR2    := NULL,            in_value06  VARCHAR2 := NULL,
+        in_name07               VARCHAR2    := NULL,            in_value07  VARCHAR2 := NULL,
+        in_name08               VARCHAR2    := NULL,            in_value08  VARCHAR2 := NULL,
+        in_name09               VARCHAR2    := NULL,            in_value09  VARCHAR2 := NULL,
+        in_name10               VARCHAR2    := NULL,            in_value10  VARCHAR2 := NULL,
+        in_name11               VARCHAR2    := NULL,            in_value11  VARCHAR2 := NULL,
+        in_name12               VARCHAR2    := NULL,            in_value12  VARCHAR2 := NULL,
+        in_name13               VARCHAR2    := NULL,            in_value13  VARCHAR2 := NULL,
+        in_name14               VARCHAR2    := NULL,            in_value14  VARCHAR2 := NULL,
+        in_name15               VARCHAR2    := NULL,            in_value15  VARCHAR2 := NULL,
+        in_name16               VARCHAR2    := NULL,            in_value16  VARCHAR2 := NULL,
+        in_name17               VARCHAR2    := NULL,            in_value17  VARCHAR2 := NULL,
+        in_name18               VARCHAR2    := NULL,            in_value18  VARCHAR2 := NULL,
+        in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
+        in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
+        --
+        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_payload              CLOB        := NULL,
+        in_args_as_list         BOOLEAN     := FALSE
+    )
+    AS
+        v_id NUMBER;
+    BEGIN
+        v_id := core.log_end (
+            in_name01       => in_name01,       in_value01  => in_value01,
+            in_name02       => in_name02,       in_value02  => in_value02,
+            in_name03       => in_name03,       in_value03  => in_value03,
+            in_name04       => in_name04,       in_value04  => in_value04,
+            in_name05       => in_name05,       in_value05  => in_value05,
+            in_name06       => in_name06,       in_value06  => in_value06,
+            in_name07       => in_name07,       in_value07  => in_value07,
+            in_name08       => in_name08,       in_value08  => in_value08,
+            in_name09       => in_name09,       in_value09  => in_value09,
+            in_name10       => in_name10,       in_value10  => in_value10,
+            in_name11       => in_name11,       in_value11  => in_value11,
+            in_name12       => in_name12,       in_value12  => in_value12,
+            in_name13       => in_name13,       in_value13  => in_value13,
+            in_name14       => in_name14,       in_value14  => in_value14,
+            in_name15       => in_name15,       in_value15  => in_value15,
+            in_name16       => in_name16,       in_value16  => in_value16,
+            in_name17       => in_name17,       in_value17  => in_value17,
+            in_name18       => in_name18,       in_value18  => in_value18,
+            in_name19       => in_name19,       in_value19  => in_value19,
+            in_name20       => in_name20,       in_value20  => in_value20,
+            --
+            in_context_id   => in_context_id,
+            in_payload      => in_payload,
+            in_args_as_list => in_args_as_list
+        );
     END;
 
 

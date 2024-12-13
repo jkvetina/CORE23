@@ -62,10 +62,11 @@ AS
     c_page_item_prefix          CONSTANT VARCHAR2(2)    := 'P';
 
     -- flags use in logging
-    flag_module                 CONSTANT CHAR           := 'M';     -- start of any module (procedure/function)
-    flag_debug                  CONSTANT CHAR           := 'D';     -- debug
-    flag_warning                CONSTANT CHAR           := 'W';     -- warning
     flag_error                  CONSTANT CHAR           := 'E';     -- error
+    flag_warning                CONSTANT CHAR           := 'W';     -- warning
+    flag_debug                  CONSTANT CHAR           := 'D';     -- debug
+    flag_start                  CONSTANT CHAR           := 'S';     -- start of any module (procedure/function)
+    flag_end                    CONSTANT CHAR           := 'F';     -- end of the module (with timer)
 
     -- start assert messages with these prefixes
     c_assert_message            CONSTANT VARCHAR2(30)   := 'ASSERT_FAILED|';
@@ -674,33 +675,6 @@ AS
 
 
 
-    PROCEDURE raise_error (
-        in_action_name          VARCHAR2    := NULL,
-        in_arg1                 VARCHAR2    := NULL,
-        in_arg2                 VARCHAR2    := NULL,
-        in_arg3                 VARCHAR2    := NULL,
-        in_arg4                 VARCHAR2    := NULL,
-        in_arg5                 VARCHAR2    := NULL,
-        in_arg6                 VARCHAR2    := NULL,
-        in_arg7                 VARCHAR2    := NULL,
-        in_arg8                 VARCHAR2    := NULL,
-        in_arg9                 VARCHAR2    := NULL,
-        in_arg10                VARCHAR2    := NULL,
-        in_arg11                VARCHAR2    := NULL,
-        in_arg12                VARCHAR2    := NULL,
-        in_arg13                VARCHAR2    := NULL,
-        in_arg14                VARCHAR2    := NULL,
-        in_arg15                VARCHAR2    := NULL,
-        in_arg16                VARCHAR2    := NULL,
-        in_arg17                VARCHAR2    := NULL,
-        in_arg18                VARCHAR2    := NULL,
-        in_arg19                VARCHAR2    := NULL,
-        in_arg20                VARCHAR2    := NULL,
-        in_payload              VARCHAR2    := NULL,
-        in_json_object          BOOLEAN     := FALSE,
-        in_rollback             BOOLEAN     := FALSE,
-        in_traceback            BOOLEAN     := FALSE
-    );
     FUNCTION get_arguments (
         in_name01               VARCHAR2    := NULL,            in_value01  VARCHAR2 := NULL,
         in_name02               VARCHAR2    := NULL,            in_value02  VARCHAR2 := NULL,
@@ -729,299 +703,341 @@ AS
 
 
 
-    PROCEDURE log__ (
-        in_action_type          CHAR,
-        in_action_name          VARCHAR2,
-        in_arg1                 VARCHAR2    := NULL,
-        in_arg2                 VARCHAR2    := NULL,
-        in_arg3                 VARCHAR2    := NULL,
-        in_arg4                 VARCHAR2    := NULL,
-        in_arg5                 VARCHAR2    := NULL,
-        in_arg6                 VARCHAR2    := NULL,
-        in_arg7                 VARCHAR2    := NULL,
-        in_arg8                 VARCHAR2    := NULL,
-        in_arg9                 VARCHAR2    := NULL,
-        in_arg10                VARCHAR2    := NULL,
-        in_arg11                VARCHAR2    := NULL,
-        in_arg12                VARCHAR2    := NULL,
-        in_arg13                VARCHAR2    := NULL,
-        in_arg14                VARCHAR2    := NULL,
-        in_arg15                VARCHAR2    := NULL,
-        in_arg16                VARCHAR2    := NULL,
-        in_arg17                VARCHAR2    := NULL,
-        in_arg18                VARCHAR2    := NULL,
-        in_arg19                VARCHAR2    := NULL,
-        in_arg20                VARCHAR2    := NULL,
-        in_payload              VARCHAR2    := NULL,
-        in_json_object          BOOLEAN     := FALSE
+    PROCEDURE raise_error (
+        in_message              VARCHAR2    := NULL,            -- message for user, translatable
+        --
+        in_name01               VARCHAR2    := NULL,            in_value01  VARCHAR2 := NULL,
+        in_name02               VARCHAR2    := NULL,            in_value02  VARCHAR2 := NULL,
+        in_name03               VARCHAR2    := NULL,            in_value03  VARCHAR2 := NULL,
+        in_name04               VARCHAR2    := NULL,            in_value04  VARCHAR2 := NULL,
+        in_name05               VARCHAR2    := NULL,            in_value05  VARCHAR2 := NULL,
+        in_name06               VARCHAR2    := NULL,            in_value06  VARCHAR2 := NULL,
+        in_name07               VARCHAR2    := NULL,            in_value07  VARCHAR2 := NULL,
+        in_name08               VARCHAR2    := NULL,            in_value08  VARCHAR2 := NULL,
+        in_name09               VARCHAR2    := NULL,            in_value09  VARCHAR2 := NULL,
+        in_name10               VARCHAR2    := NULL,            in_value10  VARCHAR2 := NULL,
+        in_name11               VARCHAR2    := NULL,            in_value11  VARCHAR2 := NULL,
+        in_name12               VARCHAR2    := NULL,            in_value12  VARCHAR2 := NULL,
+        in_name13               VARCHAR2    := NULL,            in_value13  VARCHAR2 := NULL,
+        in_name14               VARCHAR2    := NULL,            in_value14  VARCHAR2 := NULL,
+        in_name15               VARCHAR2    := NULL,            in_value15  VARCHAR2 := NULL,
+        in_name16               VARCHAR2    := NULL,            in_value16  VARCHAR2 := NULL,
+        in_name17               VARCHAR2    := NULL,            in_value17  VARCHAR2 := NULL,
+        in_name18               VARCHAR2    := NULL,            in_value18  VARCHAR2 := NULL,
+        in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
+        in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
+        --
+        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_payload              CLOB        := NULL,
+        in_rollback             BOOLEAN     := TRUE,
+        in_args_as_list         BOOLEAN     := FALSE
     );
 
 
 
     FUNCTION log__ (
-        in_action_type          CHAR,
-        in_action_name          VARCHAR2,
-        in_arg1                 VARCHAR2    := NULL,
-        in_arg2                 VARCHAR2    := NULL,
-        in_arg3                 VARCHAR2    := NULL,
-        in_arg4                 VARCHAR2    := NULL,
-        in_arg5                 VARCHAR2    := NULL,
-        in_arg6                 VARCHAR2    := NULL,
-        in_arg7                 VARCHAR2    := NULL,
-        in_arg8                 VARCHAR2    := NULL,
-        in_arg9                 VARCHAR2    := NULL,
-        in_arg10                VARCHAR2    := NULL,
-        in_arg11                VARCHAR2    := NULL,
-        in_arg12                VARCHAR2    := NULL,
-        in_arg13                VARCHAR2    := NULL,
-        in_arg14                VARCHAR2    := NULL,
-        in_arg15                VARCHAR2    := NULL,
-        in_arg16                VARCHAR2    := NULL,
-        in_arg17                VARCHAR2    := NULL,
-        in_arg18                VARCHAR2    := NULL,
-        in_arg19                VARCHAR2    := NULL,
-        in_arg20                VARCHAR2    := NULL,
-        in_payload              VARCHAR2    := NULL,
-        in_json_object          BOOLEAN     := FALSE
+        in_type                 CHAR,
+        in_message              VARCHAR2,
+        in_arguments            VARCHAR2,
+        in_payload              CLOB        := NULL,
+        in_context_id           NUMBER      := NULL,
+        in_caller               VARCHAR2    := NULL
+    )
+    RETURN NUMBER;
+
+
+
+    FUNCTION log_error (
+        in_name01               VARCHAR2    := NULL,            in_value01  VARCHAR2 := NULL,
+        in_name02               VARCHAR2    := NULL,            in_value02  VARCHAR2 := NULL,
+        in_name03               VARCHAR2    := NULL,            in_value03  VARCHAR2 := NULL,
+        in_name04               VARCHAR2    := NULL,            in_value04  VARCHAR2 := NULL,
+        in_name05               VARCHAR2    := NULL,            in_value05  VARCHAR2 := NULL,
+        in_name06               VARCHAR2    := NULL,            in_value06  VARCHAR2 := NULL,
+        in_name07               VARCHAR2    := NULL,            in_value07  VARCHAR2 := NULL,
+        in_name08               VARCHAR2    := NULL,            in_value08  VARCHAR2 := NULL,
+        in_name09               VARCHAR2    := NULL,            in_value09  VARCHAR2 := NULL,
+        in_name10               VARCHAR2    := NULL,            in_value10  VARCHAR2 := NULL,
+        in_name11               VARCHAR2    := NULL,            in_value11  VARCHAR2 := NULL,
+        in_name12               VARCHAR2    := NULL,            in_value12  VARCHAR2 := NULL,
+        in_name13               VARCHAR2    := NULL,            in_value13  VARCHAR2 := NULL,
+        in_name14               VARCHAR2    := NULL,            in_value14  VARCHAR2 := NULL,
+        in_name15               VARCHAR2    := NULL,            in_value15  VARCHAR2 := NULL,
+        in_name16               VARCHAR2    := NULL,            in_value16  VARCHAR2 := NULL,
+        in_name17               VARCHAR2    := NULL,            in_value17  VARCHAR2 := NULL,
+        in_name18               VARCHAR2    := NULL,            in_value18  VARCHAR2 := NULL,
+        in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
+        in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
+        --
+        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_payload              CLOB        := NULL,
+        in_args_as_list         BOOLEAN     := FALSE
     )
     RETURN NUMBER;
 
 
 
     PROCEDURE log_error (
-        in_action_name          VARCHAR2    := NULL,
-        in_arg1                 VARCHAR2    := NULL,
-        in_arg2                 VARCHAR2    := NULL,
-        in_arg3                 VARCHAR2    := NULL,
-        in_arg4                 VARCHAR2    := NULL,
-        in_arg5                 VARCHAR2    := NULL,
-        in_arg6                 VARCHAR2    := NULL,
-        in_arg7                 VARCHAR2    := NULL,
-        in_arg8                 VARCHAR2    := NULL,
-        in_arg9                 VARCHAR2    := NULL,
-        in_arg10                VARCHAR2    := NULL,
-        in_arg11                VARCHAR2    := NULL,
-        in_arg12                VARCHAR2    := NULL,
-        in_arg13                VARCHAR2    := NULL,
-        in_arg14                VARCHAR2    := NULL,
-        in_arg15                VARCHAR2    := NULL,
-        in_arg16                VARCHAR2    := NULL,
-        in_arg17                VARCHAR2    := NULL,
-        in_arg18                VARCHAR2    := NULL,
-        in_arg19                VARCHAR2    := NULL,
-        in_arg20                VARCHAR2    := NULL,
-        in_payload              VARCHAR2    := NULL,
-        in_json_object          BOOLEAN     := FALSE
+        in_name01               VARCHAR2    := NULL,            in_value01  VARCHAR2 := NULL,
+        in_name02               VARCHAR2    := NULL,            in_value02  VARCHAR2 := NULL,
+        in_name03               VARCHAR2    := NULL,            in_value03  VARCHAR2 := NULL,
+        in_name04               VARCHAR2    := NULL,            in_value04  VARCHAR2 := NULL,
+        in_name05               VARCHAR2    := NULL,            in_value05  VARCHAR2 := NULL,
+        in_name06               VARCHAR2    := NULL,            in_value06  VARCHAR2 := NULL,
+        in_name07               VARCHAR2    := NULL,            in_value07  VARCHAR2 := NULL,
+        in_name08               VARCHAR2    := NULL,            in_value08  VARCHAR2 := NULL,
+        in_name09               VARCHAR2    := NULL,            in_value09  VARCHAR2 := NULL,
+        in_name10               VARCHAR2    := NULL,            in_value10  VARCHAR2 := NULL,
+        in_name11               VARCHAR2    := NULL,            in_value11  VARCHAR2 := NULL,
+        in_name12               VARCHAR2    := NULL,            in_value12  VARCHAR2 := NULL,
+        in_name13               VARCHAR2    := NULL,            in_value13  VARCHAR2 := NULL,
+        in_name14               VARCHAR2    := NULL,            in_value14  VARCHAR2 := NULL,
+        in_name15               VARCHAR2    := NULL,            in_value15  VARCHAR2 := NULL,
+        in_name16               VARCHAR2    := NULL,            in_value16  VARCHAR2 := NULL,
+        in_name17               VARCHAR2    := NULL,            in_value17  VARCHAR2 := NULL,
+        in_name18               VARCHAR2    := NULL,            in_value18  VARCHAR2 := NULL,
+        in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
+        in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
+        --
+        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_payload              CLOB        := NULL,
+        in_args_as_list         BOOLEAN     := FALSE
     );
 
 
 
-    FUNCTION log_error (
-        in_action_name          VARCHAR2    := NULL,
-        in_arg1                 VARCHAR2    := NULL,
-        in_arg2                 VARCHAR2    := NULL,
-        in_arg3                 VARCHAR2    := NULL,
-        in_arg4                 VARCHAR2    := NULL,
-        in_arg5                 VARCHAR2    := NULL,
-        in_arg6                 VARCHAR2    := NULL,
-        in_arg7                 VARCHAR2    := NULL,
-        in_arg8                 VARCHAR2    := NULL,
-        in_arg9                 VARCHAR2    := NULL,
-        in_arg10                VARCHAR2    := NULL,
-        in_arg11                VARCHAR2    := NULL,
-        in_arg12                VARCHAR2    := NULL,
-        in_arg13                VARCHAR2    := NULL,
-        in_arg14                VARCHAR2    := NULL,
-        in_arg15                VARCHAR2    := NULL,
-        in_arg16                VARCHAR2    := NULL,
-        in_arg17                VARCHAR2    := NULL,
-        in_arg18                VARCHAR2    := NULL,
-        in_arg19                VARCHAR2    := NULL,
-        in_arg20                VARCHAR2    := NULL,
-        in_payload              VARCHAR2    := NULL,
-        in_json_object          BOOLEAN     := FALSE
+    FUNCTION log_warning (
+        in_name01               VARCHAR2    := NULL,            in_value01  VARCHAR2 := NULL,
+        in_name02               VARCHAR2    := NULL,            in_value02  VARCHAR2 := NULL,
+        in_name03               VARCHAR2    := NULL,            in_value03  VARCHAR2 := NULL,
+        in_name04               VARCHAR2    := NULL,            in_value04  VARCHAR2 := NULL,
+        in_name05               VARCHAR2    := NULL,            in_value05  VARCHAR2 := NULL,
+        in_name06               VARCHAR2    := NULL,            in_value06  VARCHAR2 := NULL,
+        in_name07               VARCHAR2    := NULL,            in_value07  VARCHAR2 := NULL,
+        in_name08               VARCHAR2    := NULL,            in_value08  VARCHAR2 := NULL,
+        in_name09               VARCHAR2    := NULL,            in_value09  VARCHAR2 := NULL,
+        in_name10               VARCHAR2    := NULL,            in_value10  VARCHAR2 := NULL,
+        in_name11               VARCHAR2    := NULL,            in_value11  VARCHAR2 := NULL,
+        in_name12               VARCHAR2    := NULL,            in_value12  VARCHAR2 := NULL,
+        in_name13               VARCHAR2    := NULL,            in_value13  VARCHAR2 := NULL,
+        in_name14               VARCHAR2    := NULL,            in_value14  VARCHAR2 := NULL,
+        in_name15               VARCHAR2    := NULL,            in_value15  VARCHAR2 := NULL,
+        in_name16               VARCHAR2    := NULL,            in_value16  VARCHAR2 := NULL,
+        in_name17               VARCHAR2    := NULL,            in_value17  VARCHAR2 := NULL,
+        in_name18               VARCHAR2    := NULL,            in_value18  VARCHAR2 := NULL,
+        in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
+        in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
+        --
+        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_payload              CLOB        := NULL,
+        in_args_as_list         BOOLEAN     := FALSE
     )
     RETURN NUMBER;
 
 
 
     PROCEDURE log_warning (
-        in_action_name          VARCHAR2    := NULL,
-        in_arg1                 VARCHAR2    := NULL,
-        in_arg2                 VARCHAR2    := NULL,
-        in_arg3                 VARCHAR2    := NULL,
-        in_arg4                 VARCHAR2    := NULL,
-        in_arg5                 VARCHAR2    := NULL,
-        in_arg6                 VARCHAR2    := NULL,
-        in_arg7                 VARCHAR2    := NULL,
-        in_arg8                 VARCHAR2    := NULL,
-        in_arg9                 VARCHAR2    := NULL,
-        in_arg10                VARCHAR2    := NULL,
-        in_arg11                VARCHAR2    := NULL,
-        in_arg12                VARCHAR2    := NULL,
-        in_arg13                VARCHAR2    := NULL,
-        in_arg14                VARCHAR2    := NULL,
-        in_arg15                VARCHAR2    := NULL,
-        in_arg16                VARCHAR2    := NULL,
-        in_arg17                VARCHAR2    := NULL,
-        in_arg18                VARCHAR2    := NULL,
-        in_arg19                VARCHAR2    := NULL,
-        in_arg20                VARCHAR2    := NULL,
-        in_payload              VARCHAR2    := NULL,
-        in_json_object          BOOLEAN     := FALSE
+        in_name01               VARCHAR2    := NULL,            in_value01  VARCHAR2 := NULL,
+        in_name02               VARCHAR2    := NULL,            in_value02  VARCHAR2 := NULL,
+        in_name03               VARCHAR2    := NULL,            in_value03  VARCHAR2 := NULL,
+        in_name04               VARCHAR2    := NULL,            in_value04  VARCHAR2 := NULL,
+        in_name05               VARCHAR2    := NULL,            in_value05  VARCHAR2 := NULL,
+        in_name06               VARCHAR2    := NULL,            in_value06  VARCHAR2 := NULL,
+        in_name07               VARCHAR2    := NULL,            in_value07  VARCHAR2 := NULL,
+        in_name08               VARCHAR2    := NULL,            in_value08  VARCHAR2 := NULL,
+        in_name09               VARCHAR2    := NULL,            in_value09  VARCHAR2 := NULL,
+        in_name10               VARCHAR2    := NULL,            in_value10  VARCHAR2 := NULL,
+        in_name11               VARCHAR2    := NULL,            in_value11  VARCHAR2 := NULL,
+        in_name12               VARCHAR2    := NULL,            in_value12  VARCHAR2 := NULL,
+        in_name13               VARCHAR2    := NULL,            in_value13  VARCHAR2 := NULL,
+        in_name14               VARCHAR2    := NULL,            in_value14  VARCHAR2 := NULL,
+        in_name15               VARCHAR2    := NULL,            in_value15  VARCHAR2 := NULL,
+        in_name16               VARCHAR2    := NULL,            in_value16  VARCHAR2 := NULL,
+        in_name17               VARCHAR2    := NULL,            in_value17  VARCHAR2 := NULL,
+        in_name18               VARCHAR2    := NULL,            in_value18  VARCHAR2 := NULL,
+        in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
+        in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
+        --
+        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_payload              CLOB        := NULL,
+        in_args_as_list         BOOLEAN     := FALSE
     );
 
 
 
-    FUNCTION log_warning (
-        in_action_name          VARCHAR2    := NULL,
-        in_arg1                 VARCHAR2    := NULL,
-        in_arg2                 VARCHAR2    := NULL,
-        in_arg3                 VARCHAR2    := NULL,
-        in_arg4                 VARCHAR2    := NULL,
-        in_arg5                 VARCHAR2    := NULL,
-        in_arg6                 VARCHAR2    := NULL,
-        in_arg7                 VARCHAR2    := NULL,
-        in_arg8                 VARCHAR2    := NULL,
-        in_arg9                 VARCHAR2    := NULL,
-        in_arg10                VARCHAR2    := NULL,
-        in_arg11                VARCHAR2    := NULL,
-        in_arg12                VARCHAR2    := NULL,
-        in_arg13                VARCHAR2    := NULL,
-        in_arg14                VARCHAR2    := NULL,
-        in_arg15                VARCHAR2    := NULL,
-        in_arg16                VARCHAR2    := NULL,
-        in_arg17                VARCHAR2    := NULL,
-        in_arg18                VARCHAR2    := NULL,
-        in_arg19                VARCHAR2    := NULL,
-        in_arg20                VARCHAR2    := NULL,
-        in_payload              VARCHAR2    := NULL,
-        in_json_object          BOOLEAN     := FALSE
+    FUNCTION log_debug (
+        in_name01               VARCHAR2    := NULL,            in_value01  VARCHAR2 := NULL,
+        in_name02               VARCHAR2    := NULL,            in_value02  VARCHAR2 := NULL,
+        in_name03               VARCHAR2    := NULL,            in_value03  VARCHAR2 := NULL,
+        in_name04               VARCHAR2    := NULL,            in_value04  VARCHAR2 := NULL,
+        in_name05               VARCHAR2    := NULL,            in_value05  VARCHAR2 := NULL,
+        in_name06               VARCHAR2    := NULL,            in_value06  VARCHAR2 := NULL,
+        in_name07               VARCHAR2    := NULL,            in_value07  VARCHAR2 := NULL,
+        in_name08               VARCHAR2    := NULL,            in_value08  VARCHAR2 := NULL,
+        in_name09               VARCHAR2    := NULL,            in_value09  VARCHAR2 := NULL,
+        in_name10               VARCHAR2    := NULL,            in_value10  VARCHAR2 := NULL,
+        in_name11               VARCHAR2    := NULL,            in_value11  VARCHAR2 := NULL,
+        in_name12               VARCHAR2    := NULL,            in_value12  VARCHAR2 := NULL,
+        in_name13               VARCHAR2    := NULL,            in_value13  VARCHAR2 := NULL,
+        in_name14               VARCHAR2    := NULL,            in_value14  VARCHAR2 := NULL,
+        in_name15               VARCHAR2    := NULL,            in_value15  VARCHAR2 := NULL,
+        in_name16               VARCHAR2    := NULL,            in_value16  VARCHAR2 := NULL,
+        in_name17               VARCHAR2    := NULL,            in_value17  VARCHAR2 := NULL,
+        in_name18               VARCHAR2    := NULL,            in_value18  VARCHAR2 := NULL,
+        in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
+        in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
+        --
+        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_payload              CLOB        := NULL,
+        in_args_as_list         BOOLEAN     := FALSE
     )
     RETURN NUMBER;
 
 
 
     PROCEDURE log_debug (
-        in_action_name          VARCHAR2    := NULL,
-        in_arg1                 VARCHAR2    := NULL,
-        in_arg2                 VARCHAR2    := NULL,
-        in_arg3                 VARCHAR2    := NULL,
-        in_arg4                 VARCHAR2    := NULL,
-        in_arg5                 VARCHAR2    := NULL,
-        in_arg6                 VARCHAR2    := NULL,
-        in_arg7                 VARCHAR2    := NULL,
-        in_arg8                 VARCHAR2    := NULL,
-        in_arg9                 VARCHAR2    := NULL,
-        in_arg10                VARCHAR2    := NULL,
-        in_arg11                VARCHAR2    := NULL,
-        in_arg12                VARCHAR2    := NULL,
-        in_arg13                VARCHAR2    := NULL,
-        in_arg14                VARCHAR2    := NULL,
-        in_arg15                VARCHAR2    := NULL,
-        in_arg16                VARCHAR2    := NULL,
-        in_arg17                VARCHAR2    := NULL,
-        in_arg18                VARCHAR2    := NULL,
-        in_arg19                VARCHAR2    := NULL,
-        in_arg20                VARCHAR2    := NULL,
-        in_payload              VARCHAR2    := NULL,
-        in_json_object          BOOLEAN     := FALSE
+        in_name01               VARCHAR2    := NULL,            in_value01  VARCHAR2 := NULL,
+        in_name02               VARCHAR2    := NULL,            in_value02  VARCHAR2 := NULL,
+        in_name03               VARCHAR2    := NULL,            in_value03  VARCHAR2 := NULL,
+        in_name04               VARCHAR2    := NULL,            in_value04  VARCHAR2 := NULL,
+        in_name05               VARCHAR2    := NULL,            in_value05  VARCHAR2 := NULL,
+        in_name06               VARCHAR2    := NULL,            in_value06  VARCHAR2 := NULL,
+        in_name07               VARCHAR2    := NULL,            in_value07  VARCHAR2 := NULL,
+        in_name08               VARCHAR2    := NULL,            in_value08  VARCHAR2 := NULL,
+        in_name09               VARCHAR2    := NULL,            in_value09  VARCHAR2 := NULL,
+        in_name10               VARCHAR2    := NULL,            in_value10  VARCHAR2 := NULL,
+        in_name11               VARCHAR2    := NULL,            in_value11  VARCHAR2 := NULL,
+        in_name12               VARCHAR2    := NULL,            in_value12  VARCHAR2 := NULL,
+        in_name13               VARCHAR2    := NULL,            in_value13  VARCHAR2 := NULL,
+        in_name14               VARCHAR2    := NULL,            in_value14  VARCHAR2 := NULL,
+        in_name15               VARCHAR2    := NULL,            in_value15  VARCHAR2 := NULL,
+        in_name16               VARCHAR2    := NULL,            in_value16  VARCHAR2 := NULL,
+        in_name17               VARCHAR2    := NULL,            in_value17  VARCHAR2 := NULL,
+        in_name18               VARCHAR2    := NULL,            in_value18  VARCHAR2 := NULL,
+        in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
+        in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
+        --
+        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_payload              CLOB        := NULL,
+        in_args_as_list         BOOLEAN     := FALSE
     );
 
 
 
-    FUNCTION log_debug (
-        in_action_name          VARCHAR2    := NULL,
-        in_arg1                 VARCHAR2    := NULL,
-        in_arg2                 VARCHAR2    := NULL,
-        in_arg3                 VARCHAR2    := NULL,
-        in_arg4                 VARCHAR2    := NULL,
-        in_arg5                 VARCHAR2    := NULL,
-        in_arg6                 VARCHAR2    := NULL,
-        in_arg7                 VARCHAR2    := NULL,
-        in_arg8                 VARCHAR2    := NULL,
-        in_arg9                 VARCHAR2    := NULL,
-        in_arg10                VARCHAR2    := NULL,
-        in_arg11                VARCHAR2    := NULL,
-        in_arg12                VARCHAR2    := NULL,
-        in_arg13                VARCHAR2    := NULL,
-        in_arg14                VARCHAR2    := NULL,
-        in_arg15                VARCHAR2    := NULL,
-        in_arg16                VARCHAR2    := NULL,
-        in_arg17                VARCHAR2    := NULL,
-        in_arg18                VARCHAR2    := NULL,
-        in_arg19                VARCHAR2    := NULL,
-        in_arg20                VARCHAR2    := NULL,
-        in_payload              VARCHAR2    := NULL,
-        in_json_object          BOOLEAN     := FALSE
+    FUNCTION log_start (
+        in_name01               VARCHAR2    := NULL,            in_value01  VARCHAR2 := NULL,
+        in_name02               VARCHAR2    := NULL,            in_value02  VARCHAR2 := NULL,
+        in_name03               VARCHAR2    := NULL,            in_value03  VARCHAR2 := NULL,
+        in_name04               VARCHAR2    := NULL,            in_value04  VARCHAR2 := NULL,
+        in_name05               VARCHAR2    := NULL,            in_value05  VARCHAR2 := NULL,
+        in_name06               VARCHAR2    := NULL,            in_value06  VARCHAR2 := NULL,
+        in_name07               VARCHAR2    := NULL,            in_value07  VARCHAR2 := NULL,
+        in_name08               VARCHAR2    := NULL,            in_value08  VARCHAR2 := NULL,
+        in_name09               VARCHAR2    := NULL,            in_value09  VARCHAR2 := NULL,
+        in_name10               VARCHAR2    := NULL,            in_value10  VARCHAR2 := NULL,
+        in_name11               VARCHAR2    := NULL,            in_value11  VARCHAR2 := NULL,
+        in_name12               VARCHAR2    := NULL,            in_value12  VARCHAR2 := NULL,
+        in_name13               VARCHAR2    := NULL,            in_value13  VARCHAR2 := NULL,
+        in_name14               VARCHAR2    := NULL,            in_value14  VARCHAR2 := NULL,
+        in_name15               VARCHAR2    := NULL,            in_value15  VARCHAR2 := NULL,
+        in_name16               VARCHAR2    := NULL,            in_value16  VARCHAR2 := NULL,
+        in_name17               VARCHAR2    := NULL,            in_value17  VARCHAR2 := NULL,
+        in_name18               VARCHAR2    := NULL,            in_value18  VARCHAR2 := NULL,
+        in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
+        in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
+        --
+        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_payload              CLOB        := NULL,
+        in_args_as_list         BOOLEAN     := FALSE
     )
     RETURN NUMBER;
 
 
 
-    PROCEDURE log_request;
-
-
-
-    PROCEDURE log_module (
-        in_action_name          VARCHAR2    := NULL,
-        in_arg1                 VARCHAR2    := NULL,
-        in_arg2                 VARCHAR2    := NULL,
-        in_arg3                 VARCHAR2    := NULL,
-        in_arg4                 VARCHAR2    := NULL,
-        in_arg5                 VARCHAR2    := NULL,
-        in_arg6                 VARCHAR2    := NULL,
-        in_arg7                 VARCHAR2    := NULL,
-        in_arg8                 VARCHAR2    := NULL,
-        in_arg9                 VARCHAR2    := NULL,
-        in_arg10                VARCHAR2    := NULL,
-        in_arg11                VARCHAR2    := NULL,
-        in_arg12                VARCHAR2    := NULL,
-        in_arg13                VARCHAR2    := NULL,
-        in_arg14                VARCHAR2    := NULL,
-        in_arg15                VARCHAR2    := NULL,
-        in_arg16                VARCHAR2    := NULL,
-        in_arg17                VARCHAR2    := NULL,
-        in_arg18                VARCHAR2    := NULL,
-        in_arg19                VARCHAR2    := NULL,
-        in_arg20                VARCHAR2    := NULL,
-        in_payload              VARCHAR2    := NULL,
-        in_json_object          BOOLEAN     := FALSE
+    PROCEDURE log_start (
+        in_name01               VARCHAR2    := NULL,            in_value01  VARCHAR2 := NULL,
+        in_name02               VARCHAR2    := NULL,            in_value02  VARCHAR2 := NULL,
+        in_name03               VARCHAR2    := NULL,            in_value03  VARCHAR2 := NULL,
+        in_name04               VARCHAR2    := NULL,            in_value04  VARCHAR2 := NULL,
+        in_name05               VARCHAR2    := NULL,            in_value05  VARCHAR2 := NULL,
+        in_name06               VARCHAR2    := NULL,            in_value06  VARCHAR2 := NULL,
+        in_name07               VARCHAR2    := NULL,            in_value07  VARCHAR2 := NULL,
+        in_name08               VARCHAR2    := NULL,            in_value08  VARCHAR2 := NULL,
+        in_name09               VARCHAR2    := NULL,            in_value09  VARCHAR2 := NULL,
+        in_name10               VARCHAR2    := NULL,            in_value10  VARCHAR2 := NULL,
+        in_name11               VARCHAR2    := NULL,            in_value11  VARCHAR2 := NULL,
+        in_name12               VARCHAR2    := NULL,            in_value12  VARCHAR2 := NULL,
+        in_name13               VARCHAR2    := NULL,            in_value13  VARCHAR2 := NULL,
+        in_name14               VARCHAR2    := NULL,            in_value14  VARCHAR2 := NULL,
+        in_name15               VARCHAR2    := NULL,            in_value15  VARCHAR2 := NULL,
+        in_name16               VARCHAR2    := NULL,            in_value16  VARCHAR2 := NULL,
+        in_name17               VARCHAR2    := NULL,            in_value17  VARCHAR2 := NULL,
+        in_name18               VARCHAR2    := NULL,            in_value18  VARCHAR2 := NULL,
+        in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
+        in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
+        --
+        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_payload              CLOB        := NULL,
+        in_args_as_list         BOOLEAN     := FALSE
     );
 
 
 
-    FUNCTION log_module (
-        in_action_name          VARCHAR2    := NULL,
-        in_arg1                 VARCHAR2    := NULL,
-        in_arg2                 VARCHAR2    := NULL,
-        in_arg3                 VARCHAR2    := NULL,
-        in_arg4                 VARCHAR2    := NULL,
-        in_arg5                 VARCHAR2    := NULL,
-        in_arg6                 VARCHAR2    := NULL,
-        in_arg7                 VARCHAR2    := NULL,
-        in_arg8                 VARCHAR2    := NULL,
-        in_arg9                 VARCHAR2    := NULL,
-        in_arg10                VARCHAR2    := NULL,
-        in_arg11                VARCHAR2    := NULL,
-        in_arg12                VARCHAR2    := NULL,
-        in_arg13                VARCHAR2    := NULL,
-        in_arg14                VARCHAR2    := NULL,
-        in_arg15                VARCHAR2    := NULL,
-        in_arg16                VARCHAR2    := NULL,
-        in_arg17                VARCHAR2    := NULL,
-        in_arg18                VARCHAR2    := NULL,
-        in_arg19                VARCHAR2    := NULL,
-        in_arg20                VARCHAR2    := NULL,
-        in_payload              VARCHAR2    := NULL,
-        in_json_object          BOOLEAN     := FALSE
+    FUNCTION log_end (
+        in_name01               VARCHAR2    := NULL,            in_value01  VARCHAR2 := NULL,
+        in_name02               VARCHAR2    := NULL,            in_value02  VARCHAR2 := NULL,
+        in_name03               VARCHAR2    := NULL,            in_value03  VARCHAR2 := NULL,
+        in_name04               VARCHAR2    := NULL,            in_value04  VARCHAR2 := NULL,
+        in_name05               VARCHAR2    := NULL,            in_value05  VARCHAR2 := NULL,
+        in_name06               VARCHAR2    := NULL,            in_value06  VARCHAR2 := NULL,
+        in_name07               VARCHAR2    := NULL,            in_value07  VARCHAR2 := NULL,
+        in_name08               VARCHAR2    := NULL,            in_value08  VARCHAR2 := NULL,
+        in_name09               VARCHAR2    := NULL,            in_value09  VARCHAR2 := NULL,
+        in_name10               VARCHAR2    := NULL,            in_value10  VARCHAR2 := NULL,
+        in_name11               VARCHAR2    := NULL,            in_value11  VARCHAR2 := NULL,
+        in_name12               VARCHAR2    := NULL,            in_value12  VARCHAR2 := NULL,
+        in_name13               VARCHAR2    := NULL,            in_value13  VARCHAR2 := NULL,
+        in_name14               VARCHAR2    := NULL,            in_value14  VARCHAR2 := NULL,
+        in_name15               VARCHAR2    := NULL,            in_value15  VARCHAR2 := NULL,
+        in_name16               VARCHAR2    := NULL,            in_value16  VARCHAR2 := NULL,
+        in_name17               VARCHAR2    := NULL,            in_value17  VARCHAR2 := NULL,
+        in_name18               VARCHAR2    := NULL,            in_value18  VARCHAR2 := NULL,
+        in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
+        in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
+        --
+        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_payload              CLOB        := NULL,
+        in_args_as_list         BOOLEAN     := FALSE
     )
     RETURN NUMBER;
 
 
 
-    PROCEDURE log_success (
-        in_log_id               NUMBER
+    PROCEDURE log_end (
+        in_name01               VARCHAR2    := NULL,            in_value01  VARCHAR2 := NULL,
+        in_name02               VARCHAR2    := NULL,            in_value02  VARCHAR2 := NULL,
+        in_name03               VARCHAR2    := NULL,            in_value03  VARCHAR2 := NULL,
+        in_name04               VARCHAR2    := NULL,            in_value04  VARCHAR2 := NULL,
+        in_name05               VARCHAR2    := NULL,            in_value05  VARCHAR2 := NULL,
+        in_name06               VARCHAR2    := NULL,            in_value06  VARCHAR2 := NULL,
+        in_name07               VARCHAR2    := NULL,            in_value07  VARCHAR2 := NULL,
+        in_name08               VARCHAR2    := NULL,            in_value08  VARCHAR2 := NULL,
+        in_name09               VARCHAR2    := NULL,            in_value09  VARCHAR2 := NULL,
+        in_name10               VARCHAR2    := NULL,            in_value10  VARCHAR2 := NULL,
+        in_name11               VARCHAR2    := NULL,            in_value11  VARCHAR2 := NULL,
+        in_name12               VARCHAR2    := NULL,            in_value12  VARCHAR2 := NULL,
+        in_name13               VARCHAR2    := NULL,            in_value13  VARCHAR2 := NULL,
+        in_name14               VARCHAR2    := NULL,            in_value14  VARCHAR2 := NULL,
+        in_name15               VARCHAR2    := NULL,            in_value15  VARCHAR2 := NULL,
+        in_name16               VARCHAR2    := NULL,            in_value16  VARCHAR2 := NULL,
+        in_name17               VARCHAR2    := NULL,            in_value17  VARCHAR2 := NULL,
+        in_name18               VARCHAR2    := NULL,            in_value18  VARCHAR2 := NULL,
+        in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
+        in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
+        --
+        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_payload              CLOB        := NULL,
+        in_args_as_list         BOOLEAN     := FALSE
     );
 
 
