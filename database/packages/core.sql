@@ -1601,102 +1601,6 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
-    FUNCTION get_json_list (
-        in_arg1                 VARCHAR2    := NULL,
-        in_arg2                 VARCHAR2    := NULL,
-        in_arg3                 VARCHAR2    := NULL,
-        in_arg4                 VARCHAR2    := NULL,
-        in_arg5                 VARCHAR2    := NULL,
-        in_arg6                 VARCHAR2    := NULL,
-        in_arg7                 VARCHAR2    := NULL,
-        in_arg8                 VARCHAR2    := NULL,
-        in_arg9                 VARCHAR2    := NULL,
-        in_arg10                VARCHAR2    := NULL,
-        in_arg11                VARCHAR2    := NULL,
-        in_arg12                VARCHAR2    := NULL,
-        in_arg13                VARCHAR2    := NULL,
-        in_arg14                VARCHAR2    := NULL,
-        in_arg15                VARCHAR2    := NULL,
-        in_arg16                VARCHAR2    := NULL,
-        in_arg17                VARCHAR2    := NULL,
-        in_arg18                VARCHAR2    := NULL,
-        in_arg19                VARCHAR2    := NULL,
-        in_arg20                VARCHAR2    := NULL
-    )
-    RETURN VARCHAR2
-    AS
-    BEGIN
-        RETURN NULLIF(REGEXP_REPLACE(
-            REGEXP_REPLACE(
-                NULLIF(JSON_ARRAY(
-                    in_arg1,    in_arg2,    in_arg3,    in_arg4,    in_arg5,    in_arg6,    in_arg7,    in_arg8,    in_arg9,    in_arg10,
-                    in_arg11,   in_arg12,   in_arg13,   in_arg14,   in_arg15,   in_arg16,   in_arg17,   in_arg18,   in_arg19,   in_arg20
-                    NULL ON NULL),
-                    '[]'),
-                '"(\d+)([.,]\d+)?"', '\1\2'  -- convert to numbers if possible
-            ),
-            '(,null)+\]$', ']'),  -- strip NULLs from the right side
-            '[null]');
-    END;
-
-
-
-    FUNCTION get_json_object (
-        in_name01   VARCHAR2 := NULL,           in_value01  VARCHAR2 := NULL,
-        in_name02   VARCHAR2 := NULL,           in_value02  VARCHAR2 := NULL,
-        in_name03   VARCHAR2 := NULL,           in_value03  VARCHAR2 := NULL,
-        in_name04   VARCHAR2 := NULL,           in_value04  VARCHAR2 := NULL,
-        in_name05   VARCHAR2 := NULL,           in_value05  VARCHAR2 := NULL,
-        in_name06   VARCHAR2 := NULL,           in_value06  VARCHAR2 := NULL,
-        in_name07   VARCHAR2 := NULL,           in_value07  VARCHAR2 := NULL,
-        in_name08   VARCHAR2 := NULL,           in_value08  VARCHAR2 := NULL,
-        in_name09   VARCHAR2 := NULL,           in_value09  VARCHAR2 := NULL,
-        in_name10   VARCHAR2 := NULL,           in_value10  VARCHAR2 := NULL,
-        in_name11   VARCHAR2 := NULL,           in_value11  VARCHAR2 := NULL,
-        in_name12   VARCHAR2 := NULL,           in_value12  VARCHAR2 := NULL,
-        in_name13   VARCHAR2 := NULL,           in_value13  VARCHAR2 := NULL,
-        in_name14   VARCHAR2 := NULL,           in_value14  VARCHAR2 := NULL,
-        in_name15   VARCHAR2 := NULL,           in_value15  VARCHAR2 := NULL,
-        in_name16   VARCHAR2 := NULL,           in_value16  VARCHAR2 := NULL,
-        in_name17   VARCHAR2 := NULL,           in_value17  VARCHAR2 := NULL,
-        in_name18   VARCHAR2 := NULL,           in_value18  VARCHAR2 := NULL,
-        in_name19   VARCHAR2 := NULL,           in_value19  VARCHAR2 := NULL,
-        in_name20   VARCHAR2 := NULL,           in_value20  VARCHAR2 := NULL
-    )
-    RETURN VARCHAR2
-    AS
-        v_obj                   JSON_OBJECT_T;
-    BEGIN
-        -- construct a key-value pairs
-        v_obj := JSON_OBJECT_T(JSON_OBJECT (
-            CASE WHEN (in_name01 IS NULL OR in_value01 IS NULL) THEN '__' ELSE in_name01 END VALUE in_value01,
-            CASE WHEN (in_name02 IS NULL OR in_value02 IS NULL) THEN '__' ELSE in_name02 END VALUE in_value02,
-            CASE WHEN (in_name03 IS NULL OR in_value03 IS NULL) THEN '__' ELSE in_name03 END VALUE in_value03,
-            CASE WHEN (in_name04 IS NULL OR in_value04 IS NULL) THEN '__' ELSE in_name04 END VALUE in_value04,
-            CASE WHEN (in_name05 IS NULL OR in_value05 IS NULL) THEN '__' ELSE in_name05 END VALUE in_value05,
-            CASE WHEN (in_name06 IS NULL OR in_value06 IS NULL) THEN '__' ELSE in_name06 END VALUE in_value06,
-            CASE WHEN (in_name07 IS NULL OR in_value07 IS NULL) THEN '__' ELSE in_name07 END VALUE in_value07,
-            CASE WHEN (in_name08 IS NULL OR in_value08 IS NULL) THEN '__' ELSE in_name08 END VALUE in_value08,
-            CASE WHEN (in_name09 IS NULL OR in_value09 IS NULL) THEN '__' ELSE in_name09 END VALUE in_value09,
-            CASE WHEN (in_name10 IS NULL OR in_value10 IS NULL) THEN '__' ELSE in_name10 END VALUE in_value10,
-            CASE WHEN (in_name11 IS NULL OR in_value11 IS NULL) THEN '__' ELSE in_name11 END VALUE in_value11,
-            CASE WHEN (in_name12 IS NULL OR in_value12 IS NULL) THEN '__' ELSE in_name12 END VALUE in_value12,
-            CASE WHEN (in_name13 IS NULL OR in_value13 IS NULL) THEN '__' ELSE in_name13 END VALUE in_value13,
-            CASE WHEN (in_name14 IS NULL OR in_value14 IS NULL) THEN '__' ELSE in_name14 END VALUE in_value14,
-            CASE WHEN (in_name15 IS NULL OR in_value15 IS NULL) THEN '__' ELSE in_name15 END VALUE in_value15,
-            CASE WHEN (in_name16 IS NULL OR in_value16 IS NULL) THEN '__' ELSE in_name16 END VALUE in_value16,
-            CASE WHEN (in_name17 IS NULL OR in_value17 IS NULL) THEN '__' ELSE in_name17 END VALUE in_value17,
-            CASE WHEN (in_name18 IS NULL OR in_value18 IS NULL) THEN '__' ELSE in_name18 END VALUE in_value18,
-            CASE WHEN (in_name19 IS NULL OR in_value19 IS NULL) THEN '__' ELSE in_name19 END VALUE in_value19,
-            CASE WHEN (in_name20 IS NULL OR in_value20 IS NULL) THEN '__' ELSE in_name20 END VALUE in_value20
-        ));
-        v_obj.REMOVE('__');     -- remove empty pairs
-        --
-        RETURN NULLIF(v_obj.STRINGIFY, '{}');
-    END;
-
-
-
     PROCEDURE create_job (
         in_job_name             VARCHAR2,
         in_statement            VARCHAR2,
@@ -1882,6 +1786,98 @@ CREATE OR REPLACE PACKAGE BODY core AS
     EXCEPTION
     WHEN OTHERS THEN
         core.raise_error('RUN_JOB|' || v_job_name);
+    END;
+
+
+
+    FUNCTION get_arguments (
+        in_name01               VARCHAR2    := NULL,            in_value01  VARCHAR2 := NULL,
+        in_name02               VARCHAR2    := NULL,            in_value02  VARCHAR2 := NULL,
+        in_name03               VARCHAR2    := NULL,            in_value03  VARCHAR2 := NULL,
+        in_name04               VARCHAR2    := NULL,            in_value04  VARCHAR2 := NULL,
+        in_name05               VARCHAR2    := NULL,            in_value05  VARCHAR2 := NULL,
+        in_name06               VARCHAR2    := NULL,            in_value06  VARCHAR2 := NULL,
+        in_name07               VARCHAR2    := NULL,            in_value07  VARCHAR2 := NULL,
+        in_name08               VARCHAR2    := NULL,            in_value08  VARCHAR2 := NULL,
+        in_name09               VARCHAR2    := NULL,            in_value09  VARCHAR2 := NULL,
+        in_name10               VARCHAR2    := NULL,            in_value10  VARCHAR2 := NULL,
+        in_name11               VARCHAR2    := NULL,            in_value11  VARCHAR2 := NULL,
+        in_name12               VARCHAR2    := NULL,            in_value12  VARCHAR2 := NULL,
+        in_name13               VARCHAR2    := NULL,            in_value13  VARCHAR2 := NULL,
+        in_name14               VARCHAR2    := NULL,            in_value14  VARCHAR2 := NULL,
+        in_name15               VARCHAR2    := NULL,            in_value15  VARCHAR2 := NULL,
+        in_name16               VARCHAR2    := NULL,            in_value16  VARCHAR2 := NULL,
+        in_name17               VARCHAR2    := NULL,            in_value17  VARCHAR2 := NULL,
+        in_name18               VARCHAR2    := NULL,            in_value18  VARCHAR2 := NULL,
+        in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
+        in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
+        --
+        in_args_as_list         BOOLEAN     := FALSE
+    )
+    RETURN VARCHAR2
+    AS
+        v_obj                   JSON_OBJECT_T;
+    BEGIN
+        -- construct a list of arguments
+        IF in_args_as_list THEN
+            RETURN NULLIF(REGEXP_REPLACE(
+                REGEXP_REPLACE(
+                    NULLIF(JSON_ARRAY(
+                        in_name01, in_value01,
+                        in_name02, in_value02,
+                        in_name03, in_value03,
+                        in_name04, in_value04,
+                        in_name05, in_value05,
+                        in_name06, in_value06,
+                        in_name07, in_value07,
+                        in_name08, in_value08,
+                        in_name09, in_value09,
+                        in_name10, in_value10,
+                        in_name11, in_value11,
+                        in_name12, in_value12,
+                        in_name13, in_value13,
+                        in_name14, in_value14,
+                        in_name15, in_value15,
+                        in_name16, in_value16,
+                        in_name17, in_value17,
+                        in_name18, in_value18,
+                        in_name19, in_value19,
+                        in_name20, in_value20
+                        NULL ON NULL),
+                        '[]'),
+                    '"(\d+)([.,]\d+)?"', '\1\2'  -- convert to numbers if possible
+                ),
+                '(,null)+\]$', ']'),  -- strip NULLs from the right side
+                '[null]');
+        END IF;
+
+        -- construct a key-value pairs
+        v_obj := JSON_OBJECT_T(JSON_OBJECT (
+            CASE WHEN (in_name01 IS NULL OR in_value01 IS NULL) THEN '__' ELSE in_name01 END VALUE in_value01,
+            CASE WHEN (in_name02 IS NULL OR in_value02 IS NULL) THEN '__' ELSE in_name02 END VALUE in_value02,
+            CASE WHEN (in_name03 IS NULL OR in_value03 IS NULL) THEN '__' ELSE in_name03 END VALUE in_value03,
+            CASE WHEN (in_name04 IS NULL OR in_value04 IS NULL) THEN '__' ELSE in_name04 END VALUE in_value04,
+            CASE WHEN (in_name05 IS NULL OR in_value05 IS NULL) THEN '__' ELSE in_name05 END VALUE in_value05,
+            CASE WHEN (in_name06 IS NULL OR in_value06 IS NULL) THEN '__' ELSE in_name06 END VALUE in_value06,
+            CASE WHEN (in_name07 IS NULL OR in_value07 IS NULL) THEN '__' ELSE in_name07 END VALUE in_value07,
+            CASE WHEN (in_name08 IS NULL OR in_value08 IS NULL) THEN '__' ELSE in_name08 END VALUE in_value08,
+            CASE WHEN (in_name09 IS NULL OR in_value09 IS NULL) THEN '__' ELSE in_name09 END VALUE in_value09,
+            CASE WHEN (in_name10 IS NULL OR in_value10 IS NULL) THEN '__' ELSE in_name10 END VALUE in_value10,
+            CASE WHEN (in_name11 IS NULL OR in_value11 IS NULL) THEN '__' ELSE in_name11 END VALUE in_value11,
+            CASE WHEN (in_name12 IS NULL OR in_value12 IS NULL) THEN '__' ELSE in_name12 END VALUE in_value12,
+            CASE WHEN (in_name13 IS NULL OR in_value13 IS NULL) THEN '__' ELSE in_name13 END VALUE in_value13,
+            CASE WHEN (in_name14 IS NULL OR in_value14 IS NULL) THEN '__' ELSE in_name14 END VALUE in_value14,
+            CASE WHEN (in_name15 IS NULL OR in_value15 IS NULL) THEN '__' ELSE in_name15 END VALUE in_value15,
+            CASE WHEN (in_name16 IS NULL OR in_value16 IS NULL) THEN '__' ELSE in_name16 END VALUE in_value16,
+            CASE WHEN (in_name17 IS NULL OR in_value17 IS NULL) THEN '__' ELSE in_name17 END VALUE in_value17,
+            CASE WHEN (in_name18 IS NULL OR in_value18 IS NULL) THEN '__' ELSE in_name18 END VALUE in_value18,
+            CASE WHEN (in_name19 IS NULL OR in_value19 IS NULL) THEN '__' ELSE in_name19 END VALUE in_value19,
+            CASE WHEN (in_name20 IS NULL OR in_value20 IS NULL) THEN '__' ELSE in_name20 END VALUE in_value20
+        ));
+        --
+        v_obj.REMOVE('__');     -- remove empty pairs
+        --
+        RETURN NULLIF(v_obj.STRINGIFY, '{}');
     END;
 
 

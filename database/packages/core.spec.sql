@@ -637,58 +637,6 @@ AS
 
 
 
-    FUNCTION get_json_list (
-        in_arg1                 VARCHAR2    := NULL,
-        in_arg2                 VARCHAR2    := NULL,
-        in_arg3                 VARCHAR2    := NULL,
-        in_arg4                 VARCHAR2    := NULL,
-        in_arg5                 VARCHAR2    := NULL,
-        in_arg6                 VARCHAR2    := NULL,
-        in_arg7                 VARCHAR2    := NULL,
-        in_arg8                 VARCHAR2    := NULL,
-        in_arg9                 VARCHAR2    := NULL,
-        in_arg10                VARCHAR2    := NULL,
-        in_arg11                VARCHAR2    := NULL,
-        in_arg12                VARCHAR2    := NULL,
-        in_arg13                VARCHAR2    := NULL,
-        in_arg14                VARCHAR2    := NULL,
-        in_arg15                VARCHAR2    := NULL,
-        in_arg16                VARCHAR2    := NULL,
-        in_arg17                VARCHAR2    := NULL,
-        in_arg18                VARCHAR2    := NULL,
-        in_arg19                VARCHAR2    := NULL,
-        in_arg20                VARCHAR2    := NULL
-    )
-    RETURN VARCHAR2;
-
-
-
-    FUNCTION get_json_object (
-        in_name01   VARCHAR2 := NULL,           in_value01  VARCHAR2 := NULL,
-        in_name02   VARCHAR2 := NULL,           in_value02  VARCHAR2 := NULL,
-        in_name03   VARCHAR2 := NULL,           in_value03  VARCHAR2 := NULL,
-        in_name04   VARCHAR2 := NULL,           in_value04  VARCHAR2 := NULL,
-        in_name05   VARCHAR2 := NULL,           in_value05  VARCHAR2 := NULL,
-        in_name06   VARCHAR2 := NULL,           in_value06  VARCHAR2 := NULL,
-        in_name07   VARCHAR2 := NULL,           in_value07  VARCHAR2 := NULL,
-        in_name08   VARCHAR2 := NULL,           in_value08  VARCHAR2 := NULL,
-        in_name09   VARCHAR2 := NULL,           in_value09  VARCHAR2 := NULL,
-        in_name10   VARCHAR2 := NULL,           in_value10  VARCHAR2 := NULL,
-        in_name11   VARCHAR2 := NULL,           in_value11  VARCHAR2 := NULL,
-        in_name12   VARCHAR2 := NULL,           in_value12  VARCHAR2 := NULL,
-        in_name13   VARCHAR2 := NULL,           in_value13  VARCHAR2 := NULL,
-        in_name14   VARCHAR2 := NULL,           in_value14  VARCHAR2 := NULL,
-        in_name15   VARCHAR2 := NULL,           in_value15  VARCHAR2 := NULL,
-        in_name16   VARCHAR2 := NULL,           in_value16  VARCHAR2 := NULL,
-        in_name17   VARCHAR2 := NULL,           in_value17  VARCHAR2 := NULL,
-        in_name18   VARCHAR2 := NULL,           in_value18  VARCHAR2 := NULL,
-        in_name19   VARCHAR2 := NULL,           in_value19  VARCHAR2 := NULL,
-        in_name20   VARCHAR2 := NULL,           in_value20  VARCHAR2 := NULL
-    )
-    RETURN VARCHAR2;
-
-
-
     PROCEDURE create_job (
         in_job_name             VARCHAR2,
         in_statement            VARCHAR2,
@@ -753,6 +701,31 @@ AS
         in_rollback             BOOLEAN     := FALSE,
         in_traceback            BOOLEAN     := FALSE
     );
+    FUNCTION get_arguments (
+        in_name01               VARCHAR2    := NULL,            in_value01  VARCHAR2 := NULL,
+        in_name02               VARCHAR2    := NULL,            in_value02  VARCHAR2 := NULL,
+        in_name03               VARCHAR2    := NULL,            in_value03  VARCHAR2 := NULL,
+        in_name04               VARCHAR2    := NULL,            in_value04  VARCHAR2 := NULL,
+        in_name05               VARCHAR2    := NULL,            in_value05  VARCHAR2 := NULL,
+        in_name06               VARCHAR2    := NULL,            in_value06  VARCHAR2 := NULL,
+        in_name07               VARCHAR2    := NULL,            in_value07  VARCHAR2 := NULL,
+        in_name08               VARCHAR2    := NULL,            in_value08  VARCHAR2 := NULL,
+        in_name09               VARCHAR2    := NULL,            in_value09  VARCHAR2 := NULL,
+        in_name10               VARCHAR2    := NULL,            in_value10  VARCHAR2 := NULL,
+        in_name11               VARCHAR2    := NULL,            in_value11  VARCHAR2 := NULL,
+        in_name12               VARCHAR2    := NULL,            in_value12  VARCHAR2 := NULL,
+        in_name13               VARCHAR2    := NULL,            in_value13  VARCHAR2 := NULL,
+        in_name14               VARCHAR2    := NULL,            in_value14  VARCHAR2 := NULL,
+        in_name15               VARCHAR2    := NULL,            in_value15  VARCHAR2 := NULL,
+        in_name16               VARCHAR2    := NULL,            in_value16  VARCHAR2 := NULL,
+        in_name17               VARCHAR2    := NULL,            in_value17  VARCHAR2 := NULL,
+        in_name18               VARCHAR2    := NULL,            in_value18  VARCHAR2 := NULL,
+        in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
+        in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
+        --
+        in_args_as_list         BOOLEAN     := FALSE
+    )
+    RETURN VARCHAR2;
 
 
 
