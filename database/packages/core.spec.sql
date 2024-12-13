@@ -1232,6 +1232,15 @@ AS
         in_region_id            VARCHAR2        := NULL
     );
 
+
+
+    FUNCTION get_view_source (
+        in_view_name        VARCHAR2,
+        in_owner            VARCHAR2    := NULL,
+        in_trim             CHAR        := NULL
+    )
+    RETURN VARCHAR2;
+
 END;
 /
 

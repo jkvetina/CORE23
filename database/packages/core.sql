@@ -3616,6 +3616,48 @@ CREATE OR REPLACE PACKAGE BODY core AS
         core.raise_error();
     END;
 
+
+
+    FUNCTION get_view_source (
+        in_view_name        VARCHAR2,
+        in_owner            VARCHAR2    := NULL,
+        in_trim             CHAR        := NULL
+    )
+    RETURN VARCHAR2
+    AS
+        v_owner             apex_applications.owner%TYPE;
+        v_source            user_views.text%TYPE;
+    BEGIN
+        IF in_owner IS NULL THEN
+            SELECT ORA_INVOKING_USER INTO v_owner
+            FROM DUAL;
+        END IF;
+        --
+        IF in_owner IS NULL THEN
+            SELECT MAX(a.owner) INTO v_owner
+            FROM apex_applications a
+            WHERE a.application_id = core.get_app_id();
+        END IF;
+        --
+        v_owner := COALESCE(in_owner, v_owner, USER);
+        --
+        SELECT v.text
+        INTO v_source
+        FROM all_views v
+        WHERE v.owner       = v_owner
+            AND v.view_name = UPPER(in_view_name);
+        --
+        IF in_trim IS NOT NULL THEN
+            v_source := REGEXP_REPLACE(v_source, '[ ]{2,}', ' ');
+            v_source := REGEXP_REPLACE(v_source, CHR(10) || '[ ]*', CHR(10));
+        END IF;
+        --
+        RETURN v_source;
+    EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        core.raise_error('VIEW_SOURCE_MISSING|' || v_owner || '.' || in_view_name);
+    END;
+
 END;
 /
 
