@@ -271,7 +271,10 @@ CREATE OR REPLACE PACKAGE BODY core AS
     )
     AS
     BEGIN
-        core.log_module('SET_PREFERENCE', in_name, in_value);
+        core.log_start (
+            'name',     in_name,
+            'value',    in_value
+        );
         --
         APEX_UTIL.SET_PREFERENCE (
             p_preference    => in_name,
@@ -308,7 +311,10 @@ CREATE OR REPLACE PACKAGE BODY core AS
     )
     AS
     BEGIN
-        core.log_module('SET_APP_SETTING', in_name, in_value);
+        core.log_start (
+            'name',     in_name,
+            'value',    in_value
+        );
         --
         APEX_APP_SETTING.SET_VALUE (
             p_name          => in_name,
@@ -481,7 +487,10 @@ CREATE OR REPLACE PACKAGE BODY core AS
     )
     AS
     BEGIN
-        core.log_module('SET_DEBUG', in_level, in_session_id);
+        core.log_start (
+            'level',        in_level,
+            'session_id',   in_session_id
+        );
         --
         --APEX_APPLICATION.G_DEBUG := in_level;
         APEX_SESSION.SET_DEBUG (
@@ -718,7 +727,10 @@ CREATE OR REPLACE PACKAGE BODY core AS
     )
     AS
     BEGIN
-        core.log_module('SET_ACTION', in_action_name, in_module_name);
+        core.log_start (
+            'action_name',  in_action_name,
+            'module_name',  in_module_name
+        );
         --
         IF in_module_name IS NOT NULL THEN
             DBMS_APPLICATION_INFO.SET_MODULE(in_module_name, in_action_name);   -- USERENV.MODULE, USERENV.ACTION
@@ -1020,8 +1032,6 @@ CREATE OR REPLACE PACKAGE BODY core AS
     )
     AS
     BEGIN
-        --core.log_module('SET_GRID_DATA', in_column_name, in_value);
-        --
         APEX_UTIL.SET_SESSION_STATE (
             p_name      => in_column_name,
             p_value     => in_value,
@@ -1254,8 +1264,6 @@ CREATE OR REPLACE PACKAGE BODY core AS
     AS
         v_item_name             apex_application_page_items.item_name%TYPE;
     BEGIN
-        --core.log_module('SET_ITEM', in_name, in_value);
-        --
         v_item_name := core.get_item_name(in_name);
         --
         IF v_item_name IS NOT NULL THEN
@@ -1297,7 +1305,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         l_refcur                SYS_REFCURSOR;
         l_items                 t_page_items;
     BEGIN
-        core.log_module('SET_PAGE_ITEMS', in_query, in_page_id);
+        core.log_start();
 
         -- process cursor
         OPEN l_refcur FOR LTRIM(RTRIM(in_query));
@@ -1322,7 +1330,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         l_refcur                SYS_REFCURSOR;
         l_items                 t_page_items;
     BEGIN
-        core.log_module('SET_PAGE_ITEMS', in_query, in_page_id);
+        core.log_start();
 
         -- process cursor
         OPEN l_refcur FOR LTRIM(RTRIM(in_query));
@@ -1352,7 +1360,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         l_cloned_curs           SYS_REFCURSOR;
         l_items                 t_page_items;
     BEGIN
-        core.log_module('SET_PAGE_ITEMS', in_page_id);
+        core.log_start();
         --
         l_cloned_curs   := in_cursor;
         l_cursor        := get_cursor_number(l_cloned_curs);
@@ -1375,7 +1383,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         l_cloned_curs           SYS_REFCURSOR;
         l_items                 t_page_items;
     BEGIN
-        core.log_module('SET_PAGE_ITEMS', in_page_id);
+        core.log_start();
         --
         l_cloned_curs   := in_cursor;
         l_cursor        := get_cursor_number(l_cloned_curs);
@@ -1409,6 +1417,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         out_items       t_page_items        := t_page_items();
         out_item        type_page_items;
     BEGIN
+        core.log_start();
         --
         -- two scenarios:
         --     1) multiple lines with 2 columns, first = item_name, second = item_value
@@ -1631,7 +1640,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
             q'!BEGIN
               !    DBMS_OUTPUT.PUT_LINE('%4');
               !    --
-              !    core.log_module('JOB_EXECUTED|%6',
+              !    core.log_start (
+              !        'job_name',   '%6',
               !        'user_id',    '%1',
               !        'app_id',     '%2',
               !        'session_id', '%5',
@@ -1660,10 +1670,12 @@ CREATE OR REPLACE PACKAGE BODY core AS
             p_prefix    => '!'
         ));
         --
-        core.log_debug('JOB_REQUESTED|' || v_job_name,
-            in_comments,
-            REGEXP_REPLACE(in_statement, '(\s*;\s*)$', '') || ';',              -- statement
-            in_payload => v_action
+        core.log_start (
+            'job_name',     v_job_name,
+            'comments',     in_comments,
+            'statement',    REGEXP_REPLACE(in_statement, '(\s*;\s*)$', '') || ';',
+            --
+            in_payload      => v_action
         );
 
         -- either run on schedule or at specified date
@@ -1708,7 +1720,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             core.raise_error('GRANT_FAILED');
         END;
         --
-        core.log_debug('JOB_CREATED|' || v_job_name);
+        core.log_end();
         --
     EXCEPTION
     WHEN OTHERS THEN
