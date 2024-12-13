@@ -551,6 +551,15 @@ CREATE OR REPLACE PACKAGE BODY core AS
         --
         v_user_name             apex_workspace_sessions.user_name%TYPE;
     BEGIN
+        core.log_start (
+            'user_id',      in_user_id,
+            'app_id',       in_app_id,
+            'page_id',      in_page_id,
+            'session_id',   in_session_id,
+            'workspace',    in_workspace,
+            'postauth',     CASE WHEN in_postauth THEN 'Y' ELSE 'N' END
+        );
+
         -- set security context
         core.create_security_context (
             in_workspace        => in_workspace,
