@@ -1897,7 +1897,10 @@ CREATE OR REPLACE PACKAGE BODY core AS
         --
         v_obj.REMOVE('__');     -- remove empty pairs
         --
-        RETURN NULLIF(v_obj.STRINGIFY, '{}');
+        RETURN REGEXP_REPLACE(
+            NULLIF(v_obj.STRINGIFY, '{}'),
+            '"(\d+)([.,]\d+)?"', '\1\2'  -- convert to numbers if possible
+        );
     END;
 
 
