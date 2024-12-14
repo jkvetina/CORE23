@@ -39,3 +39,30 @@ SELECT *
 FROM all_tab_privs
 WHERE grantor = 'APPS';
 
+--
+-- VERIFY SYNONYMS FROM TARGET SCHEMA
+--
+SELECT
+    s.synonym_name,
+    g.type              AS object_type,
+    s.table_owner       AS owner,
+    s.table_name        AS object_name,
+    --
+    REPLACE (
+        LISTAGG(g.privilege, ', ') WITHIN GROUP (ORDER BY g.privilege),
+        'ALTER, DEBUG, DELETE, FLASHBACK, INDEX, INSERT, ON COMMIT REFRESH, QUERY REWRITE, READ, REFERENCES, SELECT, UPDATE', 'ALL'
+        ) AS privileges,
+    g.grantable
+    --
+FROM user_synonyms s
+LEFT JOIN user_tab_privs_recd g
+    ON g.owner          = s.table_owner
+    AND g.table_name    = s.table_name
+GROUP BY
+    s.synonym_name,
+    s.table_owner,
+    s.table_name,
+    g.type,
+    g.grantable
+ORDER BY 1;
+
