@@ -1001,6 +1001,18 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
+    FUNCTION get_request (
+        in_name                 VARCHAR2,
+        in_escape               VARCHAR2    := '\'
+    )
+    RETURN BOOLEAN
+    AS
+    BEGIN
+        RETURN APEX_APPLICATION.G_REQUEST LIKE in_name ESCAPE in_escape;
+    END;
+
+
+
     FUNCTION get_icon (
         in_name                 VARCHAR2,
         in_title                VARCHAR2    := NULL,
