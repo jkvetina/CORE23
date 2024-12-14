@@ -3,3 +3,4 @@
 database/grants/*
 config/Wallet*
 config/connections.yaml
+config/db_dependencies.yaml
