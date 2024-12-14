@@ -1,7 +1,7 @@
-CREATE OR REPLACE PACKAGE BODY gen_tapi AS
+CREATE OR REPLACE PACKAGE BODY core_tapi AS
 
     --
-    -- @TODO: it would be uch cooler to actually use APEX_STRING.FORMAT and generate CLOB instead of DBMS_OUTPUT
+    -- @TODO: it would be much cooler to actually use APEX_STRING.FORMAT and generate CLOB instead of DBMS_OUTPUT
     --
 
     g_width_in      PLS_INTEGER;
@@ -143,7 +143,7 @@ CREATE OR REPLACE PACKAGE BODY gen_tapi AS
         --
         DBMS_OUTPUT.PUT_LINE('    )');
         DBMS_OUTPUT.PUT_LINE('    AS');
-        DBMS_OUTPUT.PUT_LINE('        ' || RPAD('c_action', g_width_in) || RPAD('CONSTANT CHAR', g_width_type) || ':= gen_tapi.get_action(in_action);');
+        DBMS_OUTPUT.PUT_LINE('        ' || RPAD('c_action', g_width_in) || RPAD('CONSTANT CHAR', g_width_type) || ':= core_tapi.get_action(in_action);');
         DBMS_OUTPUT.PUT_LINE('    BEGIN');
         --DBMS_OUTPUT.PUT_LINE('        --log_module();');
         --DBMS_OUTPUT.PUT_LINE('');
@@ -151,7 +151,7 @@ CREATE OR REPLACE PACKAGE BODY gen_tapi AS
         -- auth evaluation
         DBMS_OUTPUT.PUT_LINE('        -- evaluate access to this table');
         DBMS_OUTPUT.PUT_LINE('        ' || LOWER(in_auth_package) || '.check_allowed_dml (');
-        DBMS_OUTPUT.PUT_LINE('            in_table_name       => gen_tapi.get_table_name(),');
+        DBMS_OUTPUT.PUT_LINE('            in_table_name       => core_tapi.get_table_name(),');
         DBMS_OUTPUT.PUT_LINE('            in_action           => c_action,');
         DBMS_OUTPUT.PUT_LINE('            in_user_id          => core.get_user_id(),');
         DBMS_OUTPUT.PUT_LINE('            in_client_id        => ' || CASE WHEN column_exists(c_table_name, 'PROJECT_ID') THEN 'rec.project_id' ELSE 'NULL' END || ',');
@@ -179,7 +179,7 @@ CREATE OR REPLACE PACKAGE BODY gen_tapi AS
         FOR c IN c_primary_key_columns(in_table_name) LOOP
             DBMS_OUTPUT.PUT_LINE('        -- are we renaming the primary key?');
             DBMS_OUTPUT.PUT_LINE('        IF c_action = ''U'' AND in_' || c.column_name || ' != rec.' || c.column_name || ' THEN');
-            DBMS_OUTPUT.PUT_LINE('            gen_tapi.rename_primary_key (');
+            DBMS_OUTPUT.PUT_LINE('            core_tapi.rename_primary_key (');
             DBMS_OUTPUT.PUT_LINE('                in_column_name  => ''' || UPPER(c.column_name) || ''',');
             DBMS_OUTPUT.PUT_LINE('                in_old_key      => in_' || c.column_name || ',');
             DBMS_OUTPUT.PUT_LINE('                in_new_key      => rec.' || c.column_name);
@@ -479,7 +479,7 @@ CREATE OR REPLACE PACKAGE BODY gen_tapi AS
         ) LOOP
             -- @TODO: we should certainly log this
             BEGIN
-                v_query := gen_tapi.get_query(q'!
+                v_query := core_tapi.get_query(q'!
                     !UPDATE %0
                     !SET %1   = :NEW_KEY_ID
                     !WHERE %1 = :OLD_KEY_ID
@@ -493,8 +493,8 @@ CREATE OR REPLACE PACKAGE BODY gen_tapi AS
             EXCEPTION
             WHEN DUP_VAL_ON_INDEX THEN
                 -- if this is the master table, we could remove the original row
-                IF in_merge AND c.table_name = gen_tapi.get_master_table(in_column_name) THEN
-                    v_query := gen_tapi.get_query(q'!
+                IF in_merge AND c.table_name = core_tapi.get_master_table(in_column_name) THEN
+                    v_query := core_tapi.get_query(q'!
                         !DELETE %0
                         !WHERE %1 = :OLD_KEY_ID
                         !',
