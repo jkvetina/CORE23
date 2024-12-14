@@ -32,46 +32,46 @@ AS
      */
 
     -- package name holding constants, used as get_constant() default
-    c_constants                 CONSTANT VARCHAR2(30)   := 'APP_CONSTANTS';
+    c_constants                 CONSTANT VARCHAR2(30)   := core_custom.global_constants;
 
     -- global items to hold application + page context
-    c_context_name_app          CONSTANT VARCHAR2(30)   := app_constants.global_context_app;
-    c_context_name_page         CONSTANT VARCHAR2(30)   := app_constants.global_context_page;
+    c_context_name_app          CONSTANT VARCHAR2(30)   := core_custom.global_context_app;
+    c_context_name_page         CONSTANT VARCHAR2(30)   := core_custom.global_context_page;
 
     -- code for app exception
-    app_exception_code          CONSTANT PLS_INTEGER    := -20990;
-    assert_exception_code       CONSTANT PLS_INTEGER    := -20992;
+    app_exception_code          CONSTANT PLS_INTEGER    := core_custom.app_exception_code;
+    assert_exception_code       CONSTANT PLS_INTEGER    := core_custom.assert_exception_code;
 
     -- some constants, used also in APEX app substitutions
-    c_format_date               CONSTANT VARCHAR2(32)   := app_constants.format_date;
-    c_format_date_time          CONSTANT VARCHAR2(32)   := app_constants.format_date_time;
-    c_format_date_short         CONSTANT VARCHAR2(32)   := app_constants.format_date_short;
+    c_format_date               CONSTANT VARCHAR2(32)   := core_custom.format_date;
+    c_format_date_time          CONSTANT VARCHAR2(32)   := core_custom.format_date_time;
+    c_format_date_short         CONSTANT VARCHAR2(32)   := core_custom.format_date_short;
     --
-    c_app_proxy                 CONSTANT VARCHAR2(128)  := app_constants.global_app_proxy;
-    c_app_wallet                CONSTANT VARCHAR2(128)  := app_constants.global_app_wallet;
+    c_app_proxy                 CONSTANT VARCHAR2(128)  := core_custom.global_app_proxy;
+    c_app_wallet                CONSTANT VARCHAR2(128)  := core_custom.global_app_wallet;
     --
-    c_smtp_from                 CONSTANT VARCHAR2(128)  := app_constants.global_smtp_from;
-    c_smtp_host                 CONSTANT VARCHAR2(128)  := app_constants.global_smtp_host;
-    c_smtp_port                 CONSTANT NUMBER(8)      := app_constants.global_smtp_port;
-    c_smtp_timeout              CONSTANT NUMBER(8)      := app_constants.global_smtp_timeout;
-    c_smtp_username             CONSTANT VARCHAR2(128)  := app_constants.global_smtp_username;
-    c_smtp_password             CONSTANT VARCHAR2(128)  := app_constants.global_smtp_password;
+    c_smtp_from                 CONSTANT VARCHAR2(128)  := core_custom.global_smtp_from;
+    c_smtp_host                 CONSTANT VARCHAR2(128)  := core_custom.global_smtp_host;
+    c_smtp_port                 CONSTANT NUMBER(8)      := core_custom.global_smtp_port;
+    c_smtp_timeout              CONSTANT NUMBER(8)      := core_custom.global_smtp_timeout;
+    c_smtp_username             CONSTANT VARCHAR2(128)  := core_custom.global_smtp_username;
+    c_smtp_password             CONSTANT VARCHAR2(128)  := core_custom.global_smtp_password;
 
     -- for dynamic page items
     c_page_item_wild            CONSTANT VARCHAR2(2)    := '$';
     c_page_item_prefix          CONSTANT VARCHAR2(2)    := 'P';
 
     -- flags use in logging
-    flag_error                  CONSTANT CHAR           := 'E';     -- error
-    flag_warning                CONSTANT CHAR           := 'W';     -- warning
-    flag_debug                  CONSTANT CHAR           := 'D';     -- debug
-    flag_start                  CONSTANT CHAR           := 'S';     -- start of any module (procedure/function)
-    flag_end                    CONSTANT CHAR           := 'F';     -- end of the module (with timer)
+    flag_error                  CONSTANT CHAR           := core_custom.flag_error;
+    flag_warning                CONSTANT CHAR           := core_custom.flag_warning;
+    flag_debug                  CONSTANT CHAR           := core_custom.flag_debug;
+    flag_start                  CONSTANT CHAR           := core_custom.flag_start;
+    flag_end                    CONSTANT CHAR           := core_custom.flag_end;
 
     -- start assert messages with these prefixes
-    c_assert_message            CONSTANT VARCHAR2(30)   := 'ASSERT_FAILED|';
-    c_constraint_prefix         CONSTANT VARCHAR2(30)   := 'CONSTRAINT_ERROR|';
-    c_not_null_prefix           CONSTANT VARCHAR2(30)   := 'NOT_NULL|';
+    c_assert_message            CONSTANT VARCHAR2(30)   := core_custom.global_assert_message;
+    c_constraint_prefix         CONSTANT VARCHAR2(30)   := core_custom.global_constraint_prefix;
+    c_not_null_prefix           CONSTANT VARCHAR2(30)   := core_custom.global_not_null_prefix;
 
 
 
