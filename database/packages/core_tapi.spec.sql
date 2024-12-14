@@ -1,4 +1,6 @@
-CREATE OR REPLACE PACKAGE core_tapi AS
+CREATE OR REPLACE PACKAGE core_tapi
+AUTHID CURRENT_USER
+AS
 
     g_app_prefix                VARCHAR2(16)   := '';
     g_in_prefix                 VARCHAR2(16)   := 'in_';
