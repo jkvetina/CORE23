@@ -7,7 +7,7 @@ CLEAR SCREEN
 -- (THIS MIGHT NEED MANUAL EXECUTION IF YOU ARE NOT DBA)
 --
 DECLARE
-    v_core_owner  CONSTANT VARCHAR2(30) := 'APPS';
+    v_core_owner  CONSTANT VARCHAR2(30) := 'CORE';      -- EXECUTE SCRIPT AS THIS USER OR DBA
 BEGIN
     FOR c IN (
         SELECT u.username
@@ -16,18 +16,31 @@ BEGIN
             AND u.oracle_maintained = 'N'
             AND u.cloud_maintained  = 'NO'
             AND u.username          != v_core_owner
+                AND u.username      NOT IN ('ADMIN')
     ) LOOP
         DBMS_OUTPUT.PUT_LINE('-- PROCESSING: ' || c.username);
         --
-        EXECUTE IMMEDIATE 'GRANT EXECUTE ON ' || v_core_owner || '.core'        || ' TO ' || c.username;
-        EXECUTE IMMEDIATE 'GRANT EXECUTE ON ' || v_core_owner || '.core_custom' || ' TO ' || c.username;
-        EXECUTE IMMEDIATE 'GRANT EXECUTE ON ' || v_core_owner || '.core_tapi'   || ' TO ' || c.username;
-        EXECUTE IMMEDIATE 'GRANT EXECUTE ON ' || v_core_owner || '.recompile'   || ' TO ' || c.username;
+        FOR o IN (
+            SELECT
+                o.owner,
+                o.object_type,
+                o.object_name
+            FROM all_objects o
+            WHERE o.owner           = v_core_owner
+                AND o.object_type   NOT LIKE '%BODY'
+        ) LOOP
+            EXECUTE IMMEDIATE
+                'GRANT EXECUTE ON ' || o.owner || '.' || o.object_name || ' TO ' || c.username;
+            --
+            EXECUTE IMMEDIATE
+                'DROP ' || o.object_type || ' IF EXISTS ' || c.username || '.' || o.object_name;
+            --
+            EXECUTE IMMEDIATE
+                'CREATE OR REPLACE SYNONYM ' || c.username || '.' || o.object_name
+                || ' FOR ' || v_core_owner || '.' || o.object_name;
+        END LOOP;
         --
-        DBMS_OUTPUT.PUT_LINE('CREATE OR REPLACE SYNONYM ' || c.username || '.core         FOR ' || v_core_owner || '.core;');
-        DBMS_OUTPUT.PUT_LINE('CREATE OR REPLACE SYNONYM ' || c.username || '.core_custom  FOR ' || v_core_owner || '.core_custom;');
-        DBMS_OUTPUT.PUT_LINE('CREATE OR REPLACE SYNONYM ' || c.username || '.core_tapi    FOR ' || v_core_owner || '.core_tapi;');
-        DBMS_OUTPUT.PUT_LINE('CREATE OR REPLACE SYNONYM ' || c.username || '.recompile    FOR ' || v_core_owner || '.recompile;');
+        DBMS_UTILITY.COMPILE_SCHEMA(schema => c.username);
     END LOOP;
 END;
 /
@@ -37,7 +50,7 @@ END;
 --
 SELECT *
 FROM all_tab_privs
-WHERE grantor = 'APPS';
+WHERE grantor = 'CORE';
 
 --
 -- VERIFY SYNONYMS FROM TARGET SCHEMA
