@@ -82,6 +82,7 @@ CREATE OR REPLACE PACKAGE BODY core_custom AS
                     p_force         => TRUE
                 );
                 --
+                /*
                 logger.log (
                     p_text    => in_message
                                         || CASE WHEN in_arguments IS NOT NULL THEN CHR(10) || '^ARGS: '         || in_arguments END,
@@ -89,6 +90,7 @@ CREATE OR REPLACE PACKAGE BODY core_custom AS
                     --p_extra   => in_payload
                     --p_params  in tab_param default logger.gc_empty_tab_param
                 );
+                */
             END CASE;
         --
         COMMIT;
