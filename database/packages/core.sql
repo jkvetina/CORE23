@@ -3665,14 +3665,14 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     FUNCTION get_view_source (
-        in_view_name        VARCHAR2,
-        in_owner            VARCHAR2    := NULL,
-        in_trim             CHAR        := NULL
+        in_view_name            VARCHAR2,
+        in_owner                VARCHAR2    := NULL,
+        in_trim                 CHAR        := NULL
     )
     RETURN VARCHAR2
     AS
-        v_owner             apex_applications.owner%TYPE;
-        v_source            user_views.text%TYPE;
+        v_owner     apex_applications.owner%TYPE;
+        v_source    user_views.text%TYPE;
     BEGIN
         IF in_owner IS NULL THEN
             SELECT ORA_INVOKING_USER INTO v_owner
@@ -3702,6 +3702,72 @@ CREATE OR REPLACE PACKAGE BODY core AS
     EXCEPTION
     WHEN NO_DATA_FOUND THEN
         core.raise_error('VIEW_SOURCE_MISSING', v_owner || '.' || in_view_name, in_concat => TRUE);
+    END;
+
+
+
+    FUNCTION call_procedure (
+        in_package_name         VARCHAR2,
+        in_procedure_name       VARCHAR2,
+        in_owner                VARCHAR2    := NULL,
+        in_prefix               VARCHAR2    := NULL
+    )
+    RETURN BOOLEAN
+    AS
+    BEGIN
+        FOR c IN (
+            SELECT
+                p.object_name || '.' || p.procedure_name AS procedure_name,
+                p.owner
+            FROM all_procedures p
+            WHERE 1 = 1
+                AND p.owner             = COALESCE(in_owner, core.get_app_owner())
+                AND p.object_name       = in_prefix || in_package_name
+                AND p.procedure_name    = in_procedure_name
+            ORDER BY 1
+            FETCH FIRST 1 ROWS ONLY
+        ) LOOP
+            core.log_debug('CALLING_PROCEDURE',
+                'owner',            c.owner,
+                'procedure_name',   c.procedure_name
+            );
+            --
+            EXECUTE IMMEDIATE
+                'BEGIN ' || c.procedure_name || '(); END;';
+            --
+            RETURN TRUE;
+        END LOOP;
+        --
+        RETURN FALSE;
+    EXCEPTION
+    WHEN core.app_exception THEN
+        RAISE;
+    WHEN OTHERS THEN
+        core.raise_error();
+    END;
+
+
+
+    PROCEDURE call_procedure (
+        in_package_name         VARCHAR2,
+        in_procedure_name       VARCHAR2,
+        in_owner                VARCHAR2    := NULL,
+        in_prefix               VARCHAR2    := NULL
+    )
+    AS
+        v_result BOOLEAN;
+    BEGIN
+        v_result := call_procedure (
+            in_package_name    => in_package_name,
+            in_procedure_name  => in_procedure_name,
+            in_owner           => in_owner,
+            in_prefix          => in_prefix
+        );
+    EXCEPTION
+    WHEN core.app_exception THEN
+        RAISE;
+    WHEN OTHERS THEN
+        core.raise_error();
     END;
 
 END;

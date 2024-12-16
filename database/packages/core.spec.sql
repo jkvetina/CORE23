@@ -1243,11 +1243,30 @@ AS
 
 
     FUNCTION get_view_source (
-        in_view_name        VARCHAR2,
-        in_owner            VARCHAR2    := NULL,
-        in_trim             CHAR        := NULL
+        in_view_name            VARCHAR2,
+        in_owner                VARCHAR2    := NULL,
+        in_trim                 CHAR        := NULL
     )
     RETURN VARCHAR2;
+
+
+
+    FUNCTION call_procedure (
+        in_package_name         VARCHAR2,
+        in_procedure_name       VARCHAR2,
+        in_owner                VARCHAR2    := NULL,
+        in_prefix               VARCHAR2    := NULL
+    )
+    RETURN BOOLEAN;
+
+
+
+    PROCEDURE call_procedure (
+        in_package_name         VARCHAR2,
+        in_procedure_name       VARCHAR2,
+        in_owner                VARCHAR2    := NULL,
+        in_prefix               VARCHAR2    := NULL
+    );
 
 END;
 /
