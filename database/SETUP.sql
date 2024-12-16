@@ -17,6 +17,7 @@ BEGIN
             AND u.cloud_maintained  = 'NO'
             AND u.username          != v_core_owner
                 AND u.username      NOT IN ('ADMIN')
+        ORDER BY 1
     ) LOOP
         DBMS_OUTPUT.PUT_LINE('-- PROCESSING: ' || c.username);
         --
