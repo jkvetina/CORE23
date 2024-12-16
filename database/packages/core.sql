@@ -1175,43 +1175,56 @@ CREATE OR REPLACE PACKAGE BODY core AS
     )
     RETURN DATE
     AS
+        TYPE list_of_strings    IS VARRAY(10) OF VARCHAR2(30);
+        --
+        l_formats               list_of_strings := list_of_strings();
         l_value                 VARCHAR2(30)    := SUBSTR(REPLACE(in_value, 'T', ' '), 1, 30);
+        out_date                DATE;
     BEGIN
         IF in_format IS NOT NULL THEN
             BEGIN
                 RETURN TO_DATE(l_value, in_format);
             EXCEPTION
             WHEN OTHERS THEN
-                core.raise_error('INVALID_DATE', in_value, in_format);
+                core.raise_error('INVALID_DATE',
+                    'value',    in_value,
+                    'format',   in_format
+                );
             END;
         END IF;
 
+        -- prepare multiple formats in array
+        l_formats.EXTEND; l_formats(l_formats.COUNT) := c_format_date_time;
+        l_formats.EXTEND; l_formats(l_formats.COUNT) := c_format_date_short;
+        l_formats.EXTEND; l_formats(l_formats.COUNT) := c_format_date;
+        l_formats.EXTEND; l_formats(l_formats.COUNT) := V('APP_NLS_DATE_FORMAT');
+        l_formats.EXTEND; l_formats(l_formats.COUNT) := V('APP_DATE_TIME_FORMAT');
+
         -- try different formats
-        BEGIN
-            RETURN TO_DATE(l_value, c_format_date_time);                        -- YYYY-MM-DD HH24:MI:SS
-        EXCEPTION
-        WHEN OTHERS THEN
+        FOR i IN 1 .. l_formats.COUNT LOOP
             BEGIN
-                RETURN TO_DATE(l_value, c_format_date_short);                   -- YYYY-MM-DD HH24:MI
+                IF l_formats(i) IS NOT NULL THEN
+                    out_date := TO_DATE(l_value, l_formats(i));
+                    --
+                    RETURN out_date;    -- on success dont continue
+                END IF;
             EXCEPTION
             WHEN OTHERS THEN
-                BEGIN
-                    RETURN TO_DATE(SUBSTR(l_value, 1, 10), c_format_date);      -- YYYY-MM-DD
-                EXCEPTION
-                WHEN OTHERS THEN
-                    BEGIN
-                        RETURN TO_DATE(l_value, V('APP_NLS_DATE_FORMAT'));
-                    EXCEPTION
-                    WHEN OTHERS THEN
-                        BEGIN
-                            RETURN TO_DATE(l_value);
-                        EXCEPTION
-                        WHEN OTHERS THEN
-                            core.raise_error('INVALID_DATE', in_value, in_format);
-                        END;
-                    END;
-                END;
+                NULL;
             END;
+        END LOOP;
+
+        -- this means we did not found a match
+        BEGIN
+            RETURN TO_DATE(l_value);
+        EXCEPTION
+        WHEN OTHERS THEN
+            core.raise_error('INVALID_DATE',
+                'value',    in_value,
+                'format',   in_format,
+                --
+                in_rollback => FALSE
+            );
         END;
     END;
 
