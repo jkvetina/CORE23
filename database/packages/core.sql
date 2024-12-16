@@ -631,7 +631,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         END IF;
 
         -- enable debug so we can use debug messages
-        APEX_DEBUG.ENABLE(p_level => 9);
+        APEX_DEBUG.ENABLE(p_level => c_default_debug_level);
         --
         COMMIT;
         --
