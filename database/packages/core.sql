@@ -349,7 +349,10 @@ CREATE OR REPLACE PACKAGE BODY core AS
         --
     EXCEPTION
     WHEN OTHERS THEN
-        core.raise_error('SET_SETTING|' || in_name || '|' || in_value);
+        core.raise_error('SET_SETTING',
+            'name',     in_name,
+            'value',    in_value
+        );
     END;
 
 
@@ -545,7 +548,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 WHERE a.application_id = in_app_id;
             EXCEPTION
             WHEN NO_DATA_FOUND THEN
-                core.raise_error('INVALID_APP', in_app_id);
+                core.raise_error('INVALID_APP', in_app_id, in_concat => TRUE);
             END;
         END IF;
         --
@@ -615,7 +618,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 );
             EXCEPTION
             WHEN OTHERS THEN
-                core.raise_error('CREATE_SESSION_FAILED', in_app_id, in_page_id, in_user_id);
+                core.raise_error('CREATE_SESSION_FAILED', in_app_id, in_page_id, in_user_id, in_concat => TRUE);
             END;
 
             -- set username
@@ -672,7 +675,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             );
         EXCEPTION
         WHEN OTHERS THEN
-            core.raise_error('ATTACH_SESSION_FAILED', in_app_id, in_page_id, in_session_id);
+            core.raise_error('ATTACH_SESSION_FAILED', in_app_id, in_page_id, in_session_id, in_concat => TRUE);
         END;
         --
         COMMIT;
@@ -1141,7 +1144,9 @@ CREATE OR REPLACE PACKAGE BODY core AS
         RETURN TO_NUMBER(core.get_item(in_name));
     EXCEPTION
     WHEN OTHERS THEN
-        core.raise_error('INVALID_NUMBER', in_name, core.get_item(in_name));
+        core.raise_error('INVALID_NUMBER',
+            'name',     core.get_item(in_name)
+        );
     END;
 
 
@@ -1156,7 +1161,10 @@ CREATE OR REPLACE PACKAGE BODY core AS
         RETURN core.get_date(core.get_item(in_name), in_format);
     EXCEPTION
     WHEN OTHERS THEN
-        core.raise_error('INVALID_DATE', in_name, core.get_item(in_name), in_format);
+        core.raise_error('INVALID_DATE',
+            'name',     core.get_item(in_name),
+            'format',   in_format
+        );
     END;
 
 
@@ -1324,7 +1332,10 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 );
             EXCEPTION
             WHEN OTHERS THEN
-                core.raise_error('ITEM_MISSING', v_item_name, in_name);
+                core.raise_error('ITEM_MISSING',
+                    'name',     v_item_name,
+                    'value',    in_value
+                );
             END;
         END IF;
     END;
@@ -1801,7 +1812,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         --
     EXCEPTION
     WHEN OTHERS THEN
-        core.raise_error('STOP_JOB|' || v_job_name);
+        core.raise_error('STOP_JOB', v_job_name, in_concat => TRUE);
     END;
 
 
@@ -1825,7 +1836,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         --
     EXCEPTION
     WHEN OTHERS THEN
-        core.raise_error('DROP_JOB|' || v_job_name);
+        core.raise_error('DROP_JOB', v_job_name, in_concat => TRUE);
     END;
 
 
@@ -1849,7 +1860,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         --
     EXCEPTION
     WHEN OTHERS THEN
-        core.raise_error('RUN_JOB|' || v_job_name);
+        core.raise_error('RUN_JOB', v_job_name, in_concat => TRUE);
     END;
 
 
@@ -1973,10 +1984,11 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_context_id           NUMBER      := NULL,
         in_payload              CLOB        := NULL,
         in_rollback             BOOLEAN     := TRUE,
-        in_as_list              BOOLEAN     := FALSE
+        in_as_list              BOOLEAN     := FALSE,
+        in_concat               BOOLEAN     := FALSE
     )
     AS
         v_caller                VARCHAR2(256);
@@ -1995,29 +2007,56 @@ CREATE OR REPLACE PACKAGE BODY core AS
         v_message   := REGEXP_REPLACE(v_caller, '\[\d+\]', '') || '|' || COALESCE(in_message, REGEXP_SUBSTR(v_caller, '\[(\d+)\]', 1, 1, NULL, 1));
 
         -- convert passed arguments
-        v_arguments := core.get_arguments (
-            in_name01       => in_name01,       in_value01  => in_value01,
-            in_name02       => in_name02,       in_value02  => in_value02,
-            in_name03       => in_name03,       in_value03  => in_value03,
-            in_name04       => in_name04,       in_value04  => in_value04,
-            in_name05       => in_name05,       in_value05  => in_value05,
-            in_name06       => in_name06,       in_value06  => in_value06,
-            in_name07       => in_name07,       in_value07  => in_value07,
-            in_name08       => in_name08,       in_value08  => in_value08,
-            in_name09       => in_name09,       in_value09  => in_value09,
-            in_name10       => in_name10,       in_value10  => in_value10,
-            in_name11       => in_name11,       in_value11  => in_value11,
-            in_name12       => in_name12,       in_value12  => in_value12,
-            in_name13       => in_name13,       in_value13  => in_value13,
-            in_name14       => in_name14,       in_value14  => in_value14,
-            in_name15       => in_name15,       in_value15  => in_value15,
-            in_name16       => in_name16,       in_value16  => in_value16,
-            in_name17       => in_name17,       in_value17  => in_value17,
-            in_name18       => in_name18,       in_value18  => in_value18,
-            in_name19       => in_name19,       in_value19  => in_value19,
-            in_name20       => in_name20,       in_value20  => in_value20,
-            in_as_list      => in_as_list
-        );
+        IF in_concat THEN
+            -- keep args concatenated in the message
+            v_message := SUBSTR(v_message || '|' || in_name01,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value01, 1, 32767);
+            v_message := SUBSTR(v_message || '|' || in_name02,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value02, 1, 32767);
+            v_message := SUBSTR(v_message || '|' || in_name03,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value03, 1, 32767);
+            v_message := SUBSTR(v_message || '|' || in_name04,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value04, 1, 32767);
+            v_message := SUBSTR(v_message || '|' || in_name05,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value05, 1, 32767);
+            v_message := SUBSTR(v_message || '|' || in_name06,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value06, 1, 32767);
+            v_message := SUBSTR(v_message || '|' || in_name07,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value07, 1, 32767);
+            v_message := SUBSTR(v_message || '|' || in_name08,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value08, 1, 32767);
+            v_message := SUBSTR(v_message || '|' || in_name09,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value09, 1, 32767);
+            v_message := SUBSTR(v_message || '|' || in_name10,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value10, 1, 32767);
+            v_message := SUBSTR(v_message || '|' || in_name11,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value11, 1, 32767);
+            v_message := SUBSTR(v_message || '|' || in_name12,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value12, 1, 32767);
+            v_message := SUBSTR(v_message || '|' || in_name13,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value13, 1, 32767);
+            v_message := SUBSTR(v_message || '|' || in_name14,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value14, 1, 32767);
+            v_message := SUBSTR(v_message || '|' || in_name15,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value15, 1, 32767);
+            v_message := SUBSTR(v_message || '|' || in_name16,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value16, 1, 32767);
+            v_message := SUBSTR(v_message || '|' || in_name17,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value17, 1, 32767);
+            v_message := SUBSTR(v_message || '|' || in_name18,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value18, 1, 32767);
+            v_message := SUBSTR(v_message || '|' || in_name19,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value19, 1, 32767);
+            v_message := SUBSTR(v_message || '|' || in_name20,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value20, 1, 32767);
+            --
+            v_message := RTRIM(v_message, '|');
+        ELSE
+            -- pass arguments either as JSON object or JSON array
+            v_arguments := core.get_arguments (
+                in_name01       => in_name01,       in_value01  => in_value01,
+                in_name02       => in_name02,       in_value02  => in_value02,
+                in_name03       => in_name03,       in_value03  => in_value03,
+                in_name04       => in_name04,       in_value04  => in_value04,
+                in_name05       => in_name05,       in_value05  => in_value05,
+                in_name06       => in_name06,       in_value06  => in_value06,
+                in_name07       => in_name07,       in_value07  => in_value07,
+                in_name08       => in_name08,       in_value08  => in_value08,
+                in_name09       => in_name09,       in_value09  => in_value09,
+                in_name10       => in_name10,       in_value10  => in_value10,
+                in_name11       => in_name11,       in_value11  => in_value11,
+                in_name12       => in_name12,       in_value12  => in_value12,
+                in_name13       => in_name13,       in_value13  => in_value13,
+                in_name14       => in_name14,       in_value14  => in_value14,
+                in_name15       => in_name15,       in_value15  => in_value15,
+                in_name16       => in_name16,       in_value16  => in_value16,
+                in_name17       => in_name17,       in_value17  => in_value17,
+                in_name18       => in_name18,       in_value18  => in_value18,
+                in_name19       => in_name19,       in_value19  => in_value19,
+                in_name20       => in_name20,       in_value20  => in_value20,
+                in_as_list      => in_as_list
+            );
+        END IF;
 
         -- log raised error
         v_id := core.log__ (
@@ -2122,7 +2161,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_context_id           NUMBER      := NULL,
         in_payload              CLOB        := NULL,
         in_as_list              BOOLEAN     := FALSE
     )
@@ -2188,7 +2227,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_context_id           NUMBER      := NULL,
         in_payload              CLOB        := NULL,
         in_as_list              BOOLEAN     := FALSE
     )
@@ -2247,7 +2286,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_context_id           NUMBER      := NULL,
         in_payload              CLOB        := NULL,
         in_as_list              BOOLEAN     := FALSE
     )
@@ -2313,7 +2352,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_context_id           NUMBER      := NULL,
         in_payload              CLOB        := NULL,
         in_as_list              BOOLEAN     := FALSE
     )
@@ -2372,7 +2411,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_context_id           NUMBER      := NULL,
         in_payload              CLOB        := NULL,
         in_as_list              BOOLEAN     := FALSE
     )
@@ -2438,7 +2477,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_context_id           NUMBER      := NULL,
         in_payload              CLOB        := NULL,
         in_as_list              BOOLEAN     := FALSE
     )
@@ -2497,7 +2536,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_context_id           NUMBER      := NULL,
         in_payload              CLOB        := NULL,
         in_as_list              BOOLEAN     := FALSE
     )
@@ -2563,7 +2602,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_context_id           NUMBER      := NULL,
         in_payload              CLOB        := NULL,
         in_as_list              BOOLEAN     := FALSE
     )
@@ -2622,7 +2661,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_context_id           NUMBER      := NULL,
         in_payload              CLOB        := NULL,
         in_as_list              BOOLEAN     := FALSE
     )
@@ -2688,7 +2727,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
+        in_context_id           NUMBER      := NULL,
         in_payload              CLOB        := NULL,
         in_as_list              BOOLEAN     := FALSE
     )
@@ -3334,7 +3373,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         DBMS_OUTPUT.PUT_LINE(http_resp.status_code);
         --
         IF http_resp.status_code >= 300 THEN
-            core.raise_error('WRONG_RESPONSE_CODE', http_resp.status_code);
+            core.raise_error('WRONG_RESPONSE_CODE', http_resp.status_code, in_concat => TRUE);
         END IF;
 
         -- get response
@@ -3595,7 +3634,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
                     AND a.static_id     = in_static_id;
             EXCEPTION
             WHEN NO_DATA_FOUND THEN
-                core.raise_error('REGION_NOT_FOUND', in_static_id);
+                core.raise_error('REGION_NOT_FOUND', in_static_id, in_concat => TRUE);
             END;
         END IF;
         --
@@ -3662,7 +3701,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         RETURN v_source;
     EXCEPTION
     WHEN NO_DATA_FOUND THEN
-        core.raise_error('VIEW_SOURCE_MISSING|' || v_owner || '.' || in_view_name);
+        core.raise_error('VIEW_SOURCE_MISSING', v_owner || '.' || in_view_name, in_concat => TRUE);
     END;
 
 END;
