@@ -3719,6 +3719,105 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
+    FUNCTION search_clob (
+        in_payload              CLOB,
+        in_search_start         VARCHAR2,
+        in_search_stop          VARCHAR2,
+        in_occurence            PLS_INTEGER     := 1,
+        in_overlap              PLS_INTEGER     := NULL,
+        in_new_line             VARCHAR2        := NULL
+    )
+    RETURN VARCHAR2
+    AS
+        v_length        PLS_INTEGER;                    -- length of the input CLOB
+        v_counter       PLS_INTEGER     := 0;           -- number of found strings
+        v_chunk_size    PLS_INTEGER     := 2000;        -- chunk size
+        v_chunk         VARCHAR2(32767);                -- chunk extracted from the CLOB
+        v_position      PLS_INTEGER     := 1;           -- starting position for next chunk
+        v_pos2          PLS_INTEGER;
+    BEGIN
+        -- search CLOB in chunks
+        v_length := DBMS_LOB.GETLENGTH(in_payload);
+        --
+        WHILE v_position <= v_length LOOP
+            v_position  := GREATEST(1, v_position - NVL(in_overlap, LENGTH(in_search_start) - 1));
+            v_chunk     := DBMS_LOB.SUBSTR(in_payload, v_chunk_size, v_position);
+
+            -- modify CLOB to remove new lines for easier multiline searching
+            IF in_new_line IS NOT NULL THEN
+                v_chunk := REPLACE(v_chunk, CHR(10), in_new_line);  -- to search multilines
+            END IF;
+
+            -- we can have multiple occurences in the same chunk
+            FOR i IN 1 .. REGEXP_COUNT(v_chunk, in_search_start) LOOP
+                v_counter   := v_counter + 1;
+                v_pos2      := REGEXP_INSTR(v_chunk, in_search_start, 1, i) + LENGTH(in_search_start);
+                --
+                IF v_counter = in_occurence THEN
+                    -- retrieve whole bucket from the starting point
+                    v_chunk := DBMS_LOB.SUBSTR(in_payload, v_chunk_size, v_position + v_pos2 - 1);
+                    IF in_new_line IS NOT NULL THEN
+                        v_chunk := REPLACE(v_chunk, CHR(10), in_new_line);  -- to search multilines
+                    END IF;
+                    --
+                    RETURN SUBSTR(v_chunk, 1, NVL(INSTR(v_chunk, in_search_stop) - 1, v_chunk_size));
+                END IF;
+            END LOOP;
+
+            -- process next chunk
+            v_position := v_position + v_chunk_size;
+        END LOOP;
+        --
+        RETURN '';
+    EXCEPTION
+    WHEN core.app_exception THEN
+        RAISE;
+    WHEN OTHERS THEN
+        core.raise_error();
+    END;
+
+
+
+    FUNCTION search_clob_count (
+        in_payload              CLOB,
+        in_search_start         VARCHAR2,
+        in_overlap              PLS_INTEGER     := NULL,
+        in_new_line             VARCHAR2        := NULL
+    )
+    RETURN PLS_INTEGER
+    AS
+        v_length        PLS_INTEGER;                    -- length of the input CLOB
+        v_counter       PLS_INTEGER     := 0;           -- number of found strings
+        v_chunk_size    PLS_INTEGER     := 2000;        -- chunk size
+        v_chunk         VARCHAR2(32767);                -- chunk extracted from the CLOB
+        v_position      PLS_INTEGER     := 1;           -- starting position for next chunk
+    BEGIN
+        -- search CLOB in chunks
+        v_length := DBMS_LOB.GETLENGTH(in_payload);
+        --
+        WHILE v_position <= v_length LOOP
+            v_position  := GREATEST(1, v_position - NVL(in_overlap, LENGTH(in_search_start) - 1));
+            v_chunk     := DBMS_LOB.SUBSTR(in_payload, v_chunk_size, v_position);
+
+            -- modify CLOB to remove new lines for easier multiline searching
+            IF in_new_line IS NOT NULL THEN
+                v_chunk := REPLACE(v_chunk, CHR(10), in_new_line);  -- to search multilines
+            END IF;
+            --
+            v_counter   := v_counter + REGEXP_COUNT(v_chunk, in_search_start);
+            v_position  := v_position + v_chunk_size;
+        END LOOP;
+        --
+        RETURN v_counter;
+    EXCEPTION
+    WHEN core.app_exception THEN
+        RAISE;
+    WHEN OTHERS THEN
+        core.raise_error();
+    END;
+
+
+
     FUNCTION call_procedure (
         in_package_name         VARCHAR2,
         in_procedure_name       VARCHAR2,

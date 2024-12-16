@@ -1254,6 +1254,28 @@ AS
 
 
 
+    FUNCTION search_clob (
+        in_payload              CLOB,
+        in_search_start         VARCHAR2,
+        in_search_stop          VARCHAR2,
+        in_occurence            PLS_INTEGER     := 1,
+        in_overlap              PLS_INTEGER     := NULL,
+        in_new_line             VARCHAR2        := NULL
+    )
+    RETURN VARCHAR2;
+
+
+
+    FUNCTION search_clob_count (
+        in_payload              CLOB,
+        in_search_start         VARCHAR2,
+        in_overlap              PLS_INTEGER     := NULL,
+        in_new_line             VARCHAR2        := NULL
+    )
+    RETURN PLS_INTEGER;
+
+
+
     FUNCTION call_procedure (
         in_package_name         VARCHAR2,
         in_procedure_name       VARCHAR2,
