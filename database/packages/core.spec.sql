@@ -112,6 +112,17 @@ AS
 
 
 
+    FUNCTION get_id (
+        in_position1            NUMBER,
+        in_position2            NUMBER := NULL,
+        in_position3            NUMBER := NULL,
+        in_position4            NUMBER := NULL,
+        in_position5            NUMBER := NULL
+    )
+    RETURN VARCHAR2;
+
+
+
     FUNCTION get_token (
         in_size                 NUMBER := 6
     )

@@ -9,6 +9,35 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
+    FUNCTION get_id (
+        in_position1            NUMBER,
+        in_position2            NUMBER := NULL,
+        in_position3            NUMBER := NULL,
+        in_position4            NUMBER := NULL,
+        in_position5            NUMBER := NULL
+    )
+    RETURN VARCHAR2
+    AS
+    BEGIN
+        RETURN RTRIM(REGEXP_REPLACE (
+            SYS_GUID(),
+            '^(.{' || REPLACE(in_position1
+                || CASE WHEN in_position2 IS NOT NULL THEN ',' || in_position2 END
+                || CASE WHEN in_position3 IS NOT NULL THEN ',' || in_position3 END
+                || CASE WHEN in_position4 IS NOT NULL THEN ',' || in_position4 END
+                || CASE WHEN in_position5 IS NOT NULL THEN ',' || in_position5 END,
+                ',', '})(.{') || '})(.{0})',
+            '\1'
+                || CASE WHEN in_position1 IS NOT NULL THEN '-\2' END
+                || CASE WHEN in_position2 IS NOT NULL THEN '-\3' END
+                || CASE WHEN in_position3 IS NOT NULL THEN '-\4' END
+                || CASE WHEN in_position4 IS NOT NULL THEN '-\5' END
+                || CASE WHEN in_position5 IS NOT NULL THEN '-\6' END
+        ), '-');
+    END;
+
+
+
     FUNCTION get_token (
         in_size                 NUMBER := 6
     )
