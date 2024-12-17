@@ -165,36 +165,37 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
-    FUNCTION get_app_homepage (
-        in_app_id               NUMBER
+    FUNCTION get_app_home_url (
+        in_app_id               NUMBER,
+        in_full                 CHAR        := NULL
     )
-    RETURN NUMBER
+    RETURN VARCHAR2
     DETERMINISTIC
     AS
-        out_page_id             apex_application_pages.page_id%TYPE;
+        out_url                 apex_applications.home_link%TYPE;
     BEGIN
         BEGIN
-            SELECT p.page_id
-            INTO out_page_id
+            SELECT
+                CASE WHEN in_full IS NOT NULL
+                    THEN REPLACE(APEX_UTIL.HOST_URL('APEX_PATH'), 'http://:', '')
+                    END ||
+                RTRIM(REPLACE(REPLACE(REPLACE(
+                    a.home_link,
+                    '&' || 'APP_ID.',       a.application_id),
+                    '&' || 'SESSION.',      '&' || 'APP_SESSION.'),     -- keep session
+                    '&' || 'DEBUG.',        ''),
+                    ':'
+                )
+            INTO out_url
             FROM apex_applications a
-            JOIN apex_application_pages p
-                ON p.application_id     = a.application_id
-                AND p.page_alias        = REGEXP_SUBSTR(a.home_link, ':([^:]+)', 1, 1, NULL, 1)
             WHERE a.application_id      = in_app_id;
+            --
         EXCEPTION
         WHEN NO_DATA_FOUND THEN
-            BEGIN
-                SELECT TO_NUMBER(REGEXP_SUBSTR(a.home_link, ':([^:]+)', 1, 1, NULL, 1))
-                INTO out_page_id
-                FROM apex_applications a
-                WHERE a.application_id  = in_app_id;
-            EXCEPTION
-            WHEN NO_DATA_FOUND THEN
-                NULL;
-            END;
+            NULL;
         END;
         --
-        RETURN out_page_id;
+        RETURN out_url;
     EXCEPTION
     WHEN OTHERS THEN
         core.raise_error();
@@ -203,7 +204,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     FUNCTION get_app_login_url (
-        in_app_id               NUMBER
+        in_app_id               NUMBER,
+        in_full                 CHAR        := NULL
     )
     RETURN VARCHAR2
     DETERMINISTIC
@@ -211,16 +213,28 @@ CREATE OR REPLACE PACKAGE BODY core AS
         out_url                 apex_applications.login_url%TYPE;
     BEGIN
         BEGIN
-            SELECT a.login_url
+            SELECT
+                CASE WHEN in_full IS NOT NULL
+                    THEN REPLACE(APEX_UTIL.HOST_URL('APEX_PATH'), 'http://:', '')
+                    END ||
+                RTRIM(REPLACE(REPLACE(REPLACE(REPLACE(
+                    a.login_url,
+                    '&' || 'APP_ID.',       a.application_id),
+                    '&' || 'SESSION.',      '0'),
+                    '&' || 'APP_SESSION.',  '0'),
+                    '&' || 'DEBUG.',        ''),
+                    ':'
+                )
             INTO out_url
             FROM apex_applications a
             WHERE a.application_id = in_app_id;
+            --
         EXCEPTION
         WHEN NO_DATA_FOUND THEN
             NULL;
         END;
         --
-        RETURN REPLACE(out_url, '&' || 'APP_ID.', in_app_id);
+        RETURN out_url;
     EXCEPTION
     WHEN OTHERS THEN
         core.raise_error();

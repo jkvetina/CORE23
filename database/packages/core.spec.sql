@@ -180,16 +180,18 @@ AS
 
 
 
-    FUNCTION get_app_homepage (
-        in_app_id               NUMBER
+    FUNCTION get_app_home_url (
+        in_app_id               NUMBER,
+        in_full                 CHAR        := NULL
     )
-    RETURN NUMBER
+    RETURN VARCHAR2
     DETERMINISTIC;
 
 
 
     FUNCTION get_app_login_url (
-        in_app_id               NUMBER
+        in_app_id               NUMBER,
+        in_full                 CHAR        := NULL
     )
     RETURN VARCHAR2
     DETERMINISTIC;
