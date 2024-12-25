@@ -1343,27 +1343,52 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
     PROCEDURE set_item (
         in_name                 VARCHAR2,
-        in_value                VARCHAR2        := NULL
+        in_value                VARCHAR2        := NULL,
+        in_ignore               BOOLEAN         := FALSE
     )
     AS
         v_item_name             apex_application_page_items.item_name%TYPE;
+        v_exists                CHAR;
     BEGIN
         v_item_name := core.get_item_name(in_name);
         --
         IF v_item_name IS NOT NULL THEN
-            BEGIN
+            IF NOT in_ignore THEN
+                IF v_exists IS NULL THEN
+                    -- check page item presence
+                    SELECT MAX('Y')
+                    INTO v_exists
+                    FROM apex_application_page_items t
+                    WHERE t.application_id  = core.get_app_id()
+                        --AND t.page_id       = core.get_page_id()
+                        AND t.item_name     = v_item_name;
+                END IF;
+                --
+                IF v_exists IS NULL THEN
+                    -- check application item presence
+                    SELECT MAX('Y')
+                    INTO v_exists
+                    FROM apex_application_items t
+                    WHERE t.application_id  = core.get_app_id()
+                        AND t.item_name     = v_item_name;
+                END IF;
+                --
+                IF v_exists IS NULL THEN
+                    core.raise_error('ITEM_MISSING',
+                        'name',     v_item_name,
+                        'value',    in_value
+                    );
+                END IF;
+            END IF;
+
+            -- set item, you cant catch exception raised on this
+            IF (v_exists = 'Y' OR NOT in_ignore) THEN
                 APEX_UTIL.SET_SESSION_STATE (
                     p_name      => v_item_name,
                     p_value     => core.get_translated(in_value),
                     p_commit    => FALSE
                 );
-            EXCEPTION
-            WHEN OTHERS THEN
-                core.raise_error('ITEM_MISSING',
-                    'name',     v_item_name,
-                    'value',    in_value
-                );
-            END;
+            END IF;
         END IF;
     END;
 

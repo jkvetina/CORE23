@@ -574,7 +574,8 @@ AS
 
     PROCEDURE set_item (
         in_name                 VARCHAR2,
-        in_value                VARCHAR2        := NULL
+        in_value                VARCHAR2        := NULL,
+        in_ignore               BOOLEAN         := FALSE
     );
 
 
