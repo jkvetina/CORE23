@@ -101,6 +101,15 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
+    FUNCTION get_master_id
+    RETURN NUMBER
+    AS
+    BEGIN
+        RETURN core_custom.master_id;
+    END;
+
+
+
     FUNCTION get_app_id
     RETURN NUMBER
     AS

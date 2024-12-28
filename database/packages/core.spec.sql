@@ -154,6 +154,11 @@ AS
 
 
 
+    FUNCTION get_master_id
+    RETURN NUMBER;
+
+
+
     FUNCTION get_app_id
     RETURN NUMBER;
 

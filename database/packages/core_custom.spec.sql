@@ -2,6 +2,9 @@ CREATE OR REPLACE PACKAGE core_custom
 AUTHID CURRENT_USER
 AS
 
+    -- id for the Master application
+    master_id                   CONSTANT PLS_INTEGER    := 800;
+
     -- code for app exception
     app_exception_code          CONSTANT PLS_INTEGER    := -20990;
     assert_exception_code       CONSTANT PLS_INTEGER    := -20992;
