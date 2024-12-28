@@ -453,10 +453,17 @@ CREATE OR REPLACE PACKAGE BODY core AS
     AS
         is_valid                CHAR;
     BEGIN
+        -- check if we have APEX Builder session
         IF NV('APP_BUILDER_SESSION') > 0 THEN
             RETURN TRUE;
         END IF;
-        --
+
+        -- check if we are running as database user
+        IF in_user IS NULL AND core.get_user_id() = USER THEN
+            RETURN TRUE;
+        END IF;
+
+        -- check if we have a record in APEX Developers table
         WITH u AS (
             SELECT core.get_user_id() AS user_id    FROM DUAL UNION ALL
             SELECT in_user                          FROM DUAL
