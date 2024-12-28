@@ -2883,7 +2883,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         END IF;
 
         -- store incident in your log
-        IF p_error.is_internal_error AND p_error.ora_sqlcode IS NULL AND p_error.apex_error_code NOT IN ('APEX.SESSION.EXPIRED') THEN
+        IF p_error.is_internal_error AND p_error.apex_error_code IN ('APEX.SESSION.EXPIRED') THEN
             -- dont log session errors
             NULL;
         ELSE
