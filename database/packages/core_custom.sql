@@ -87,6 +87,15 @@ CREATE OR REPLACE PACKAGE BODY core_custom AS
                 );
             END CASE;
 
+            IF in_payload IS NOT NULL THEN
+                APEX_DEBUG.MESSAGE (
+                    p_message       => 'PAYLOAD: ' || DBMS_LOB.SUBSTR(in_payload, 32000),
+                    p_max_length    => 32767,
+                    p_level         => 6,
+                    p_force         => TRUE
+                );
+            END IF;
+
             -- you can use Logger or anything you want instead
             /*
             logger.log (
