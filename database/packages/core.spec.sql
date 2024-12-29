@@ -1109,7 +1109,9 @@ AS
     PROCEDURE refresh_mviews (
         in_name_like            VARCHAR2        := NULL,
         in_percent              NUMBER          := NULL,
-        in_method               CHAR            := NULL
+        in_method               CHAR            := NULL,
+        in_parallelism          NUMBER          := NULL,
+        in_atomic               BOOLEAN         := FALSE
     );
 
 

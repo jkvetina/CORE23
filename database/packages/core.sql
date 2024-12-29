@@ -3017,7 +3017,9 @@ CREATE OR REPLACE PACKAGE BODY core AS
     PROCEDURE refresh_mviews (
         in_name_like            VARCHAR2        := NULL,
         in_percent              NUMBER          := NULL,
-        in_method               CHAR            := NULL
+        in_method               CHAR            := NULL,
+        in_parallelism          NUMBER          := NULL,
+        in_atomic               BOOLEAN         := FALSE
     )
     AS
     BEGIN
@@ -3030,11 +3032,16 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 AND (m.mview_name   LIKE in_name_like ESCAPE '\' OR in_name_like IS NULL)
             ORDER BY 1, 2
         ) LOOP
+            core.log_debug (
+                'owner',        c.owner,
+                'name',         c.mview_name
+            );
+            --
             DBMS_MVIEW.REFRESH (
                 list            => c.owner || '.' || c.mview_name,
                 method          => NVL(in_method, 'C'),
-                parallelism     => 1,
-                atomic_refresh  => FALSE
+                parallelism     => NVL(in_parallelism, 1),
+                atomic_refresh  => in_atomic
             );
             --
             IF in_percent > 0 THEN
