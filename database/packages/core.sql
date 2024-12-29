@@ -647,7 +647,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         );
 
         -- attach to existing session
-        IF NULLIF(in_session_id, 0) IS NOT NULL THEN
+        IF in_session_id > 0 THEN
             attach_session (
                 in_session_id   => in_session_id,
                 in_app_id       => in_app_id,
@@ -1767,53 +1767,65 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_start_date           DATE            := NULL,
         in_enabled              BOOLEAN         := TRUE,
         in_autodrop             BOOLEAN         := TRUE,
+        in_force_replace        BOOLEAN         := FALSE,
+        in_context_id           NUMBER          := NULL,
         in_comments             VARCHAR2        := NULL
     )
     AS
         PRAGMA AUTONOMOUS_TRANSACTION;
         --
-        v_job_name              user_scheduler_jobs.job_name%TYPE;
-        v_action                VARCHAR2(32767);
+        v_job_name              user_scheduler_jobs.job_name%TYPE := '"' || in_job_name || '"';
+        v_statement             VARCHAR2(32767);
     BEGIN
-        v_job_name := '"' || in_job_name || '"';
-        --
+        -- create unique name, if there is "?" in the job name
         IF INSTR(v_job_name, '?') > 0 THEN
-            v_job_name := DBMS_SCHEDULER.GENERATE_JOB_NAME(REPLACE(v_job_name, '?', ''));  -- create unique name
+            v_job_name := DBMS_SCHEDULER.GENERATE_JOB_NAME(REPLACE(v_job_name, '?', ''));
         END IF;
         --
-        v_action := RTRIM(APEX_STRING.FORMAT (
+        v_statement := RTRIM(APEX_STRING.FORMAT (
             -- point of the first comment is that it will be visible in scheduler additional info
-            q'!BEGIN
-              !    DBMS_OUTPUT.PUT_LINE('%4');
-              !    --
-              !    core.log_start (
-              !        'job_name',   '%6',
-              !        'user_id',    '%1',
+            q'!DECLARE
+              !    v_id PLS_INTEGER;
+              !BEGIN
+              !    v_id := core.log_start (
+              !        'job_name',   '%1',
+              !        'user_id',    '%3',
               !        'app_id',     '%2',
-              !        'session_id', '%5',
-              !        'comment',    '%4'
+              !        'session_id', '%4',
+              !        'comment',    '%6',
+              !        in_context_id => %5
               !    );
-              !    --
-              !    IF '%1' IS NOT NULL AND %2 IS NOT NULL THEN
+              !
+              !    -- keep comment here, so it is visible in job additional_output column
+              !    DBMS_OUTPUT.PUT_LINE('#%5 %6');
+              !
+              !    -- we need a valid APEX session to handle collections and other context sensitive things
+              !    IF '%3' IS NOT NULL AND %2 IS NOT NULL THEN
               !        core.create_session (
-              !            in_user_id      => '%1',
+              !            in_user_id      => '%3',
               !            in_app_id       => %2,
-              !            in_session_id   => %5
+              !            in_session_id   => %4
               !        );
               !    END IF;
-              !    %3
+              !
+              !    -- finally execute the requested statement
+              !    %7;
+              !
+              !    -- mark it as finished in the log
+              !    core.log_end (in_context_id => v_id);
               !EXCEPTION
               !WHEN OTHERS THEN
               !    core.raise_error();
               !END;
               !',
             --
-            p1  => in_user_id,
-            p2  => NVL(TO_CHAR(COALESCE(in_app_id, core.get_app_id())), 'NULL'),
-            p3  => REGEXP_REPLACE(in_statement, '(\s*;\s*)$', '') || ';',
-            p4  => in_comments,
-            p5  => NVL(TO_CHAR(in_session_id), 'NULL'),
-            p6  => v_job_name,
+            p1  => v_job_name,                                                      -- job_name
+            p2  => NVL(TO_CHAR(COALESCE(in_app_id, core.get_app_id())), 'NULL'),    -- app_id
+            p3  => in_user_id,                                                      -- user_id
+            p4  => NVL(TO_CHAR(in_session_id), 'NULL'),                             -- session_id
+            p5  => NVL(TO_CHAR(in_context_id), 'NULL'),                             -- context_id
+            p6  => in_comments,                                                     -- comments
+            p7  => REGEXP_REPLACE(in_statement, '(\s*;\s*)$', ''),                  -- statement
             --
             p_max_length    => 32767,
             p_prefix        => '!'
@@ -1824,16 +1836,28 @@ CREATE OR REPLACE PACKAGE BODY core AS
             'comments',     in_comments,
             'statement',    REGEXP_REPLACE(in_statement, '(\s*;\s*)$', '') || ';',
             --
-            in_payload      => v_action
+            in_context_id   => in_context_id,
+            in_payload      => v_statement
         );
+
+        -- if we are going to use the same name, kill and drop previous job
+        IF in_force_replace THEN
+            stop_job (
+                in_job_name => v_job_name
+            );
+            --
+            drop_job (
+                in_job_name => v_job_name
+            );
+        END IF;
 
         -- either run on schedule or at specified date
         IF in_schedule_name IS NOT NULL THEN
             DBMS_SCHEDULER.CREATE_JOB (
                 job_name        => v_job_name,
-                schedule_name   => in_schedule_name,
+                schedule_name   => in_schedule_name,    -- using schedule
                 job_type        => 'PLSQL_BLOCK',
-                job_action      => v_action,
+                job_action      => v_statement,
                 enabled         => FALSE,
                 auto_drop       => in_autodrop,
                 comments        => in_comments
@@ -1842,8 +1866,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
             DBMS_SCHEDULER.CREATE_JOB (
                 job_name        => v_job_name,
                 job_type        => 'PLSQL_BLOCK',
-                job_action      => v_action,
-                start_date      => in_start_date,
+                job_action      => v_statement,
+                start_date      => in_start_date,       -- using date
                 enabled         => FALSE,
                 auto_drop       => in_autodrop,
                 comments        => in_comments

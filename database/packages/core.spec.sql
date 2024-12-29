@@ -689,6 +689,8 @@ AS
         in_start_date           DATE            := NULL,
         in_enabled              BOOLEAN         := TRUE,
         in_autodrop             BOOLEAN         := TRUE,
+        in_force_replace        BOOLEAN         := FALSE,
+        in_context_id           NUMBER          := NULL,
         in_comments             VARCHAR2        := NULL
     );
 
