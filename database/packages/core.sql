@@ -396,6 +396,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name                 VARCHAR2,
         in_package              VARCHAR2        := NULL,
         in_prefix               VARCHAR2        := NULL,
+        in_owner                VARCHAR2        := NULL,
         in_private              CHAR            := NULL
     )
     RETURN VARCHAR2
@@ -417,12 +418,15 @@ CREATE OR REPLACE PACKAGE BODY core AS
                     ''),
                 'NULL')
         INTO out_value
-        FROM user_identifiers t
-        JOIN user_source s
-            ON s.name               = t.object_name
+        FROM all_identifiers t
+        JOIN all_source s
+            ON s.owner              = t.owner
+            AND s.name              = t.object_name
             AND s.type              = t.object_type
             AND s.line              = t.line
-        WHERE t.object_name         = UPPER(NVL(in_package, c_constants))
+        WHERE 1 = 1
+            AND t.owner             = COALESCE(in_owner, core.get_app_owner())
+            AND t.object_name       = UPPER(NVL(in_package, c_constants))
             AND t.object_type       = 'PACKAGE' || CASE WHEN in_private IS NOT NULL THEN ' BODY' END
             AND t.name              = UPPER(in_prefix || in_name)
             AND t.type              = 'CONSTANT'
@@ -441,6 +445,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name                 VARCHAR2,
         in_package              VARCHAR2        := NULL,
         in_prefix               VARCHAR2        := NULL,
+        in_owner                VARCHAR2        := NULL,
         in_private              CHAR            := NULL
     )
     RETURN NUMBER
@@ -452,6 +457,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_package      => in_package,
             in_name         => in_name,
             in_prefix       => in_prefix,
+            in_owner        => in_owner,
             in_private      => in_private
         ));
     END;

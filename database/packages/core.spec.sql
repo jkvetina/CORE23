@@ -261,6 +261,7 @@ AS
         in_name                 VARCHAR2,
         in_package              VARCHAR2        := NULL,
         in_prefix               VARCHAR2        := NULL,
+        in_owner                VARCHAR2        := NULL,
         in_private              CHAR            := NULL     -- Y = package body
     )
     RETURN VARCHAR2
@@ -272,6 +273,7 @@ AS
         in_name                 VARCHAR2,
         in_package              VARCHAR2        := NULL,
         in_prefix               VARCHAR2        := NULL,
+        in_owner                VARCHAR2        := NULL,
         in_private              CHAR            := NULL
     )
     RETURN NUMBER
