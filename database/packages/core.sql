@@ -1787,6 +1787,9 @@ CREATE OR REPLACE PACKAGE BODY core AS
             q'!DECLARE
               !    v_id PLS_INTEGER;
               !BEGIN
+              !    -- keep comment here, so it is visible in user_scheduler_job_run_details.output column
+              !    DBMS_OUTPUT.PUT_LINE('#%5 | %6');
+              !    --
               !    v_id := core.log_start (
               !        'job_name',   '%1',
               !        'user_id',    '%3',
@@ -1795,9 +1798,6 @@ CREATE OR REPLACE PACKAGE BODY core AS
               !        'comment',    '%6',
               !        in_context_id => %5
               !    );
-              !
-              !    -- keep comment here, so it is visible in job additional_output column
-              !    DBMS_OUTPUT.PUT_LINE('#%5 %6');
               !
               !    -- we need a valid APEX session to handle collections and other context sensitive things
               !    IF '%3' IS NOT NULL AND %2 IS NOT NULL THEN
@@ -1890,7 +1890,13 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 'GRANT ALTER ON ' || v_job_name || ' TO APEX_PUBLIC_USER';
         EXCEPTION
         WHEN OTHERS THEN
-            core.raise_error('GRANT_FAILED');
+            BEGIN
+                EXECUTE IMMEDIATE
+                    'GRANT ALTER ON ' || v_job_name || ' TO ORDS_PUBLIC_USER';
+            EXCEPTION
+            WHEN OTHERS THEN
+                core.raise_error('GRANT_FAILED');
+            END;
         END;
         --
         core.log_end();
@@ -1922,7 +1928,11 @@ CREATE OR REPLACE PACKAGE BODY core AS
         --
     EXCEPTION
     WHEN OTHERS THEN
-        core.raise_error('STOP_JOB', v_job_name, in_concat => TRUE);
+        IF SQLCODE NOT IN (
+            -27475      -- ORA-27475 uknown job
+        ) THEN
+            core.raise_error('STOP_JOB', v_job_name, in_concat => TRUE);
+        END IF;
     END;
 
 
@@ -1946,7 +1956,11 @@ CREATE OR REPLACE PACKAGE BODY core AS
         --
     EXCEPTION
     WHEN OTHERS THEN
-        core.raise_error('DROP_JOB', v_job_name, in_concat => TRUE);
+        IF SQLCODE NOT IN (
+            -27475      -- ORA-27475 uknown job
+        ) THEN
+            core.raise_error('DROP_JOB', v_job_name, in_concat => TRUE);
+        END IF;
     END;
 
 
