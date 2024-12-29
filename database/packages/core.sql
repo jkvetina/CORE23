@@ -3957,7 +3957,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             ORDER BY 1
             FETCH FIRST 1 ROWS ONLY
         ) LOOP
-            core.log_debug('CALLING_PROCEDURE',
+            core.log_debug (
                 'owner',            c.owner,
                 'procedure_name',   c.procedure_name
             );
