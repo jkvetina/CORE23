@@ -49,6 +49,18 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
+    FUNCTION get_yn (
+        in_boolean              BOOLEAN
+    )
+    RETURN CHAR
+    DETERMINISTIC
+    AS
+    BEGIN
+        RETURN CASE WHEN in_boolean THEN 'Y' ELSE 'N' END;
+    END;
+
+
+
     FUNCTION get_context_app (
         in_context_name         VARCHAR2 := NULL
     )

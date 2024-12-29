@@ -133,6 +133,14 @@ AS
 
 
 
+    FUNCTION get_yn (
+        in_boolean              BOOLEAN
+    )
+    RETURN CHAR
+    DETERMINISTIC;
+
+
+
     FUNCTION get_context_app (
         in_context_name         VARCHAR2 := NULL
     )
