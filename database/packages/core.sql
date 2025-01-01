@@ -3944,6 +3944,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
     )
     RETURN BOOLEAN
     AS
+        v_id PLS_INTEGER;
     BEGIN
         FOR c IN (
             SELECT
@@ -3957,13 +3958,15 @@ CREATE OR REPLACE PACKAGE BODY core AS
             ORDER BY 1
             FETCH FIRST 1 ROWS ONLY
         ) LOOP
-            core.log_debug (
+            v_id := core.log_start (
                 'owner',            c.owner,
                 'procedure_name',   c.procedure_name
             );
             --
             EXECUTE IMMEDIATE
                 'BEGIN ' || c.procedure_name || '(); END;';
+            --
+            core.log_end(in_context_id => v_id);
             --
             RETURN TRUE;
         END LOOP;
