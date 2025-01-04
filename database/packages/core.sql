@@ -395,9 +395,9 @@ CREATE OR REPLACE PACKAGE BODY core AS
     FUNCTION get_constant (
         in_name                 VARCHAR2,
         in_package              VARCHAR2        := NULL,
-        in_prefix               VARCHAR2        := NULL,
         in_owner                VARCHAR2        := NULL,
-        in_private              CHAR            := NULL
+        in_private              CHAR            := NULL,    -- Y = package body
+        in_prefix               VARCHAR2        := NULL
     )
     RETURN VARCHAR2
     RESULT_CACHE
@@ -444,9 +444,9 @@ CREATE OR REPLACE PACKAGE BODY core AS
     FUNCTION get_constant_num (
         in_name                 VARCHAR2,
         in_package              VARCHAR2        := NULL,
-        in_prefix               VARCHAR2        := NULL,
         in_owner                VARCHAR2        := NULL,
-        in_private              CHAR            := NULL
+        in_private              CHAR            := NULL,    -- Y = package body
+        in_prefix               VARCHAR2        := NULL
     )
     RETURN NUMBER
     RESULT_CACHE
@@ -456,9 +456,9 @@ CREATE OR REPLACE PACKAGE BODY core AS
         RETURN TO_NUMBER(get_constant (
             in_package      => in_package,
             in_name         => in_name,
-            in_prefix       => in_prefix,
             in_owner        => in_owner,
-            in_private      => in_private
+            in_private      => in_private,
+            in_prefix       => in_prefix
         ));
     END;
 

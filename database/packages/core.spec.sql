@@ -260,9 +260,9 @@ AS
     FUNCTION get_constant (
         in_name                 VARCHAR2,
         in_package              VARCHAR2        := NULL,
-        in_prefix               VARCHAR2        := NULL,
         in_owner                VARCHAR2        := NULL,
-        in_private              CHAR            := NULL     -- Y = package body
+        in_private              CHAR            := NULL,    -- Y = package body
+        in_prefix               VARCHAR2        := NULL
     )
     RETURN VARCHAR2
     RESULT_CACHE;
@@ -272,9 +272,9 @@ AS
     FUNCTION get_constant_num (
         in_name                 VARCHAR2,
         in_package              VARCHAR2        := NULL,
-        in_prefix               VARCHAR2        := NULL,
         in_owner                VARCHAR2        := NULL,
-        in_private              CHAR            := NULL
+        in_private              CHAR            := NULL,    -- Y = package body
+        in_prefix               VARCHAR2        := NULL
     )
     RETURN NUMBER
     RESULT_CACHE;
