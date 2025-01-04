@@ -3059,14 +3059,41 @@ CREATE OR REPLACE PACKAGE BODY core AS
             );
             --
             IF in_percent > 0 THEN
-                DBMS_STATS.GATHER_TABLE_STATS (
-                    ownname             => c.owner,
-                    tabname             => c.mview_name,
-                    estimate_percent    => in_percent,
-                    granularity         => 'ALL'
+                recalc_table_stats (
+                    in_owner        => c.owner,
+                    in_table_name   => c.mview_name,
+                    in_percent      => in_percent
                 );
             END IF;
         END LOOP;
+    EXCEPTION
+    WHEN OTHERS THEN
+        core.raise_error();
+    END;
+
+
+
+    PROCEDURE recalc_table_stats (
+        in_owner            VARCHAR2,
+        in_table_name       VARCHAR2,
+        in_percent          NUMBER
+    )
+    AS
+    BEGIN
+        core.log_debug (
+            'owner',        in_owner,
+            'table_name',   in_table_name,
+            'percent',      in_percent
+        );
+        --
+        IF in_percent > 0 THEN
+            DBMS_STATS.GATHER_TABLE_STATS (
+                ownname             => in_owner,
+                tabname             => in_table_name,
+                estimate_percent    => in_percent,
+                granularity         => 'ALL'
+            );
+        END IF;
     EXCEPTION
     WHEN OTHERS THEN
         core.raise_error();

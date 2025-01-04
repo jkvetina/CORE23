@@ -1116,6 +1116,14 @@ AS
 
 
 
+    PROCEDURE recalc_table_stats (
+        in_owner            VARCHAR2,
+        in_table_name       VARCHAR2,
+        in_percent          NUMBER
+    );
+
+
+
     FUNCTION get_caller_name (
         in_offset               PLS_INTEGER     := NULL,
         in_add_line             BOOLEAN         := FALSE
