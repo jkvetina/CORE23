@@ -31,7 +31,7 @@ BEGIN
                 AND o.object_type   NOT LIKE '%BODY'
         ) LOOP
             EXECUTE IMMEDIATE
-                'GRANT EXECUTE ON ' || o.owner || '.' || o.object_name || ' TO ' || c.username;
+                'GRANT EXECUTE ON ' || o.owner || '.' || o.object_name || ' TO ' || c.username || ' WITH GRANT OPTION';
             --
             EXECUTE IMMEDIATE
                 'DROP ' || o.object_type || ' IF EXISTS ' || c.username || '.' || o.object_name;
