@@ -12,6 +12,9 @@ AS
     -- package name holding constants, used as get_constant() default
     global_constants            CONSTANT VARCHAR2(30)   := 'APP_CONSTANTS';
 
+    -- global prefix for database objects
+    global_prefix               CONSTANT VARCHAR2(30)   := '';
+
     -- flags use in logging
     flag_error                  CONSTANT CHAR           := 'E';     -- error
     flag_warning                CONSTANT CHAR           := 'W';     -- warning
