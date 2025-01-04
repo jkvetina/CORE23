@@ -1100,8 +1100,22 @@ CREATE OR REPLACE PACKAGE BODY core AS
     )
     RETURN VARCHAR2
     AS
+        v_icon_name             VARCHAR2(64);
     BEGIN
-        RETURN '<span class="fa ' || in_name || '" style="' || in_style || '" title="' || in_title || '"></span>';
+        IF INSTR(in_name, '#fa-') > 0 THEN
+            v_icon_name := REGEXP_SUBSTR(in_name, '(#fa-[a-z0-9-]+)', 1, 1, NULL, 1);
+            --
+        ELSIF in_name LIKE 'fa-%' THEN
+            v_icon_name := in_name;
+            --
+        ELSE
+            RETURN in_name;
+        END IF;
+        --
+        RETURN REPLACE(in_name, v_icon_name,
+            '<span class="fa ' || REPLACE(v_icon_name, '#', '') ||
+            '" style="' || in_style ||
+            '" title="' || in_title || '"></span>');
     END;
 
 
