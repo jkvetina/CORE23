@@ -61,6 +61,17 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
+    FUNCTION get_slug (
+        in_name                 VARCHAR2
+    )
+    RETURN VARCHAR2
+    AS
+    BEGIN
+        RETURN NVL(UPPER(REPLACE(APEX_STRING_UTIL.GET_SLUG(in_name), '-', '_')), '_');
+    END;
+
+
+
     FUNCTION get_context_app (
         in_context_name         VARCHAR2 := NULL
     )

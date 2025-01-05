@@ -141,6 +141,13 @@ AS
 
 
 
+    FUNCTION get_slug (
+        in_name                 VARCHAR2
+    )
+    RETURN VARCHAR2;
+
+
+
     FUNCTION get_context_app (
         in_context_name         VARCHAR2 := NULL
     )
