@@ -3115,6 +3115,89 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
+    PROCEDURE shrink_table (
+        in_owner                VARCHAR2,
+        in_table_name           VARCHAR2,
+        in_drop_indexes         BOOLEAN := FALSE,
+        in_row_movement         BOOLEAN := FALSE
+    )
+    AS
+        v_indexes               VARCHAR2(32767);    -- to backup indexes
+    BEGIN
+        core.log_debug (
+            'owner',            in_owner,
+            'table_name',       in_table_name,
+            'row_movement',     core.get_yn(in_row_movement),
+            'drop_indexes',     core.get_yn(in_drop_indexes)
+        );
+
+        -- to shrink tables with function based indexes we have to drop them first
+        IF in_drop_indexes THEN
+            FOR c IN (
+                SELECT i.table_name, i.index_name, DBMS_METADATA.GET_DDL('INDEX', i.index_name, in_owner) AS content
+                FROM user_indexes i
+                WHERE i.index_type      LIKE 'FUNCTION%'
+                    AND i.table_name    = in_table_name
+            ) LOOP
+                -- create backup
+                v_indexes := v_indexes || c.content || ';';
+            END LOOP;
+            --
+            FOR c IN (
+                SELECT i.table_name, i.index_name
+                FROM user_indexes i
+                WHERE i.index_type      LIKE 'FUNCTION%'
+                    AND i.table_name    = in_table_name
+            ) LOOP
+                EXECUTE IMMEDIATE
+                    'DROP INDEX ' || in_owner || '.' || c.index_name;
+            END LOOP;
+        END IF;
+
+        -- we also need to enable row movement
+        -- we should check if it is already enabled...
+        EXECUTE IMMEDIATE 'ALTER TABLE ' || in_table_name || ' ENABLE ROW MOVEMENT';
+        EXECUTE IMMEDIATE 'ALTER TABLE ' || in_table_name || ' SHRINK SPACE';
+        --
+        IF NOT in_row_movement THEN
+            EXECUTE IMMEDIATE
+                'ALTER TABLE ' || in_table_name || ' DISABLE ROW MOVEMENT';
+        END IF;
+
+        -- recreate indexes
+        IF v_indexes IS NOT NULL THEN
+            FOR c IN (
+                WITH t AS (
+                    SELECT v_indexes AS src FROM DUAL
+                )
+                SELECT REGEXP_SUBSTR(src, '([^;]+)', 1, LEVEL) AS col
+                FROM t
+                CONNECT BY REGEXP_INSTR(src, '([^;]+)', 1, LEVEL) > 0
+                ORDER BY LEVEL ASC
+            ) LOOP
+                DBMS_OUTPUT.PUT_LINE(c.col);
+                EXECUTE IMMEDIATE c.col;
+            END LOOP;
+        END IF;
+
+        -- recalc stats after shrink
+        --DBMS_STATS.GATHER_TABLE_STATS('' || in_owner || '', in_table_name);
+        EXECUTE IMMEDIATE
+            'ANALYZE TABLE ' || in_owner || '.' || in_table_name ||
+            ' COMPUTE STATISTICS FOR TABLE';
+        --
+    EXCEPTION
+    WHEN OTHERS THEN
+        IF NOT in_row_movement THEN
+            EXECUTE IMMEDIATE
+                'ALTER TABLE ' || in_table_name || ' DISABLE ROW MOVEMENT';
+        END IF;
+        --
+        core.raise_error();
+    END;
+
+
+
     FUNCTION get_caller_name (
         in_offset               PLS_INTEGER     := NULL,
         in_add_line             BOOLEAN         := FALSE

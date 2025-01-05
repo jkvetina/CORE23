@@ -1124,6 +1124,15 @@ AS
 
 
 
+    PROCEDURE shrink_table (
+        in_owner                VARCHAR2,
+        in_table_name           VARCHAR2,
+        in_drop_indexes         BOOLEAN := FALSE,
+        in_row_movement         BOOLEAN := FALSE
+    );
+
+
+
     FUNCTION get_caller_name (
         in_offset               PLS_INTEGER     := NULL,
         in_add_line             BOOLEAN         := FALSE
