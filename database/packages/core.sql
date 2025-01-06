@@ -1248,57 +1248,31 @@ CREATE OR REPLACE PACKAGE BODY core AS
     )
     RETURN DATE
     AS
-        TYPE list_of_strings    IS VARRAY(10) OF VARCHAR2(30);
-        --
-        l_formats               list_of_strings := list_of_strings();
         l_value                 VARCHAR2(30)    := SUBSTR(REPLACE(in_value, 'T', ' '), 1, 30);
         out_date                DATE;
     BEGIN
         IF in_format IS NOT NULL THEN
-            BEGIN
-                RETURN TO_DATE(l_value, in_format);
-            EXCEPTION
-            WHEN OTHERS THEN
-                core.raise_error('INVALID_DATE',
-                    'value',    in_value,
-                    'format',   in_format
-                );
-            END;
+            out_date := TO_DATE(l_value DEFAULT NULL ON CONVERSION ERROR, in_format);
+        ELSE
+            -- try different formats
+            out_date := COALESCE (
+                TO_DATE(l_value DEFAULT NULL ON CONVERSION ERROR, c_format_date_time),
+                TO_DATE(l_value DEFAULT NULL ON CONVERSION ERROR, c_format_date_short),
+                TO_DATE(l_value DEFAULT NULL ON CONVERSION ERROR, c_format_date),
+                TO_DATE(l_value DEFAULT NULL ON CONVERSION ERROR, V('APP_NLS_DATE_FORMAT')),
+                TO_DATE(l_value DEFAULT NULL ON CONVERSION ERROR, V('APP_DATE_TIME_FORMAT')),
+                TO_DATE(l_value DEFAULT NULL ON CONVERSION ERROR)
+            );
         END IF;
-
-        -- prepare multiple formats in array
-        l_formats.EXTEND; l_formats(l_formats.COUNT) := c_format_date_time;
-        l_formats.EXTEND; l_formats(l_formats.COUNT) := c_format_date_short;
-        l_formats.EXTEND; l_formats(l_formats.COUNT) := c_format_date;
-        l_formats.EXTEND; l_formats(l_formats.COUNT) := V('APP_NLS_DATE_FORMAT');
-        l_formats.EXTEND; l_formats(l_formats.COUNT) := V('APP_DATE_TIME_FORMAT');
-
-        -- try different formats
-        FOR i IN 1 .. l_formats.COUNT LOOP
-            BEGIN
-                IF l_formats(i) IS NOT NULL THEN
-                    out_date := TO_DATE(l_value, l_formats(i));
-                    --
-                    RETURN out_date;    -- on success dont continue
-                END IF;
-            EXCEPTION
-            WHEN OTHERS THEN
-                NULL;
-            END;
-        END LOOP;
-
-        -- this means we did not found a match
-        BEGIN
-            RETURN TO_DATE(l_value);
-        EXCEPTION
-        WHEN OTHERS THEN
+        --
+        IF out_date IS NULL THEN
             core.raise_error('INVALID_DATE',
                 'value',    in_value,
                 'format',   in_format,
                 --
                 in_rollback => FALSE
             );
-        END;
+        END IF;
     END;
 
 
