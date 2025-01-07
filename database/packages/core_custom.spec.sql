@@ -2,6 +2,9 @@ CREATE OR REPLACE PACKAGE core_custom
 AUTHID CURRENT_USER
 AS
 
+    -- remove string from env name
+    env_name_strip              CONSTANT VARCHAR2(30)   := '';
+
     -- id for the Master application
     master_id                   CONSTANT PLS_INTEGER    := 800;
 

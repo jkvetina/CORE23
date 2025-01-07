@@ -128,7 +128,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
     RETURN NUMBER
     AS
     BEGIN
-        RETURN core_custom.master_id;
+        RETURN c_master_id;
     END;
 
 

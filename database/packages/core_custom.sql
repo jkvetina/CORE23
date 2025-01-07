@@ -5,9 +5,9 @@ CREATE OR REPLACE PACKAGE BODY core_custom AS
     AS
     BEGIN
         -- extract env name (cloud edition)
-        RETURN REPLACE(
+        RETURN REPLACE (
             REGEXP_REPLACE(SYS_CONTEXT('USERENV', 'DB_NAME'), '^[^_]*_', ''),
-            'DYR', '');
+            env_name_strip, '');
     END;
 
 

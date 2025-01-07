@@ -37,6 +37,7 @@ AS
     -- global items to hold application + page context
     c_context_name_app          CONSTANT VARCHAR2(30)   := core_custom.global_context_app;
     c_context_name_page         CONSTANT VARCHAR2(30)   := core_custom.global_context_page;
+    c_master_id                 CONSTANT PLS_INTEGER    := core_custom.master_id;
 
     -- code for app exception
     app_exception_code          CONSTANT PLS_INTEGER    := core_custom.app_exception_code;
