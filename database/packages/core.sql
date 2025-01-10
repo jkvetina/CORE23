@@ -152,7 +152,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         SELECT MIN(a.owner)
         INTO out_owner
         FROM apex_applications a
-        WHERE a.application_id = COALESCE(in_app_id, core.get_app_id());
+        WHERE a.application_id = COALESCE(in_app_id, core.get_context_app());
         --
         RETURN COALESCE(out_owner, APEX_UTIL.GET_DEFAULT_SCHEMA, USER);
     END;
@@ -168,7 +168,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
     BEGIN
         SELECT a.workspace INTO out_name
         FROM apex_applications a
-        WHERE a.application_id = COALESCE(in_app_id, core.get_app_id());
+        WHERE a.application_id = COALESCE(in_app_id, core.get_context_app());
         --
         RETURN out_name;
     EXCEPTION
@@ -187,7 +187,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
     BEGIN
         SELECT a.application_name INTO out_name
         FROM apex_applications a
-        WHERE a.application_id = COALESCE(in_app_id, core.get_app_id());
+        WHERE a.application_id = COALESCE(in_app_id, core.get_context_app());
         --
         RETURN out_name;
     EXCEPTION
@@ -436,7 +436,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             AND s.type              = t.object_type
             AND s.line              = t.line
         WHERE 1 = 1
-            AND t.owner             = COALESCE(in_owner, core.get_app_owner())
+            AND t.owner             = COALESCE(in_owner, c_constants_owner)
             AND t.object_name       = UPPER(NVL(in_package, c_constants))
             AND t.object_type       = 'PACKAGE' || CASE WHEN in_private IS NOT NULL THEN ' BODY' END
             AND t.name              = UPPER(in_prefix || in_name)
