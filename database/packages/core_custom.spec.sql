@@ -2,21 +2,30 @@ CREATE OR REPLACE PACKAGE core_custom
 AUTHID CURRENT_USER
 AS
 
+    --
+    -- CONSTANTS SHARED IN BETWEEN ALL APPS, WHICH YOU SET JUST ONCE
+    --
+
+    -- global prefix for database objects
+    global_prefix               CONSTANT VARCHAR2(30)   := '';
+
     -- remove string from env name
     env_name_strip              CONSTANT VARCHAR2(30)   := '';
 
     -- id for the Master application
     master_id                   CONSTANT PLS_INTEGER    := 800;
 
+    -- package name holding constants, used as get_constant() default
+    master_owner                CONSTANT VARCHAR2(30)   := 'MASTER';
+    master_constants            CONSTANT VARCHAR2(30)   := 'CORE_CUSTOM';
+
+    -- specify special pages
+    page_id_help                CONSTANT PLS_INTEGER    := 980;
+    page_id_login               CONSTANT PLS_INTEGER    := 9999;
+
     -- code for app exception
     app_exception_code          CONSTANT PLS_INTEGER    := -20990;
     assert_exception_code       CONSTANT PLS_INTEGER    := -20992;
-
-    -- package name holding constants, used as get_constant() default
-    global_constants            CONSTANT VARCHAR2(30)   := 'APP_CONSTANTS';
-
-    -- global prefix for database objects
-    global_prefix               CONSTANT VARCHAR2(30)   := '';
 
     -- flags use in logging
     flag_error                  CONSTANT CHAR           := 'E';     -- error
@@ -62,6 +71,10 @@ AS
     global_smtp_password        CONSTANT VARCHAR2(128)  := '';
 
 
+
+    --
+    -- YOUR CUSTOMIZATIONS FOR SOME CORE FUNCTIONS
+    --
 
     FUNCTION get_env
     RETURN VARCHAR2;

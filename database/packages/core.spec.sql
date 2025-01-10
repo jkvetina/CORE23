@@ -32,7 +32,8 @@ AS
      */
 
     -- package name holding constants, used as get_constant() default
-    c_constants                 CONSTANT VARCHAR2(30)   := core_custom.global_constants;
+    c_constants                 CONSTANT VARCHAR2(30)   := core_custom.master_constants;
+    c_constants_owner           CONSTANT VARCHAR2(30)   := core_custom.master_owner;
 
     -- global items to hold application + page context
     c_context_name_app          CONSTANT VARCHAR2(30)   := core_custom.global_context_app;
