@@ -4073,7 +4073,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             );
             --
             EXECUTE IMMEDIATE
-                'BEGIN ' || c.procedure_name || '(); END;';
+                'BEGIN ' || c.owner || '.' || c.procedure_name || '(); END;';
             --
             core.log_end(in_context_id => v_id);
             --
