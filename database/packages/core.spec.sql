@@ -599,7 +599,8 @@ AS
     PROCEDURE set_item (
         in_name                 VARCHAR2,
         in_value                VARCHAR2        := NULL,
-        in_ignore               BOOLEAN         := FALSE
+        in_if_exists            BOOLEAN         := FALSE,   -- set only if item exists
+        in_throw                BOOLEAN         := FALSE    -- throw error if not found
     );
 
 

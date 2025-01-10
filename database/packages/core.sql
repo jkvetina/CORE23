@@ -1377,7 +1377,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
     PROCEDURE set_item (
         in_name                 VARCHAR2,
         in_value                VARCHAR2        := NULL,
-        in_ignore               BOOLEAN         := FALSE
+        in_if_exists            BOOLEAN         := FALSE,   -- set only if item exists
+        in_throw                BOOLEAN         := FALSE    -- throw error if not found
     )
     AS
         v_item_name             apex_application_page_items.item_name%TYPE;
@@ -1385,43 +1386,54 @@ CREATE OR REPLACE PACKAGE BODY core AS
     BEGIN
         v_item_name := core.get_item_name(in_name);
         --
-        IF v_item_name IS NOT NULL THEN
-            IF NOT in_ignore THEN
-                IF v_exists IS NULL THEN
-                    -- check page item presence
-                    SELECT MAX('Y')
-                    INTO v_exists
-                    FROM apex_application_page_items t
-                    WHERE t.application_id  = core.get_app_id()
-                        --AND t.page_id       = core.get_page_id()
-                        AND t.item_name     = v_item_name;
-                END IF;
-                --
-                IF v_exists IS NULL THEN
-                    -- check application item presence
-                    SELECT MAX('Y')
-                    INTO v_exists
-                    FROM apex_application_items t
-                    WHERE t.application_id  = core.get_app_id()
-                        AND t.item_name     = v_item_name;
-                END IF;
-                --
-                IF v_exists IS NULL THEN
-                    core.raise_error('ITEM_MISSING',
-                        'name',     v_item_name,
-                        'value',    in_value
-                    );
-                END IF;
-            END IF;
+        IF v_item_name IS NULL THEN
+            RETURN;
+        END IF;
 
-            -- set item, you cant catch exception raised on this
-            IF (v_exists = 'Y' OR NOT in_ignore) THEN
-                APEX_UTIL.SET_SESSION_STATE (
-                    p_name      => v_item_name,
-                    p_value     => core.get_translated(in_value),
-                    p_commit    => FALSE
-                );
+        -- check if item exists
+        IF in_if_exists THEN
+            IF v_exists IS NULL THEN
+                -- check page item presence
+                SELECT MAX('Y')
+                INTO v_exists
+                FROM apex_application_page_items t
+                WHERE t.application_id  = core.get_context_app()
+                    --AND t.page_id       = core.get_page_id()
+                    AND t.item_name     = v_item_name;
             END IF;
+            --
+            IF v_exists IS NULL THEN
+                -- check application item presence
+                SELECT MAX('Y')
+                INTO v_exists
+                FROM apex_application_items t
+                WHERE t.application_id  = core.get_context_app()
+                    AND t.item_name     = v_item_name;
+            END IF;
+            --
+            IF v_exists IS NULL THEN
+                -- unknown page/app item, but silent mode, so not throw any error
+                --RETURN;
+                NULL;
+            END IF;
+        END IF;
+
+        -- check if item exists
+        IF in_throw AND v_exists IS NULL THEN
+            core.raise_error('ITEM_MISSING',
+                'name',     v_item_name,
+                'value',    in_value,
+                'app_id',   core.get_context_app()
+            );
+        END IF;
+
+        -- set item, you cant catch exception raised on this
+        IF (v_exists IS NOT NULL OR NOT in_if_exists) THEN
+            APEX_UTIL.SET_SESSION_STATE (
+                p_name      => v_item_name,
+                p_value     => core.get_translated(in_value),
+                p_commit    => FALSE
+            );
         END IF;
     END;
 
