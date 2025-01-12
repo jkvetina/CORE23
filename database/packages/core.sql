@@ -117,6 +117,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             core.set_item(NVL(in_context_name_app,  c_context_name_app),    core.get_app_id());
             core.set_item(NVL(in_context_name_page, c_context_name_page),   core.get_page_id());
         END IF;
+        --
     EXCEPTION
     WHEN OTHERS THEN
         core.raise_error();
@@ -1218,7 +1219,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
     EXCEPTION
     WHEN OTHERS THEN
         core.raise_error('INVALID_NUMBER',
-            'name',     core.get_item(in_name)
+            'requested',    in_name,
+            'name',         core.get_item(in_name)
         );
     END;
 
@@ -1230,13 +1232,21 @@ CREATE OR REPLACE PACKAGE BODY core AS
     )
     RETURN DATE
     AS
+        v_name VARCHAR2(256);
     BEGIN
-        RETURN core.get_date(core.get_item(in_name), in_format);
+        v_name := core.get_item(in_name);
+        --
+        IF v_name IS NULL THEN
+            RETURN NULL;
+        END IF;
+        --
+        RETURN core.get_date(v_name, in_format);
     EXCEPTION
     WHEN OTHERS THEN
         core.raise_error('INVALID_DATE',
-            'name',     core.get_item(in_name),
-            'format',   in_format
+            'name',         core.get_item(in_name),
+            'requested',    in_name,
+            'format',       in_format
         );
     END;
 
@@ -1251,6 +1261,10 @@ CREATE OR REPLACE PACKAGE BODY core AS
         l_value                 VARCHAR2(30)    := SUBSTR(REPLACE(in_value, 'T', ' '), 1, 30);
         out_date                DATE;
     BEGIN
+        IF in_value IS NULL THEN
+            RETURN NULL;
+        END IF;
+        --
         IF in_format IS NOT NULL THEN
             out_date := TO_DATE(l_value DEFAULT NULL ON CONVERSION ERROR, in_format);
         ELSE
@@ -1273,6 +1287,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 in_rollback => FALSE
             );
         END IF;
+        --
+        RETURN out_date;
     END;
 
 
