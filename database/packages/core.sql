@@ -2079,26 +2079,26 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
         -- construct a key-value pairs
         v_obj := JSON_OBJECT_T(JSON_OBJECT (
-            CASE WHEN (in_name01 IS NULL OR in_value01 IS NULL) THEN '__' ELSE in_name01 END VALUE in_value01,
-            CASE WHEN (in_name02 IS NULL OR in_value02 IS NULL) THEN '__' ELSE in_name02 END VALUE in_value02,
-            CASE WHEN (in_name03 IS NULL OR in_value03 IS NULL) THEN '__' ELSE in_name03 END VALUE in_value03,
-            CASE WHEN (in_name04 IS NULL OR in_value04 IS NULL) THEN '__' ELSE in_name04 END VALUE in_value04,
-            CASE WHEN (in_name05 IS NULL OR in_value05 IS NULL) THEN '__' ELSE in_name05 END VALUE in_value05,
-            CASE WHEN (in_name06 IS NULL OR in_value06 IS NULL) THEN '__' ELSE in_name06 END VALUE in_value06,
-            CASE WHEN (in_name07 IS NULL OR in_value07 IS NULL) THEN '__' ELSE in_name07 END VALUE in_value07,
-            CASE WHEN (in_name08 IS NULL OR in_value08 IS NULL) THEN '__' ELSE in_name08 END VALUE in_value08,
-            CASE WHEN (in_name09 IS NULL OR in_value09 IS NULL) THEN '__' ELSE in_name09 END VALUE in_value09,
-            CASE WHEN (in_name10 IS NULL OR in_value10 IS NULL) THEN '__' ELSE in_name10 END VALUE in_value10,
-            CASE WHEN (in_name11 IS NULL OR in_value11 IS NULL) THEN '__' ELSE in_name11 END VALUE in_value11,
-            CASE WHEN (in_name12 IS NULL OR in_value12 IS NULL) THEN '__' ELSE in_name12 END VALUE in_value12,
-            CASE WHEN (in_name13 IS NULL OR in_value13 IS NULL) THEN '__' ELSE in_name13 END VALUE in_value13,
-            CASE WHEN (in_name14 IS NULL OR in_value14 IS NULL) THEN '__' ELSE in_name14 END VALUE in_value14,
-            CASE WHEN (in_name15 IS NULL OR in_value15 IS NULL) THEN '__' ELSE in_name15 END VALUE in_value15,
-            CASE WHEN (in_name16 IS NULL OR in_value16 IS NULL) THEN '__' ELSE in_name16 END VALUE in_value16,
-            CASE WHEN (in_name17 IS NULL OR in_value17 IS NULL) THEN '__' ELSE in_name17 END VALUE in_value17,
-            CASE WHEN (in_name18 IS NULL OR in_value18 IS NULL) THEN '__' ELSE in_name18 END VALUE in_value18,
-            CASE WHEN (in_name19 IS NULL OR in_value19 IS NULL) THEN '__' ELSE in_name19 END VALUE in_value19,
-            CASE WHEN (in_name20 IS NULL OR in_value20 IS NULL) THEN '__' ELSE in_name20 END VALUE in_value20
+            NVL(in_name01, '__') VALUE in_value01,
+            NVL(in_name02, '__') VALUE in_value02,
+            NVL(in_name03, '__') VALUE in_value03,
+            NVL(in_name04, '__') VALUE in_value04,
+            NVL(in_name05, '__') VALUE in_value05,
+            NVL(in_name06, '__') VALUE in_value06,
+            NVL(in_name07, '__') VALUE in_value07,
+            NVL(in_name08, '__') VALUE in_value08,
+            NVL(in_name09, '__') VALUE in_value09,
+            NVL(in_name10, '__') VALUE in_value10,
+            NVL(in_name11, '__') VALUE in_value11,
+            NVL(in_name12, '__') VALUE in_value12,
+            NVL(in_name13, '__') VALUE in_value13,
+            NVL(in_name14, '__') VALUE in_value14,
+            NVL(in_name15, '__') VALUE in_value15,
+            NVL(in_name16, '__') VALUE in_value16,
+            NVL(in_name17, '__') VALUE in_value17,
+            NVL(in_name18, '__') VALUE in_value18,
+            NVL(in_name19, '__') VALUE in_value19,
+            NVL(in_name20, '__') VALUE in_value20 NULL ON NULL  -- keep NULL values
         ));
         --
         v_obj.REMOVE('__');     -- remove empty pairs
@@ -3094,6 +3094,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
             END IF;
         END LOOP;
     EXCEPTION
+    WHEN core.app_exception THEN
+        RAISE;
     WHEN OTHERS THEN
         core.raise_error();
     END;
