@@ -3078,12 +3078,20 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 'name',         c.mview_name
             );
             --
-            DBMS_MVIEW.REFRESH (
-                list            => c.owner || '.' || c.mview_name,
-                method          => NVL(in_method, 'C'),
-                parallelism     => NVL(in_parallelism, 1),
-                atomic_refresh  => in_atomic
-            );
+            BEGIN
+                DBMS_MVIEW.REFRESH (
+                    list            => c.owner || '.' || c.mview_name,
+                    method          => NVL(in_method, 'C'),
+                    parallelism     => NVL(in_parallelism, 1),
+                    atomic_refresh  => in_atomic
+                );
+            EXCEPTION
+            WHEN OTHERS THEN
+                core.raise_error('MVIEW_REFRESH_FAILED',
+                    'owner',        c.owner,
+                    'name',         c.mview_name
+                );
+            END;
             --
             IF in_percent > 0 THEN
                 recalc_table_stats (
