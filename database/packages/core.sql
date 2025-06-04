@@ -3714,6 +3714,19 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
+    PROCEDURE clob_append (
+        io_clob             IN OUT NOCOPY   CLOB,
+        in_content                          VARCHAR2
+    )
+    AS
+    BEGIN
+        IF LENGTH(in_content) > 0 THEN
+            DBMS_LOB.WRITEAPPEND(io_clob, LENGTH(in_content), in_content);
+        END IF;
+    END;
+
+
+
     FUNCTION get_long_string (
         in_table_name           VARCHAR2,
         in_column_name          VARCHAR2,
