@@ -552,7 +552,7 @@ AS
         in_interval             NUMBER
     )
     RETURN NUMBER
-    RESULT_CACHE;
+    DETERMINISTIC;
 
 
 
@@ -1162,7 +1162,7 @@ AS
         in_payload              VARCHAR2
     )
     RETURN VARCHAR2
-    RESULT_CACHE;
+    DETERMINISTIC;
 
 
 

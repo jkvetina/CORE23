@@ -1322,7 +1322,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_interval             NUMBER
     )
     RETURN NUMBER
-    RESULT_CACHE
+    DETERMINISTIC
     AS
         PRAGMA UDF;
     BEGIN
@@ -3256,7 +3256,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_payload              VARCHAR2
     )
     RETURN VARCHAR2
-    RESULT_CACHE
+    DETERMINISTIC
     AS
         out_ VARCHAR2(40);
     BEGIN
