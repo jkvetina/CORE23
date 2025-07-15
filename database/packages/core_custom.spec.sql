@@ -23,6 +23,9 @@ AS
     page_id_help                CONSTANT PLS_INTEGER    := 980;
     page_id_login               CONSTANT PLS_INTEGER    := 9999;
 
+    -- default logging level (for non-APEX sessions)
+    default_debug_level         CONSTANT PLS_INTEGER    := 7;
+
     -- code for app exception
     app_exception_code          CONSTANT PLS_INTEGER    := -20990;
     assert_exception_code       CONSTANT PLS_INTEGER    := -20992;

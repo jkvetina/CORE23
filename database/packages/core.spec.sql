@@ -75,9 +75,6 @@ AS
     c_constraint_prefix         CONSTANT VARCHAR2(30)   := core_custom.global_constraint_prefix;
     c_not_null_prefix           CONSTANT VARCHAR2(30)   := core_custom.global_not_null_prefix;
 
-    -- defautl logging level (for non-APEX sessions)
-    c_default_debug_level       CONSTANT PLS_INTEGER    := 7;
-
 
 
     --

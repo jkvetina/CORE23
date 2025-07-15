@@ -66,17 +66,23 @@ CREATE OR REPLACE PACKAGE BODY core_custom AS
         -- prepare message
         v_message := CASE
             WHEN in_type IN (core.flag_error, core.flag_warning)
-                THEN in_message
+                THEN ''
+                    || CASE in_type
+                        WHEN core.flag_error    THEN '[ERROR] '
+                        WHEN core.flag_warning  THEN '[WARN] '
+                        END
+                    || in_message
                     || CASE WHEN in_arguments IS NOT NULL THEN CHR(10) || '^ARGS: '         || in_arguments END
                     || CASE WHEN in_backtrace IS NOT NULL THEN CHR(10) || '^BACKTRACE: '    || in_backtrace END
                 --
-            ELSE
-                in_message
-                    || CASE in_type
-                        WHEN core.flag_start    THEN ' [START] '
-                        WHEN core.flag_end      THEN ' [END] '
-                        END
-                    || CASE WHEN in_arguments IS NOT NULL THEN CHR(10) || '^ARGS: '         || in_arguments END
+            ELSE ''
+                || CASE in_type
+                    WHEN core.flag_start    THEN '[START] '
+                    WHEN core.flag_end      THEN '[END] '
+                    ELSE '[DEBUG] '
+                    END
+                || in_message
+                || CASE WHEN in_arguments IS NOT NULL THEN CHR(10) || '^ARGS: '         || in_arguments END
             END;
 
         -- actually log the message into apex_debug_messages view
@@ -116,9 +122,10 @@ CREATE OR REPLACE PACKAGE BODY core_custom AS
                 );
             END CASE;
 
+            -- show payload
             IF in_payload IS NOT NULL THEN
                 APEX_DEBUG.MESSAGE (
-                    p_message       => 'PAYLOAD: ' || DBMS_LOB.SUBSTR(in_payload, 32000),
+                    p_message       => '[PAYLOAD] ' || DBMS_LOB.SUBSTR(in_payload, 32000),
                     p_max_length    => 32767,
                     p_level         => 6,
                     p_force         => TRUE
