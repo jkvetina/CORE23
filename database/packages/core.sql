@@ -279,12 +279,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
     RETURN VARCHAR2
     AS
     BEGIN
-        RETURN COALESCE (
-            APEX_APPLICATION.G_USER,
-            SYS_CONTEXT('USERENV', 'PROXY_USER'),
-            SYS_CONTEXT('USERENV', 'SESSION_USER'),
-            USER
-        );
+        RETURN core_custom.get_user_id();
     END;
 
 
@@ -297,6 +292,17 @@ CREATE OR REPLACE PACKAGE BODY core AS
     EXCEPTION
     WHEN OTHERS THEN
         RETURN 'EN';
+    END;
+
+
+
+    FUNCTION get_tenant_id (
+        in_user_id      VARCHAR2 := NULL
+    )
+    RETURN NUMBER
+    AS
+    BEGIN
+        RETURN core_custom.get_tenant_id(in_user_id);
     END;
 
 

@@ -12,6 +12,35 @@ CREATE OR REPLACE PACKAGE BODY core_custom AS
 
 
 
+    FUNCTION get_user_id
+    RETURN VARCHAR2
+    AS
+    BEGIN
+        RETURN COALESCE (
+            core.get_item('G_USER_ID'),
+            APEX_APPLICATION.G_USER,
+            SYS_CONTEXT('USERENV', 'PROXY_USER'),
+            SYS_CONTEXT('USERENV', 'SESSION_USER'),
+            USER
+        );
+    END;
+
+
+
+    FUNCTION get_tenant_id (
+        in_user_id      VARCHAR2 := NULL
+    )
+    RETURN NUMBER
+    AS
+    BEGIN
+        RETURN TO_NUMBER(COALESCE (
+            core.get_item('G_TENANT_ID'),
+            SYS_CONTEXT('APEX$SESSION', 'APP_TENANT_ID')
+        ));
+    END;
+
+
+
     FUNCTION log__ (
         in_type                 CHAR,
         in_message              VARCHAR2,

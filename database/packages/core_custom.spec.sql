@@ -81,6 +81,18 @@ AS
 
 
 
+    FUNCTION get_user_id
+    RETURN VARCHAR2;
+
+
+
+    FUNCTION get_tenant_id (
+        in_user_id      VARCHAR2 := NULL
+    )
+    RETURN NUMBER;
+
+
+
     FUNCTION log__ (
         in_type                 CHAR,
         in_message              VARCHAR2,

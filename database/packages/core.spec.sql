@@ -230,6 +230,13 @@ AS
 
 
 
+    FUNCTION get_tenant_id (
+        in_user_id      VARCHAR2 := NULL
+    )
+    RETURN NUMBER;
+
+
+
     FUNCTION get_substitution (
         in_name                 VARCHAR2,
         in_app_id               NUMBER      := NULL
