@@ -582,6 +582,13 @@ AS
 
 
 
+    FUNCTION get_timer (
+        in_timestamp            VARCHAR2
+    )
+    RETURN VARCHAR2;
+
+
+
     FUNCTION get_local_date (
         in_utc_timestamp        DATE,
         in_timezone             VARCHAR2

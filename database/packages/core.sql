@@ -1370,6 +1370,20 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
+    FUNCTION get_timer (
+        in_timestamp            VARCHAR2
+    )
+    RETURN VARCHAR2
+    AS
+    BEGIN
+        RETURN REPLACE(REPLACE(
+            LTRIM(REPLACE(REGEXP_REPLACE(in_timestamp, '^[^\s]\s+', ''), '+000', '')),
+            '000000 ', ''),
+            '.000000', '');
+    END;
+
+
+
     FUNCTION get_local_date (
         in_utc_timestamp        DATE,
         in_timezone             VARCHAR2
