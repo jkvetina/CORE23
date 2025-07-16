@@ -56,90 +56,92 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('--');
     DBMS_OUTPUT.PUT('INVALID: ');
     --
-    FOR c IN (
-        SELECT o.*
-        FROM (
-            SELECT o.object_name, o.object_type
-            FROM user_objects o
-            WHERE o.status              != 'VALID'
-                AND o.object_type       NOT IN ('SEQUENCE')
-                AND o.object_name       != $$PLSQL_UNIT         -- not this procedure
-                AND (o.object_type      LIKE in_type ESCAPE '\' OR in_type IS NULL)
-                AND (o.object_name      LIKE in_name ESCAPE '\' OR in_name IS NULL)
-            UNION ALL
-            SELECT o.object_name, o.object_type
-            FROM user_objects o
-            WHERE in_force_y            = 'Y'
-                AND o.object_type       IN ('PACKAGE', 'PACKAGE BODY', 'PROCEDURE', 'FUNCTION', 'TRIGGER', 'VIEW', 'MATERIALIZED VIEW', 'SYNONYM')
-                AND o.object_name       != $$PLSQL_UNIT         -- not this procedure
-                AND (o.object_type      LIKE in_type ESCAPE '\' OR in_type IS NULL)
-                AND (o.object_name      LIKE in_name ESCAPE '\' OR in_name IS NULL)
-        ) o
-        ORDER BY CASE o.object_type
-            WHEN 'PACKAGE'          THEN 1
-            WHEN 'PACKAGE BODY'     THEN 2
-            ELSE 3 END
-    ) LOOP
-        v_scope         := '';
-        v_warnings      := '';
-        v_ccflags       := '';
+    FOR i IN 1 .. 2 LOOP    -- try it twice
+        FOR c IN (
+            SELECT o.*
+            FROM (
+                SELECT o.object_name, o.object_type
+                FROM user_objects o
+                WHERE o.status              != 'VALID'
+                    AND o.object_type       NOT IN ('SEQUENCE')
+                    AND o.object_name       != $$PLSQL_UNIT         -- not this procedure
+                    AND (o.object_type      LIKE in_type ESCAPE '\' OR in_type IS NULL)
+                    AND (o.object_name      LIKE in_name ESCAPE '\' OR in_name IS NULL)
+                UNION ALL
+                SELECT o.object_name, o.object_type
+                FROM user_objects o
+                WHERE in_force_y            = 'Y'
+                    AND o.object_type       IN ('PACKAGE', 'PACKAGE BODY', 'PROCEDURE', 'FUNCTION', 'TRIGGER', 'VIEW', 'MATERIALIZED VIEW', 'SYNONYM')
+                    AND o.object_name       != $$PLSQL_UNIT         -- not this procedure
+                    AND (o.object_type      LIKE in_type ESCAPE '\' OR in_type IS NULL)
+                    AND (o.object_name      LIKE in_name ESCAPE '\' OR in_name IS NULL)
+            ) o
+            ORDER BY CASE o.object_type
+                WHEN 'PACKAGE'          THEN 1
+                WHEN 'PACKAGE BODY'     THEN 2
+                ELSE 3 END
+        ) LOOP
+            v_scope         := '';
+            v_warnings      := '';
+            v_ccflags       := '';
 
-        -- allow pl/sql settings changes in force mode
-        IF in_force THEN
-            -- get and apply ccflags only relevant to current object
-            IF in_ccflags IS NOT NULL THEN
-                BEGIN
-                    SELECT
-                        LISTAGG(REGEXP_SUBSTR(in_ccflags, '(' || s.flag_name || ':[^,]+)', 1, 1, NULL, 1), ', ')
-                            WITHIN GROUP (ORDER BY s.flag_name)
-                    INTO v_ccflags
-                    FROM (
-                        SELECT DISTINCT REGEXP_SUBSTR(s.text, '[$].*\s[$][$]([A-Z0-9-_]+)\s.*[$]', 1, 1, NULL, 1) AS flag_name
-                        FROM user_source s
-                        WHERE REGEXP_LIKE(s.text, '[$].*\s[$][$][A-Z0-9-_]+\s.*[$]')
-                            AND s.name = c.object_name
-                            AND s.type = c.object_type
-                    ) s;
-                EXCEPTION
-                WHEN NO_DATA_FOUND THEN
-                    v_ccflags := NULL;
-                END;
-            END IF;
-            --
-            v_scope             := v_scope      || CASE WHEN in_identifiers     THEN 'IDENTIFIERS:ALL, ' END;
-            v_scope             := v_scope      || CASE WHEN in_statements      THEN 'STATEMENTS:ALL, ' END;
-            v_warnings          := v_warnings   || CASE WHEN in_severe          THEN 'ENABLE:SEVERE, ' END;
-            v_warnings          := v_warnings   || CASE WHEN in_performance     THEN 'ENABLE:PERFORMANCE, ' END;
-            v_warnings          := v_warnings   || CASE WHEN in_informational   THEN 'ENABLE:INFORMATIONAL, ' END;
-            --
-            v_code_type         := 'PLSQL_CODE_TYPE = '       || CASE WHEN in_interpreted THEN 'INTERPRETED' ELSE 'NATIVE' END || ' ';
-            v_optimize_level    := 'PLSQL_OPTIMIZE_LEVEL = '  || in_level || ' ';
-            v_scope             := 'PLSCOPE_SETTINGS = '''    || RTRIM(v_scope, ', ') || ''' ';
-            v_warnings          := 'PLSQL_WARNINGS = '''      || REPLACE(RTRIM(v_warnings, ', '), ',', ''', ''') || ''' ';
-            v_ccflags           := 'PLSQL_CCFLAGS = '''       || RTRIM(v_ccflags) || ''' ';
-        END IF;
-
-        -- recompile object
-        BEGIN
-            EXECUTE IMMEDIATE
-                'ALTER ' || REPLACE(c.object_type, ' BODY', '') || ' ' || c.object_name || ' COMPILE ' ||
-                    CASE WHEN c.object_type LIKE '% BODY' THEN ' BODY' END || ' ' ||
-                    CASE WHEN c.object_type IN (
-                        'PACKAGE', 'PACKAGE BODY', 'PROCEDURE', 'FUNCTION', 'TRIGGER'
-                    ) THEN
-                        v_code_type         ||
-                        v_optimize_level    ||
-                        v_scope             ||
-                        v_warnings          ||
-                        v_ccflags           ||
-                        'REUSE SETTINGS'
+            -- allow pl/sql settings changes in force mode
+            IF in_force THEN
+                -- get and apply ccflags only relevant to current object
+                IF in_ccflags IS NOT NULL THEN
+                    BEGIN
+                        SELECT
+                            LISTAGG(REGEXP_SUBSTR(in_ccflags, '(' || s.flag_name || ':[^,]+)', 1, 1, NULL, 1), ', ')
+                                WITHIN GROUP (ORDER BY s.flag_name)
+                        INTO v_ccflags
+                        FROM (
+                            SELECT DISTINCT REGEXP_SUBSTR(s.text, '[$].*\s[$][$]([A-Z0-9-_]+)\s.*[$]', 1, 1, NULL, 1) AS flag_name
+                            FROM user_source s
+                            WHERE REGEXP_LIKE(s.text, '[$].*\s[$][$][A-Z0-9-_]+\s.*[$]')
+                                AND s.name = c.object_name
+                                AND s.type = c.object_type
+                        ) s;
+                    EXCEPTION
+                    WHEN NO_DATA_FOUND THEN
+                        v_ccflags := NULL;
                     END;
-            --
-            DBMS_OUTPUT.PUT('.');
-        EXCEPTION
-        WHEN OTHERS THEN
-            DBMS_OUTPUT.PUT('!');  -- something went wrong
-        END;
+                END IF;
+                --
+                v_scope             := v_scope      || CASE WHEN in_identifiers     THEN 'IDENTIFIERS:ALL, ' END;
+                v_scope             := v_scope      || CASE WHEN in_statements      THEN 'STATEMENTS:ALL, ' END;
+                v_warnings          := v_warnings   || CASE WHEN in_severe          THEN 'ENABLE:SEVERE, ' END;
+                v_warnings          := v_warnings   || CASE WHEN in_performance     THEN 'ENABLE:PERFORMANCE, ' END;
+                v_warnings          := v_warnings   || CASE WHEN in_informational   THEN 'ENABLE:INFORMATIONAL, ' END;
+                --
+                v_code_type         := 'PLSQL_CODE_TYPE = '       || CASE WHEN in_interpreted THEN 'INTERPRETED' ELSE 'NATIVE' END || ' ';
+                v_optimize_level    := 'PLSQL_OPTIMIZE_LEVEL = '  || in_level || ' ';
+                v_scope             := 'PLSCOPE_SETTINGS = '''    || RTRIM(v_scope, ', ') || ''' ';
+                v_warnings          := 'PLSQL_WARNINGS = '''      || REPLACE(RTRIM(v_warnings, ', '), ',', ''', ''') || ''' ';
+                v_ccflags           := 'PLSQL_CCFLAGS = '''       || RTRIM(v_ccflags) || ''' ';
+            END IF;
+
+            -- recompile object
+            BEGIN
+                EXECUTE IMMEDIATE
+                    'ALTER ' || REPLACE(c.object_type, ' BODY', '') || ' ' || c.object_name || ' COMPILE ' ||
+                        CASE WHEN c.object_type LIKE '% BODY' THEN ' BODY' END || ' ' ||
+                        CASE WHEN c.object_type IN (
+                            'PACKAGE', 'PACKAGE BODY', 'PROCEDURE', 'FUNCTION', 'TRIGGER'
+                        ) THEN
+                            v_code_type         ||
+                            v_optimize_level    ||
+                            v_scope             ||
+                            v_warnings          ||
+                            v_ccflags           ||
+                            'REUSE SETTINGS'
+                        END;
+                --
+                DBMS_OUTPUT.PUT('.');
+            EXCEPTION
+            WHEN OTHERS THEN
+                DBMS_OUTPUT.PUT('!');  -- something went wrong
+            END;
+        END LOOP;
     END LOOP;
 
     -- show number of invalid objects
