@@ -420,6 +420,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
     RETURN VARCHAR2
     RESULT_CACHE
     AS
+        v_found                 PLS_INTEGER;
         out_value               VARCHAR2(4000);
     BEGIN
         SELECT
@@ -443,7 +444,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             AND s.type              = t.object_type
             AND s.line              = t.line
         WHERE 1 = 1
-            AND t.owner             = COALESCE(in_owner, c_constants_owner)
+            AND t.owner             = COALESCE(in_owner, c_constants_owner, SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA'))
             AND t.object_name       = UPPER(NVL(in_package, c_constants))
             AND t.object_type       = 'PACKAGE' || CASE WHEN in_private IS NOT NULL THEN ' BODY' END
             AND t.name              = UPPER(in_prefix || in_name)
@@ -454,7 +455,21 @@ CREATE OR REPLACE PACKAGE BODY core AS
         RETURN out_value;
     EXCEPTION
     WHEN NO_DATA_FOUND THEN
-        RETURN NULL;
+        -- check if we have a correct package
+        BEGIN
+            SELECT 1
+            INTO v_found
+            FROM all_source s
+            WHERE s.owner   = COALESCE(in_owner, c_constants_owner, SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA'))
+                AND s.name  = UPPER(NVL(in_package, c_constants))
+                AND s.type  = 'PACKAGE' || CASE WHEN in_private IS NOT NULL THEN ' BODY' END
+                AND s.line  = 1;
+        EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            core.raise_error('CONSTANT_PACKAGE_MISSING|' || UPPER(NVL(in_package, c_constants)));
+        END;
+        --
+        core.raise_error('CONSTANT_MISSING|' || UPPER(NVL(in_package, c_constants)) || '|' || UPPER(in_prefix || in_name));
     END;
 
 
