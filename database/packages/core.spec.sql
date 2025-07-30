@@ -275,7 +275,8 @@ AS
         in_package              VARCHAR2        := NULL,
         in_owner                VARCHAR2        := NULL,
         in_private              CHAR            := NULL,    -- Y = package body
-        in_prefix               VARCHAR2        := NULL
+        in_prefix               VARCHAR2        := NULL,
+        in_silent               BOOLEAN         := FALSE
     )
     RETURN VARCHAR2
     RESULT_CACHE;
@@ -287,7 +288,8 @@ AS
         in_package              VARCHAR2        := NULL,
         in_owner                VARCHAR2        := NULL,
         in_private              CHAR            := NULL,    -- Y = package body
-        in_prefix               VARCHAR2        := NULL
+        in_prefix               VARCHAR2        := NULL,
+        in_silent               BOOLEAN         := FALSE
     )
     RETURN NUMBER
     RESULT_CACHE;

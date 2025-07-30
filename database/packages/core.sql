@@ -415,7 +415,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_package              VARCHAR2        := NULL,
         in_owner                VARCHAR2        := NULL,
         in_private              CHAR            := NULL,    -- Y = package body
-        in_prefix               VARCHAR2        := NULL
+        in_prefix               VARCHAR2        := NULL,
+        in_silent               BOOLEAN         := FALSE
     )
     RETURN VARCHAR2
     RESULT_CACHE
@@ -466,10 +467,14 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 AND s.line  = 1;
         EXCEPTION
         WHEN NO_DATA_FOUND THEN
-            core.raise_error('CONSTANT_PACKAGE_MISSING|' || UPPER(NVL(in_package, c_constants)));
+            IF NOT in_silent THEN
+                core.raise_error('CONSTANT_PACKAGE_MISSING|' || UPPER(NVL(in_package, c_constants)));
+            END IF;
         END;
         --
-        core.raise_error('CONSTANT_MISSING|' || UPPER(NVL(in_package, c_constants)) || '|' || UPPER(in_prefix || in_name));
+        IF NOT in_silent THEN
+            core.raise_error('CONSTANT_MISSING|' || UPPER(NVL(in_package, c_constants)) || '|' || UPPER(in_prefix || in_name));
+        END IF;
     END;
 
 
@@ -479,7 +484,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_package              VARCHAR2        := NULL,
         in_owner                VARCHAR2        := NULL,
         in_private              CHAR            := NULL,    -- Y = package body
-        in_prefix               VARCHAR2        := NULL
+        in_prefix               VARCHAR2        := NULL,
+        in_silent               BOOLEAN         := FALSE
     )
     RETURN NUMBER
     RESULT_CACHE
@@ -491,7 +497,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_name         => in_name,
             in_owner        => in_owner,
             in_private      => in_private,
-            in_prefix       => in_prefix
+            in_prefix       => in_prefix,
+            in_silent       => in_silent
         ));
     END;
 
