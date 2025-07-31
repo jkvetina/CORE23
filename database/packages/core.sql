@@ -438,20 +438,15 @@ CREATE OR REPLACE PACKAGE BODY core AS
                     ''),
                 'NULL')
         INTO out_value
-        FROM all_identifiers t
-        JOIN all_source s
-            ON s.owner              = t.owner
-            AND s.name              = t.object_name
-            AND s.type              = t.object_type
-            AND s.line              = t.line
-        WHERE 1 = 1
-            AND t.owner             = COALESCE(in_owner, c_constants_owner, SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA'))
-            AND t.object_name       = UPPER(NVL(in_package, c_constants))
-            AND t.object_type       = 'PACKAGE' || CASE WHEN in_private IS NOT NULL THEN ' BODY' END
-            AND t.name              = UPPER(in_prefix || in_name)
-            AND t.type              = 'CONSTANT'
-            AND t.usage             = 'DECLARATION'
-            AND t.usage_context_id  = 1;
+        FROM all_source s
+        WHERE s.owner           = COALESCE(in_owner, c_constants_owner, SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA'))
+            AND s.name          = UPPER(NVL(in_package, c_constants))
+            AND s.type          = 'PACKAGE' || CASE WHEN in_private IS NOT NULL THEN ' BODY' END
+            --
+            AND REGEXP_LIKE(s.text, '^\s*' || UPPER(in_prefix || in_name) || '\s+CONSTANT\s+', 'i')
+        ORDER BY
+            s.line
+        FETCH FIRST 1 ROWS ONLY;
         --
         RETURN out_value;
     EXCEPTION
