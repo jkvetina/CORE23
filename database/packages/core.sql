@@ -1930,29 +1930,34 @@ CREATE OR REPLACE PACKAGE BODY core AS
         END IF;
 
         -- either run on schedule or at specified date
-        IF in_schedule_name IS NOT NULL THEN
-            DBMS_SCHEDULER.CREATE_JOB (
-                job_name        => v_job_name,
-                schedule_name   => in_schedule_name,    -- using schedule
-                job_type        => 'PLSQL_BLOCK',
-                job_action      => v_statement,
-                job_class       => in_job_class,
-                enabled         => FALSE,
-                auto_drop       => in_autodrop,
-                comments        => in_comments
-            );
-        ELSE
-            DBMS_SCHEDULER.CREATE_JOB (
-                job_name        => v_job_name,
-                job_type        => 'PLSQL_BLOCK',
-                job_action      => v_statement,
-                job_class       => in_job_class,
-                start_date      => in_start_date,       -- using date
-                enabled         => FALSE,
-                auto_drop       => in_autodrop,
-                comments        => in_comments
-            );
-        END IF;
+        BEGIN
+            IF in_schedule_name IS NOT NULL THEN
+                DBMS_SCHEDULER.CREATE_JOB (
+                    job_name        => v_job_name,
+                    schedule_name   => in_schedule_name,    -- using schedule
+                    job_type        => 'PLSQL_BLOCK',
+                    job_action      => v_statement,
+                    job_class       => in_job_class,
+                    enabled         => FALSE,
+                    auto_drop       => in_autodrop,
+                    comments        => in_comments
+                );
+            ELSE
+                DBMS_SCHEDULER.CREATE_JOB (
+                    job_name        => v_job_name,
+                    job_type        => 'PLSQL_BLOCK',
+                    job_action      => v_statement,
+                    job_class       => in_job_class,
+                    start_date      => in_start_date,       -- using date
+                    enabled         => FALSE,
+                    auto_drop       => in_autodrop,
+                    comments        => in_comments
+                );
+            END IF;
+        EXCEPTION
+        WHEN OTHERS THEN
+            core.raise_error('CREATE_JOB_FAILED|' || v_job_name, 'query', v_statement);
+        END;
         --
         IF in_priority IS NOT NULL THEN
             DBMS_SCHEDULER.SET_ATTRIBUTE(v_job_name, 'JOB_PRIORITY', in_priority);
@@ -1982,6 +1987,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
         core.log_end();
         --
     EXCEPTION
+    WHEN core.app_exception THEN
+        RAISE;
     WHEN OTHERS THEN
         ROLLBACK;
         core.raise_error();
