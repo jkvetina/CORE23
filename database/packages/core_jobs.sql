@@ -3,13 +3,6 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
     PROCEDURE job_scan_apps
     AS
     BEGIN
-        IF core.get_session_id() IS NULL THEN
-            core.create_session (
-                in_user_id  => USER,
-                in_app_id   => core_custom.g_app_id
-            );
-        END IF;
-        --
         core.log_start();
 
         -- rebuild requested apps
@@ -20,8 +13,8 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 in_statement        => 'APEX_APP_OBJECT_DEPENDENCY.SCAN(p_application_id => ' || app_id || ');',
                 in_job_class        => core_custom.g_job_class,
                 in_user_id          => USER,
-                in_app_id           => core_custom.g_app_id,
-                in_session_id       => core.get_session_id(),
+                in_app_id           => app_id,
+                in_session_id       => NULL,
                 in_priority         => 3,
                 in_comments         => 'Rescan ' || app_id
             );
@@ -37,13 +30,16 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
 
 
     PROCEDURE send_daily (
-        in_recipient        VARCHAR2 := NULL
+        in_recipient        VARCHAR2        := NULL,
+        in_offset           PLS_INTEGER     := 1
     )
     AS
         v_out               CLOB            := EMPTY_CLOB();
-        v_subject           VARCHAR2(64)    := 'Daily Overview [' || core_custom.get_env() || ']';
+        v_subject           VARCHAR2(64)    := 'Daily Overview, ' || TO_CHAR(TRUNC(SYSDATE) - in_offset, 'YYYY-MM-DD') || ' [' || core_custom.get_env() || ']';
         v_cursor            SYS_REFCURSOR;
         v_id                NUMBER;
+        v_start_date        DATE            := TRUNC(SYSDATE) - in_offset;      -- >=
+        v_end_date          DATE            := TRUNC(SYSDATE) - in_offset + 1;  -- <
     BEGIN
         IF core.get_session_id() IS NULL THEN
             core.create_session (
@@ -100,8 +96,8 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
             FROM all_scheduler_job_run_details t
             WHERE 1 = 1
                 AND t.owner     LIKE core_custom.g_owner_like
-                AND t.log_date  >= TRUNC(SYSDATE) - 1
-                AND t.log_date  <  TRUNC(SYSDATE)
+                AND t.log_date  >= v_start_date
+                AND t.log_date  <  v_end_date
             ORDER BY
                 1, 2, 3, 4;
         --
@@ -110,7 +106,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         -- append content
         OPEN v_cursor FOR
             SELECT
-                t.application_id,
+                t.application_id AS app_id,
                 t.page_id,
                 t.message_level AS level_,
                 t.message,
@@ -120,8 +116,8 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 --
             FROM apex_debug_messages t
             WHERE 1 = 1
-                AND t.message_timestamp >= TRUNC(SYSDATE) - 1
-                AND t.message_timestamp <  TRUNC(SYSDATE)
+                AND t.message_timestamp >= v_start_date
+                AND t.message_timestamp <  v_end_date
                 AND t.message_level     < 4
             GROUP BY
                 t.application_id,
@@ -137,7 +133,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         -- append content
         OPEN v_cursor FOR
             SELECT
-                t.application_id,
+                t.application_id AS app_id,
                 t.page_id,
                 t.component_type_name,
                 t.component_display_name,
@@ -155,7 +151,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         -- append content
         OPEN v_cursor FOR
             SELECT
-                t.application_id,
+                t.application_id AS app_id,
                 t.page_id,
                 t.error_message,
                 --
@@ -163,8 +159,8 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 --
             FROM apex_workspace_activity_log t
             WHERE 1 = 1
-                AND t.view_date         >= TRUNC(SYSDATE) - 1
-                AND t.view_date         <  TRUNC(SYSDATE)
+                AND t.view_date         >= v_start_date
+                AND t.view_date         <  v_end_date
                 AND t.error_message     IS NOT NULL
             GROUP BY
                 t.application_id,
@@ -179,30 +175,43 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         OPEN v_cursor FOR
             SELECT
                 t.app_id,
-                t.mail_send_error,
+                REPLACE(REPLACE(t.mail_send_error, '<', '"'), '>', '"') AS error,
                 --
-                SUM(t.mail_send_count) AS mail_send_count
+                SUM(t.mail_send_count) AS count_
                 --
             FROM apex_mail_queue t
             WHERE 1 = 1
-                AND t.mail_message_created  >= TRUNC(SYSDATE) - 1
-                AND t.mail_message_created  <  TRUNC(SYSDATE)
+                AND t.mail_message_created  >= v_start_date
+                AND t.mail_message_created  <  v_end_date
                 AND t.mail_send_error       IS NOT NULL
             GROUP BY
                 t.app_id,
-                t.mail_send_error
+                REPLACE(REPLACE(t.mail_send_error, '<', '"'), '>', '"')
             ORDER BY
                 1, 2;
         --
         v_out := v_out || get_content(v_cursor, 'Mail Queue Errors');
 
-        -- finalize content
-        v_out := get_html_header('Daily Overview') || v_out || get_html_footer();
+        --
+        -- FINALIZE CONTENT
+        --
+        v_out := get_html_header(v_subject) || v_out || get_html_footer();
 
         -- send mail to all developers
-        IF in_recipient IS NOT NULL THEN
-            v_id := APEX_MAIL.SEND (
-                p_to         => in_recipient,
+        FOR c IN (
+            SELECT t.email
+            FROM apex_workspace_developers t
+            WHERE t.is_application_developer    = 'Yes'
+                AND t.email                     LIKE core_custom.g_developers
+                AND t.date_last_updated         > TRUNC(SYSDATE) - 90
+                AND in_recipient IS NULL
+            UNION ALL
+            SELECT in_recipient
+            FROM DUAL
+            WHERE in_recipient IS NOT NULL
+        ) LOOP
+            APEX_MAIL.SEND (
+                p_to         => c.email,
                 p_from       => get_sender(),
                 p_body       => TO_CLOB('Enable HTML to see the content'),
                 p_body_html  => v_out,
@@ -211,30 +220,9 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
             --
             core.log_debug (
                 'mail_id',      v_id,
-                'recipient',    in_recipient
+                'recipient',    c.email
             );
-        ELSE
-            FOR c IN (
-                SELECT t.email
-                FROM apex_workspace_developers t
-                WHERE t.is_application_developer    = 'Yes'
-                    AND t.email                     LIKE core_custom.g_developers
-                    AND t.date_last_updated         > TRUNC(SYSDATE) - 90
-            ) LOOP
-                APEX_MAIL.SEND (
-                    p_to         => c.email,
-                    p_from       => get_sender(),
-                    p_body       => TO_CLOB('Enable HTML to see the content'),
-                    p_body_html  => v_out,
-                    p_subj       => v_subject
-                );
-                --
-                core.log_debug (
-                    'mail_id',      v_id,
-                    'recipient',    c.email
-                );
-            END LOOP;
-        END IF;
+        END LOOP;
         --
         APEX_MAIL.PUSH_QUEUE();
 
@@ -276,6 +264,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         v_value             VARCHAR2(4000);
         v_header            VARCHAR2(32767);
         v_line              VARCHAR2(32767);
+        v_align             VARCHAR2(128);
         v_out               CLOB            := EMPTY_CLOB();
     BEGIN
         v_cursor := DBMS_SQL.TO_CURSOR_NUMBER(io_cursor);
@@ -284,15 +273,20 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         DBMS_SQL.DESCRIBE_COLUMNS(v_cursor, v_cols, v_desc);
         --
         FOR i IN 1 .. v_cols LOOP
+            v_align := '';
+            --
             IF v_desc(i).col_type = DBMS_SQL.NUMBER_TYPE THEN
                 DBMS_SQL.DEFINE_COLUMN(v_cursor, i, v_number);
+                v_align := ' align="right"';
             ELSIF v_desc(i).col_type = DBMS_SQL.DATE_TYPE THEN
                 DBMS_SQL.DEFINE_COLUMN(v_cursor, i, v_date);
+                v_align := ' align="left"';
             ELSE
                 DBMS_SQL.DEFINE_COLUMN(v_cursor, i, v_value, 4000);
+                v_align := ' align="left"';
             END IF;
             --
-            v_line := v_line || '<td>' || INITCAP(TRIM(REPLACE(v_desc(i).col_name, '_', ' '))) || '</td>';
+            v_line := v_line || '<th' || v_align || '>' || INITCAP(TRIM(REPLACE(v_desc(i).col_name, '_', ' '))) || '</th>';
         END LOOP;
         --
         v_out := v_out || TO_CLOB('<table cellpadding="5" cellspacing="0" border="1"><thead><tr>' || v_line || '</tr></thead><tbody>');
@@ -303,9 +297,12 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
             v_line := '';
             --
             FOR i IN 1 .. v_cols LOOP
+                v_align := '';
+                --
                 IF v_desc(i).col_type = DBMS_SQL.NUMBER_TYPE THEN
                     DBMS_SQL.COLUMN_VALUE(v_cursor, i, v_number);
                     v_value := TO_CHAR(v_number);
+                    v_align := ' align="right"';
                 ELSIF v_desc(i).col_type = DBMS_SQL.DATE_TYPE THEN
                     DBMS_SQL.COLUMN_VALUE(v_cursor, i, v_date);
                     v_value := TO_CHAR(v_date);
@@ -313,7 +310,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                     DBMS_SQL.COLUMN_VALUE(v_cursor, i, v_value);
                 END IF;
                 --
-                v_line := v_line || '<td>' || v_value || '</td>';
+                v_line := v_line || '<td' || v_align || '>' || v_value || '</td>';
             END LOOP;
             --
             v_out := v_out || '<tr>' || v_line || '</tr>';
@@ -359,11 +356,15 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
     RETURN VARCHAR2
     AS
     BEGIN
-        RETURN CASE COALESCE(in_env, core_custom.get_env())
-            WHEN 'DEV'  THEN core_custom.g_sender_dev
-            WHEN 'UAT'  THEN core_custom.g_sender_uat
-            WHEN 'PROD' THEN core_custom.g_sender_prod
-            ELSE NULL END;
+        RETURN COALESCE(
+            core.get_constant (
+                in_name     => 'G_SENDER_' || in_env,
+                in_package  => 'CORE_CUSTOM', 
+                in_owner    => core_custom.master_owner,
+                in_silent   => TRUE
+            ),
+            core_custom.g_sender
+        );
     END;
 
 
@@ -381,6 +382,13 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
             '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">' ||
             '<meta name="viewport" content="width=device-width">' ||
             '<style>' ||
+                'table {' ||
+                '    border: 0;' ||
+                '    border-spacing: 0;' ||
+                '    border-collapse: collapse;' ||
+                '    mso-table-lspace: 0pt;' ||
+                '    mso-table-rspace: 0pt;' ||
+                '}' ||
             '</style>' ||
             '</head>' ||
             '<body>' ||

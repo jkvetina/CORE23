@@ -12,7 +12,8 @@ CREATE OR REPLACE PACKAGE core_jobs AS
 
 
     PROCEDURE send_daily (
-        in_recipient        VARCHAR2 := NULL
+        in_recipient        VARCHAR2        := NULL,
+        in_offset           PLS_INTEGER     := 1
     );
 
 

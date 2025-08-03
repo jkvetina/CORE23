@@ -1,6 +1,4 @@
-CREATE OR REPLACE PACKAGE core_custom
-AUTHID CURRENT_USER
-AS
+CREATE OR REPLACE PACKAGE core_custom AUTHID CURRENT_USER AS
 
     --
     -- CONSTANTS SHARED IN BETWEEN ALL APPS, WHICH YOU SET JUST ONCE
@@ -79,6 +77,7 @@ AS
     g_sender_dev                CONSTANT VARCHAR2(128)  := '';
     g_sender_uat                CONSTANT VARCHAR2(128)  := '';
     g_sender_prod               CONSTANT VARCHAR2(128)  := '';
+    g_sender                    CONSTANT VARCHAR2(128)  := '';
 
     -- receivers for daily emails
     g_developers                CONSTANT VARCHAR2(128)  := '%@%';
