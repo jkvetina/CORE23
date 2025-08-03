@@ -1842,7 +1842,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_autodrop             BOOLEAN         := TRUE,
         in_force_replace        BOOLEAN         := FALSE,
         in_context_id           NUMBER          := NULL,
-        in_comments             VARCHAR2        := NULL
+        in_comments             VARCHAR2        := NULL,
+        in_job_class            VARCHAR2        := NULL
     )
     AS
         PRAGMA AUTONOMOUS_TRANSACTION;
@@ -1931,6 +1932,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 schedule_name   => in_schedule_name,    -- using schedule
                 job_type        => 'PLSQL_BLOCK',
                 job_action      => v_statement,
+                job_class       => in_job_class,
                 enabled         => FALSE,
                 auto_drop       => in_autodrop,
                 comments        => in_comments
@@ -1940,6 +1942,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 job_name        => v_job_name,
                 job_type        => 'PLSQL_BLOCK',
                 job_action      => v_statement,
+                job_class       => in_job_class,
                 start_date      => in_start_date,       -- using date
                 enabled         => FALSE,
                 auto_drop       => in_autodrop,

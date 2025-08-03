@@ -719,7 +719,8 @@ AS
         in_autodrop             BOOLEAN         := TRUE,
         in_force_replace        BOOLEAN         := FALSE,
         in_context_id           NUMBER          := NULL,
-        in_comments             VARCHAR2        := NULL
+        in_comments             VARCHAR2        := NULL,
+        in_job_class            VARCHAR2        := NULL
     );
 
 
