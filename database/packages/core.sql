@@ -423,6 +423,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
     AS
         v_found                 PLS_INTEGER;
         out_value               VARCHAR2(4000);
+        --
+        PRAGMA UDF;
     BEGIN
         SELECT
             NULLIF(
@@ -463,13 +465,15 @@ CREATE OR REPLACE PACKAGE BODY core AS
         EXCEPTION
         WHEN NO_DATA_FOUND THEN
             IF NOT in_silent THEN
-                core.raise_error('CONSTANT_PACKAGE_MISSING|' || UPPER(NVL(in_package, c_constants)));
+                core.raise_error('CONSTANT_PACKAGE_MISSING|' || UPPER(NVL(in_package, c_constants)), in_rollback => FALSE);
             END IF;
         END;
         --
         IF NOT in_silent THEN
-            core.raise_error('CONSTANT_MISSING|' || UPPER(NVL(in_package, c_constants)) || '|' || UPPER(in_prefix || in_name));
+            core.raise_error('CONSTANT_MISSING|' || UPPER(NVL(in_package, c_constants)) || '|' || UPPER(in_prefix || in_name), in_rollback => FALSE);
         END IF;
+        --
+        RETURN NULL;
     END;
 
 
