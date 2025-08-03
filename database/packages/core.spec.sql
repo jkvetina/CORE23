@@ -324,6 +324,11 @@ AS
 
 
 
+    FUNCTION get_debug
+    RETURN BOOLEAN;
+
+
+
     PROCEDURE set_debug (
         in_level                NUMBER      := NULL,
         in_session_id           NUMBER      := NULL

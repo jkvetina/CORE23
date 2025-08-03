@@ -592,6 +592,15 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
+    FUNCTION get_debug
+    RETURN BOOLEAN
+    AS
+    BEGIN
+        RETURN APEX_APPLICATION.G_DEBUG;
+    END;
+
+
+
     PROCEDURE set_debug (
         in_level                NUMBER      := NULL,
         in_session_id           NUMBER      := NULL
