@@ -1,26 +1,5 @@
 CREATE OR REPLACE PACKAGE core_jobs AS
 
-    -- filter all objects
-    g_owner_like            CONSTANT VARCHAR2(16)   := '%';
-    --
-    g_sender_dev            CONSTANT VARCHAR2(128)  := '';
-    g_sender_uat            CONSTANT VARCHAR2(128)  := '';
-    g_sender_prod           CONSTANT VARCHAR2(128)  := '';
-
-    -- receivers for daily emails
-    g_developers            CONSTANT VARCHAR2(128)  := '%@%';
-    g_copyright             CONSTANT VARCHAR2(128)  := '';
-
-    -- main application to create APEX session
-    g_app_id                CONSTANT PLS_INTEGER    := 800;
-
-    -- list of apps to scan (to ignore working copies, clones and test apps)
-    g_apps apex_t_varchar2 := apex_t_varchar2(
-        800
-    );
-
-
-
     PROCEDURE job_scan_apps;
 
 

@@ -6,21 +6,21 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         IF core.get_session_id() IS NULL THEN
             core.create_session (
                 in_user_id  => USER,
-                in_app_id   => g_app_id
+                in_app_id   => core_custom.g_app_id
             );
         END IF;
         --
         core.log_start();
 
         -- rebuild requested apps
-        FOR app_id IN VALUES OF g_apps LOOP
+        FOR app_id IN VALUES OF core_custom.g_apps LOOP
             core.log_debug('rebuild_app', app_id);
             core.create_job (
                 in_job_name         => 'REBUILD_APP_' || app_id,
                 in_statement        => 'APEX_APP_OBJECT_DEPENDENCY.SCAN(p_application_id => ' || app_id || ');',
-                in_job_class        => '',
+                in_job_class        => core_custom.g_job_class,
                 in_user_id          => USER,
-                in_app_id           => g_app_id,
+                in_app_id           => core_custom.g_app_id,
                 in_session_id       => core.get_session_id(),
                 in_priority         => 3,
                 in_comments         => 'Rescan ' || app_id
@@ -48,7 +48,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         IF core.get_session_id() IS NULL THEN
             core.create_session (
                 in_user_id  => USER,
-                in_app_id   => g_app_id
+                in_app_id   => core_custom.g_app_id
             );
         END IF;
 
@@ -60,7 +60,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 t.object_name
             FROM all_objects t
             WHERE 1 = 1
-                AND t.owner     LIKE g_owner_like
+                AND t.owner     LIKE core_custom.g_owner_like
                 AND t.status    = 'INVALID'
             ORDER BY
                 1, 2, 3;
@@ -78,7 +78,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 t.text              AS error
             FROM all_errors t
             WHERE 1 = 1
-                AND t.owner         LIKE g_owner_like
+                AND t.owner         LIKE core_custom.g_owner_like
                 AND t.attribute     = 'ERROR'
             ORDER BY
                 1, 2, 3,
@@ -99,7 +99,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 --
             FROM all_scheduler_job_run_details t
             WHERE 1 = 1
-                AND t.owner     LIKE g_owner_like
+                AND t.owner     LIKE core_custom.g_owner_like
                 AND t.log_date  >= TRUNC(SYSDATE) - 1
                 AND t.log_date  <  TRUNC(SYSDATE)
             ORDER BY
@@ -218,7 +218,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 SELECT t.email
                 FROM apex_workspace_developers t
                 WHERE t.is_application_developer    = 'Yes'
-                    AND t.email                     LIKE g_developers
+                    AND t.email                     LIKE core_custom.g_developers
                     AND t.date_last_updated         > TRUNC(SYSDATE) - 90
             ) LOOP
                 APEX_MAIL.SEND (
@@ -360,9 +360,9 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
     AS
     BEGIN
         RETURN CASE COALESCE(in_env, core_custom.get_env())
-            WHEN 'DEV'  THEN g_sender_dev
-            WHEN 'UAT'  THEN g_sender_uat
-            WHEN 'PROD' THEN g_sender_prod
+            WHEN 'DEV'  THEN core_custom.g_sender_dev
+            WHEN 'UAT'  THEN core_custom.g_sender_uat
+            WHEN 'PROD' THEN core_custom.g_sender_prod
             ELSE NULL END;
     END;
 
@@ -395,7 +395,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
     AS
     BEGIN
         RETURN TO_CLOB(
-            '<div><br />&copy; ' || TO_CHAR(SYSDATE, 'YYYY') || ' ' || g_copyright || '. All rights reserved.</div></body></html>'
+            '<div><br />&copy; ' || TO_CHAR(SYSDATE, 'YYYY') || ' ' || core_custom.g_copyright || '. All rights reserved.</div></body></html>'
         );
     END;
 
