@@ -126,29 +126,27 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         -- append content
         OPEN v_cursor FOR
             SELECT
-                t.application_id AS app_id,
-                t.page_id,
-                t.message_level AS level_,
-                t.message,
-                t.apex_user,
+                t.mview_name,
+                MAX(TO_CHAR(t.last_refresh_end_time, 'YYYY-MM-DD HH24:MI:SS'))          AS last_refreshed_at,
+                MAX(ROUND(86400 * (t.last_refresh_end_time - t.last_refresh_date), 0))  AS last_timer,
+                t.staleness,
+                t.compile_state,
                 --
-                COUNT(*) AS count_
+                LISTAGG(i.index_name, ', ') WITHIN GROUP (ORDER BY i.index_name) AS indexes
                 --
-            FROM apex_debug_messages t
+            FROM all_mviews t
+            LEFT JOIN all_indexes i
+                ON i.owner          = t.owner
+                AND i.table_name    = t.mview_name
             WHERE 1 = 1
-                AND t.message_timestamp >= v_start_date
-                AND t.message_timestamp <  v_end_date
-                AND t.message_level     < 4
+                AND t.owner         LIKE core_custom.g_owner_like
             GROUP BY
-                t.application_id,
-                t.page_id,
-                t.message_level,
-                t.message,
-                t.apex_user
-            ORDER BY
-                1, 2, 3, 4;
+                t.mview_name,
+                t.staleness,
+                t.compile_state
+            ORDER BY 1;
         --
-        v_out := v_out || get_content(v_cursor, 'APEX Debug Messages');
+        v_out := v_out || get_content(v_cursor, 'Materialized Views');
 
         -- append content
         OPEN v_cursor FOR
@@ -190,6 +188,33 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 1, 2, 3;
         --
         v_out := v_out || get_content(v_cursor, 'Workspace Errors');
+
+        -- append content
+        OPEN v_cursor FOR
+            SELECT
+                t.application_id AS app_id,
+                t.page_id,
+                t.message_level AS level_,
+                TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.message, '#\d+', ''), 'id "\d+"', 'id ?')) AS error,
+                t.apex_user AS user_,
+                --
+                COUNT(*) AS count_
+                --
+            FROM apex_debug_messages t
+            WHERE 1 = 1
+                AND t.message_timestamp >= v_start_date
+                AND t.message_timestamp <  v_end_date
+                AND t.message_level     < 4
+            GROUP BY
+                t.application_id,
+                t.page_id,
+                t.message_level,
+                TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.message, '#\d+', ''), 'id "\d+"', 'id ?')),
+                t.apex_user
+            ORDER BY
+                1, 2, 3, 4;
+        --
+        v_out := v_out || get_content(v_cursor, 'APEX Debug Messages');
 
         -- append content
         OPEN v_cursor FOR
