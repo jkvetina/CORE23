@@ -220,6 +220,31 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         -- append content
         OPEN v_cursor FOR
             SELECT
+                t.workspace_name,
+                APEX_STRING_UTIL.GET_DOMAIN(t.url) AS host,
+                t.http_method,
+                t.status_code,
+                --
+                ROUND(AVG(t.elapsed_sec), 2) AS elapsed_sec_avg,
+                COUNT(*) AS count_
+                --
+            FROM apex_webservice_log t
+            WHERE 1 = 1
+                AND t.request_date  >= v_start_date
+                AND t.request_date  <  v_end_date
+            GROUP BY
+                t.workspace_name,
+                APEX_STRING_UTIL.GET_DOMAIN(t.url),
+                t.http_method,
+                t.status_code
+            ORDER BY
+                1, 2, 3;
+        --
+        v_out := v_out || get_content(v_cursor, 'Web Service Calls');
+
+        -- append content
+        OPEN v_cursor FOR
+            SELECT
                 t.app_id,
                 REPLACE(REPLACE(t.mail_send_error, '<', '"'), '>', '"') AS error,
                 --
