@@ -80,7 +80,7 @@ CREATE OR REPLACE PACKAGE core_custom AUTHID CURRENT_USER AS
     g_sender                    CONSTANT VARCHAR2(128)  := '';
 
     -- receivers for daily emails
-    g_developers                CONSTANT VARCHAR2(128)  := '%@%';
+    g_project_name              CONSTANT VARCHAR2(128)  := '';
     g_copyright                 CONSTANT VARCHAR2(128)  := '';
     g_job_class                 CONSTANT VARCHAR2(128)  := '';
 
@@ -90,6 +90,12 @@ CREATE OR REPLACE PACKAGE core_custom AUTHID CURRENT_USER AS
     -- list of apps to scan (to ignore working copies, clones and test apps)
     g_apps apex_t_varchar2 := apex_t_varchar2(
         master_id
+    );
+
+    -- list of developers to receive reports from all environments
+    g_developers_like           CONSTANT VARCHAR2(128)  := '%@...com';
+    g_developers                apex_t_varchar2 := apex_t_varchar2(
+        '@....com'
     );
 
 

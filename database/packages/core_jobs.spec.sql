@@ -25,6 +25,14 @@ CREATE OR REPLACE PACKAGE core_jobs AS
 
 
 
+    PROCEDURE send_mail (
+        in_recipient        VARCHAR2,
+        in_subject          VARCHAR2,
+        in_payload          CLOB
+    );
+
+
+
     FUNCTION get_content (
         io_cursor           IN OUT SYS_REFCURSOR,
         --

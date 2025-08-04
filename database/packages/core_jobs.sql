@@ -35,9 +35,8 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
     )
     AS
         v_out               CLOB            := EMPTY_CLOB();
-        v_subject           VARCHAR2(64)    := 'Daily Overview, ' || TO_CHAR(TRUNC(SYSDATE) - in_offset, 'YYYY-MM-DD') || ' [' || core_custom.get_env() || ']';
+        v_subject           VARCHAR2(256)   := core_custom.g_project_name || ' - Daily Overview, ' || TO_CHAR(TRUNC(SYSDATE) - in_offset, 'YYYY-MM-DD') || ' [' || core_custom.get_env() || ']';
         v_cursor            SYS_REFCURSOR;
-        v_id                NUMBER;
         v_start_date        DATE            := TRUNC(SYSDATE) - in_offset;      -- >=
         v_end_date          DATE            := TRUNC(SYSDATE) - in_offset + 1;  -- <
     BEGIN
@@ -263,55 +262,12 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         --
         v_out := v_out || get_content(v_cursor, 'Mail Queue Errors');
 
-        --
-        -- FINALIZE CONTENT
-        --
-        v_out := get_html_header(v_subject) || v_out || get_html_footer();
-
         -- send mail to all developers
-        FOR c IN (
-            SELECT t.email
-            FROM apex_workspace_developers t
-            WHERE t.is_application_developer    = 'Yes'
-                AND t.email                     LIKE core_custom.g_developers
-                AND t.date_last_updated         > TRUNC(SYSDATE) - 90
-                AND in_recipient IS NULL
-            UNION ALL
-            SELECT in_recipient
-            FROM DUAL
-            WHERE in_recipient IS NOT NULL
-        ) LOOP
-            v_id := APEX_MAIL.SEND (
-                p_to         => c.email,
-                p_from       => get_sender(),
-                p_body       => TO_CLOB('Enable HTML to see the content'),
-                p_body_html  => v_out,
-                p_subj       => v_subject
-            );
-            --
-            core.log_debug (
-                'mail_id',      v_id,
-                'recipient',    c.email
-            );
-        END LOOP;
-        --
-        APEX_MAIL.PUSH_QUEUE();
-
-        -- check for error
-        FOR c IN (
-            SELECT
-                t.id            AS mail_id,
-                t.mail_send_error
-            FROM apex_mail_queue t
-            WHERE t.id                  = v_id
-                AND t.mail_send_error   IS NOT NULL
-        ) LOOP
-            core.raise_error (
-                'MAIL_SEND_ERROR',
-                'mail_id',      c.mail_id,
-                'error',        c.mail_send_error
-            );
-        END LOOP;
+        send_mail (
+            in_recipient    => in_recipient,
+            in_subject      => v_subject,
+            in_payload      => get_html_header(v_subject) || v_out || get_html_footer()
+        );
         --
     EXCEPTION
     WHEN core.app_exception THEN
@@ -328,10 +284,9 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
     )
     AS
         v_out               CLOB            := EMPTY_CLOB();
-        v_subject           VARCHAR2(64)    := 'Performance, ' || TO_CHAR(TRUNC(SYSDATE) - in_offset, 'YYYY-MM-DD') || ' [' || core_custom.get_env() || ']';
+        v_subject           VARCHAR2(256)   := core_custom.g_project_name || ' - Performance, ' || TO_CHAR(TRUNC(SYSDATE) - in_offset, 'YYYY-MM-DD') || ' [' || core_custom.get_env() || ']';
+        v_header            VARCHAR2(256);
         v_cursor            SYS_REFCURSOR;
-        v_id                NUMBER;
-        v_title             VARCHAR2(256);
     BEGIN
         -- go thru all selected apps
         FOR app_id IN VALUES OF core_custom.g_apps LOOP
@@ -342,7 +297,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
             --
             BEGIN
                 SELECT 'Application ' || app_id || ' &ndash; ' || a.application_name
-                INTO v_title
+                INTO v_header
                 FROM apex_applications a
                 WHERE a.application_id = app_id;
             EXCEPTION
@@ -361,7 +316,9 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                         CASE WHEN GROUPING_ID(a.id) = 0 THEN a.view_date            END AS view_date,
                         CASE WHEN GROUPING_ID(a.id) = 0 THEN MAX(a.page_view_type)  END AS page_view_type,
                         --
-                        SUM(a.elapsed_time) AS elapsed_time
+                        SUM(a.elapsed_time) AS elapsed_time,
+                        --
+                        COUNT(DISTINCT a.apex_user) AS count_users
                         --
                     FROM (
                         SELECT
@@ -399,6 +356,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                     t.application_id AS app_id,
                     t.page_id,
                     t.page_name,
+                    MAX(t.count_users) AS users_,
                     --
                     NULLIF(COUNT(CASE WHEN t.page_view_type = 'Rendering'   THEN t.id END), 0)              AS rendering_count,
                     ROUND(AVG(   CASE WHEN t.page_view_type = 'Rendering'   THEN t.elapsed_time END), 2)    AS rendering_avg,
@@ -420,33 +378,52 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 ORDER BY
                     1, 2;
             --
-            v_out := v_out || get_content(v_cursor, v_title, in_red => 1);
+            v_out := v_out || get_content(v_cursor, v_header, in_red => 1);
         END LOOP;
 
+        -- send mail to all developers
+        send_mail (
+            in_recipient    => in_recipient,
+            in_subject      => v_subject,
+            in_payload      => get_html_header(v_subject) || v_out || get_html_footer()
+        );
         --
-        -- FINALIZE CONTENT
-        --
-        v_out := get_html_header(v_subject) || v_out || get_html_footer();
+    EXCEPTION
+    WHEN core.app_exception THEN
+        RAISE;
+    WHEN OTHERS THEN
+        core.raise_error();
+    END;
 
+
+
+    PROCEDURE send_mail (
+        in_recipient        VARCHAR2,
+        in_subject          VARCHAR2,
+        in_payload          CLOB
+    )
+    AS
+        v_id                NUMBER;
+    BEGIN
         -- send mail to all developers
         FOR c IN (
             SELECT t.email
             FROM apex_workspace_developers t
             WHERE t.is_application_developer    = 'Yes'
-                AND t.email                     LIKE core_custom.g_developers
+                AND t.email                     LIKE core_custom.g_developers_like
                 AND t.date_last_updated         > TRUNC(SYSDATE) - 90
                 AND in_recipient IS NULL
             UNION ALL
-            SELECT in_recipient
-            FROM DUAL
+            SELECT t.column_value AS email
+            FROM TABLE(APEX_STRING.SPLIT(in_recipient, ',')) t
             WHERE in_recipient IS NOT NULL
         ) LOOP
             v_id := APEX_MAIL.SEND (
                 p_to         => c.email,
                 p_from       => get_sender(),
                 p_body       => TO_CLOB('Enable HTML to see the content'),
-                p_body_html  => v_out,
-                p_subj       => v_subject
+                p_body_html  => in_payload,
+                p_subj       => in_subject
             );
             --
             core.log_debug (
@@ -457,7 +434,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         --
         APEX_MAIL.PUSH_QUEUE();
 
-        -- check for error
+        -- check for error on last recipient
         FOR c IN (
             SELECT
                 t.id            AS mail_id,
@@ -559,10 +536,11 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         close_cursor(v_cursor);
         --
         IF v_line IS NOT NULL THEN
-            RETURN CASE WHEN in_header IS NOT NULL THEN TO_CLOB('<h2>' || in_header || '</h2>') END ||
+            RETURN
+                CASE WHEN in_header IS NOT NULL THEN TO_CLOB('<h2>' || in_header || '</h2>') END ||
                 v_out || TO_CLOB('</tbody></table><br />');
         ELSE
-            RETURN EMPTY_CLOB();
+            RETURN TO_CLOB('<h2>' || in_header || '</h2><p>No data found.</p><br />');
         END IF;
         --
     EXCEPTION
