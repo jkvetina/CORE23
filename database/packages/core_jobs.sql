@@ -66,6 +66,26 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         -- append content
         OPEN v_cursor FOR
             SELECT
+                'CONSTRAINT'        AS object_type,
+                t.constraint_name   AS object_name,
+                t.table_name
+            FROM user_constraints t
+            WHERE t.status = 'DISABLED'
+            UNION ALL
+            SELECT
+                'TRIGGER'           AS object_type,
+                t.trigger_name      AS object_name,
+                t.table_name
+            FROM user_triggers t
+            WHERE t.status = 'DISABLED'
+            ORDER BY
+                1, 2;
+        --
+        v_out := v_out || get_content(v_cursor, 'Disabled Objects');
+
+        -- append content
+        OPEN v_cursor FOR
+            SELECT
                 t.owner,
                 t.name,
                 t.type,
