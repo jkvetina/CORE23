@@ -281,7 +281,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
             FROM DUAL
             WHERE in_recipient IS NOT NULL
         ) LOOP
-            APEX_MAIL.SEND (
+            v_id := APEX_MAIL.SEND (
                 p_to         => c.email,
                 p_from       => get_sender(),
                 p_body       => TO_CLOB('Enable HTML to see the content'),
@@ -303,7 +303,8 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 t.id            AS mail_id,
                 t.mail_send_error
             FROM apex_mail_queue t
-            WHERE t.id          = v_id
+            WHERE t.id                  = v_id
+                AND t.mail_send_error   IS NOT NULL
         ) LOOP
             core.raise_error (
                 'MAIL_SEND_ERROR',
