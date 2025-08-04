@@ -158,7 +158,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 t.property_group_name,
                 t.property_name,
                 DBMS_LOB.SUBSTR(t.code_fragment, 4000, 1) AS code_fragment,
-                t.error_message
+                t.error_message AS error
             FROM apex_used_db_object_comp_props t
             WHERE t.error_message IS NOT NULL
             ORDER BY
@@ -171,7 +171,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
             SELECT
                 t.application_id AS app_id,
                 t.page_id,
-                t.error_message,
+                TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.error_message, '#\d+', ''), 'id "\d+"', 'id ?')) AS error,
                 --
                 COUNT(*) AS count_
                 --
@@ -180,10 +180,11 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 AND t.view_date         >= v_start_date
                 AND t.view_date         <  v_end_date
                 AND t.error_message     IS NOT NULL
+                AND t.error_message     NOT LIKE 'Your session has ended%'
             GROUP BY
                 t.application_id,
                 t.page_id,
-                t.error_message
+                TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.error_message, '#\d+', ''), 'id "\d+"', 'id ?'))
             ORDER BY
                 1, 2, 3;
         --
