@@ -18,9 +18,18 @@ CREATE OR REPLACE PACKAGE core_jobs AS
 
 
 
+    PROCEDURE send_performance (
+        in_recipient        VARCHAR2        := NULL,
+        in_offset           PLS_INTEGER     := 1
+    );
+
+
+
     FUNCTION get_content (
         io_cursor           IN OUT SYS_REFCURSOR,
-        in_header           VARCHAR2 := NULL
+        --
+        in_header           VARCHAR2        := NULL,
+        in_red              NUMBER          := NULL
     )
     RETURN CLOB;
 

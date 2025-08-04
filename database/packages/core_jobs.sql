@@ -322,9 +322,171 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
 
 
 
+    PROCEDURE send_performance (
+        in_recipient        VARCHAR2        := NULL,
+        in_offset           PLS_INTEGER     := 1
+    )
+    AS
+        v_out               CLOB            := EMPTY_CLOB();
+        v_subject           VARCHAR2(64)    := 'Performance, ' || TO_CHAR(TRUNC(SYSDATE) - in_offset, 'YYYY-MM-DD') || ' [' || core_custom.get_env() || ']';
+        v_cursor            SYS_REFCURSOR;
+        v_id                NUMBER;
+        v_title             VARCHAR2(256);
+    BEGIN
+        -- go thru all selected apps
+        FOR app_id IN VALUES OF core_custom.g_apps LOOP
+            core.create_session (
+                in_user_id  => USER,
+                in_app_id   => app_id
+            );
+            --
+            BEGIN
+                SELECT 'Application ' || app_id || ' &ndash; ' || a.application_name
+                INTO v_title
+                FROM apex_applications a
+                WHERE a.application_id = app_id;
+            EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                CONTINUE;
+            END;
+            --
+            OPEN v_cursor FOR
+                WITH t AS (
+                    SELECT
+                        a.id,
+                        --
+                        CASE WHEN GROUPING_ID(a.id) = 0 THEN a.application_id       END AS application_id,
+                        CASE WHEN GROUPING_ID(a.id) = 0 THEN a.page_id              END AS page_id,
+                        CASE WHEN GROUPING_ID(a.id) = 0 THEN a.page_name            END AS page_name,
+                        CASE WHEN GROUPING_ID(a.id) = 0 THEN a.view_date            END AS view_date,
+                        CASE WHEN GROUPING_ID(a.id) = 0 THEN MAX(a.page_view_type)  END AS page_view_type,
+                        --
+                        SUM(a.elapsed_time) AS elapsed_time
+                        --
+                    FROM (
+                        SELECT
+                            CASE WHEN page_view_type = 'Rendering' THEN a.id
+                                ELSE LAG(CASE WHEN page_view_type = 'Rendering' THEN a.id END IGNORE NULLS) OVER (ORDER BY a.id)
+                                END AS request_id,
+                            a.id,
+                            a.application_id,
+                            a.page_id,
+                            a.page_name,
+                            a.apex_user,
+                            a.view_date,
+                            a.elapsed_time,
+                            a.page_view_type,
+                            a.view_timestamp,
+                            a.apex_session_id
+                        FROM apex_workspace_activity_log a
+                        WHERE 1 = 1
+                            AND a.application_id    = app_id
+                            AND a.application_id    IS NOT NULL
+                            AND a.application_name  IS NOT NULL     -- to remove other workspaces
+                            AND a.view_date         >= CASE WHEN in_offset < 1 THEN SYSDATE ELSE TRUNC(SYSDATE) END - in_offset
+                            AND a.view_date         <  CASE WHEN in_offset < 1 THEN SYSDATE ELSE TRUNC(SYSDATE) END - in_offset + 1
+                    ) a
+                    GROUP BY
+                        a.request_id,
+                        a.application_id,
+                        a.page_id,
+                        a.page_name,
+                        a.view_date,
+                        a.id
+                    HAVING a.request_id IS NOT NULL
+                )
+                SELECT 
+                    t.application_id AS app_id,
+                    t.page_id,
+                    t.page_name,
+                    --
+                    NULLIF(COUNT(CASE WHEN t.page_view_type = 'Rendering'   THEN t.id END), 0)              AS rendering_count,
+                    ROUND(AVG(   CASE WHEN t.page_view_type = 'Rendering'   THEN t.elapsed_time END), 2)    AS rendering_avg,
+                    ROUND(MAX(   CASE WHEN t.page_view_type = 'Rendering'   THEN t.elapsed_time END), 2)    AS rendering_max,
+                    --
+                    NULLIF(COUNT(CASE WHEN t.page_view_type = 'Processing'  THEN t.id END), 0)              AS processing_count,
+                    ROUND(AVG(   CASE WHEN t.page_view_type = 'Processing'  THEN t.elapsed_time END), 2)    AS processing_avg,
+                    ROUND(MAX(   CASE WHEN t.page_view_type = 'Processing'  THEN t.elapsed_time END), 2)    AS processing_max,
+                    --
+                    NULLIF(COUNT(CASE WHEN t.page_view_type = 'Ajax'        THEN t.id END), 0)              AS ajax_count,
+                    ROUND(AVG(   CASE WHEN t.page_view_type = 'Ajax'        THEN t.elapsed_time END), 2)    AS ajax_avg,
+                    ROUND(MAX(   CASE WHEN t.page_view_type = 'Ajax'        THEN t.elapsed_time END), 2)    AS ajax_max
+                    --
+                FROM t
+                GROUP BY
+                    t.application_id,
+                    t.page_id,
+                    t.page_name
+                ORDER BY
+                    1, 2;
+            --
+            v_out := v_out || get_content(v_cursor, v_title, in_red => 1);
+        END LOOP;
+
+        --
+        -- FINALIZE CONTENT
+        --
+        v_out := get_html_header(v_subject) || v_out || get_html_footer();
+
+        -- send mail to all developers
+        FOR c IN (
+            SELECT t.email
+            FROM apex_workspace_developers t
+            WHERE t.is_application_developer    = 'Yes'
+                AND t.email                     LIKE core_custom.g_developers
+                AND t.date_last_updated         > TRUNC(SYSDATE) - 90
+                AND in_recipient IS NULL
+            UNION ALL
+            SELECT in_recipient
+            FROM DUAL
+            WHERE in_recipient IS NOT NULL
+        ) LOOP
+            v_id := APEX_MAIL.SEND (
+                p_to         => c.email,
+                p_from       => get_sender(),
+                p_body       => TO_CLOB('Enable HTML to see the content'),
+                p_body_html  => v_out,
+                p_subj       => v_subject
+            );
+            --
+            core.log_debug (
+                'mail_id',      v_id,
+                'recipient',    c.email
+            );
+        END LOOP;
+        --
+        APEX_MAIL.PUSH_QUEUE();
+
+        -- check for error
+        FOR c IN (
+            SELECT
+                t.id            AS mail_id,
+                t.mail_send_error
+            FROM apex_mail_queue t
+            WHERE t.id                  = v_id
+                AND t.mail_send_error   IS NOT NULL
+        ) LOOP
+            core.raise_error (
+                'MAIL_SEND_ERROR',
+                'mail_id',      c.mail_id,
+                'error',        c.mail_send_error
+            );
+        END LOOP;
+        --
+    EXCEPTION
+    WHEN core.app_exception THEN
+        RAISE;
+    WHEN OTHERS THEN
+        core.raise_error();
+    END;
+
+
+
     FUNCTION get_content (
         io_cursor           IN OUT SYS_REFCURSOR,
-        in_header           VARCHAR2 := NULL
+        --
+        in_header           VARCHAR2        := NULL,
+        in_red              NUMBER          := NULL
     )
     RETURN CLOB
     AS
@@ -375,6 +537,11 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                     DBMS_SQL.COLUMN_VALUE(v_cursor, i, v_number);
                     v_value := TO_CHAR(v_number);
                     v_align := ' align="right"';
+                    --
+                    IF in_red IS NOT NULL AND v_number >= in_red AND (v_desc(i).col_name LIKE '%MAX' OR v_desc(i).col_name LIKE '%AVG') THEN
+                        v_align := v_align || ' style="color: red;"';
+                    END IF;
+                    --
                 ELSIF v_desc(i).col_type = DBMS_SQL.DATE_TYPE THEN
                     DBMS_SQL.COLUMN_VALUE(v_cursor, i, v_date);
                     v_value := TO_CHAR(v_date);
