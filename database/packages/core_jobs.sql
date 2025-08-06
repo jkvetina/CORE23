@@ -47,6 +47,9 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
             );
         END IF;
 
+        --
+        recompile();
+
         -- append content
         OPEN v_cursor FOR
             SELECT
