@@ -72,6 +72,14 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
             WHERE t.status = 'DISABLED'
             UNION ALL
             SELECT
+                'INDEX'             AS object_type,
+                t.index_name        AS object_name,
+                t.table_name
+            FROM user_indexes t
+            WHERE (t.status         != 'VALID'
+                OR t.funcidx_status != 'ENABLED')
+            UNION ALL
+            SELECT
                 'TRIGGER'           AS object_type,
                 t.trigger_name      AS object_name,
                 t.table_name
