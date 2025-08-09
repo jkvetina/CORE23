@@ -12,21 +12,21 @@ CREATE OR REPLACE PACKAGE core_jobs AS
 
 
     PROCEDURE send_daily (
-        in_recipient        VARCHAR2        := NULL,
+        in_recipients       VARCHAR2        := NULL,
         in_offset           PLS_INTEGER     := 1
     );
 
 
 
     PROCEDURE send_performance (
-        in_recipient        VARCHAR2        := NULL,
+        in_recipients       VARCHAR2        := NULL,
         in_offset           PLS_INTEGER     := 1
     );
 
 
 
     PROCEDURE send_mail (
-        in_recipient        VARCHAR2,
+        in_recipients       VARCHAR2,
         in_subject          VARCHAR2,
         in_payload          CLOB
     );

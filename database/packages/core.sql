@@ -1847,13 +1847,15 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_force_replace        BOOLEAN         := FALSE,
         in_context_id           NUMBER          := NULL,
         in_comments             VARCHAR2        := NULL,
-        in_job_class            VARCHAR2        := NULL
+        in_job_class            VARCHAR2        := NULL,
+        in_job_type             VARCHAR2        := NULL
     )
     AS
         PRAGMA AUTONOMOUS_TRANSACTION;
         --
         v_job_name              user_scheduler_jobs.job_name%TYPE := '"' || in_job_name || '"';
         v_statement             VARCHAR2(32767);
+        v_query                 VARCHAR2(32767);
     BEGIN
         -- create unique name, if there is "?" in the job name
         IF INSTR(v_job_name, '?') > 0 THEN
@@ -1930,33 +1932,42 @@ CREATE OR REPLACE PACKAGE BODY core AS
         END IF;
 
         -- either run on schedule or at specified date
+        -- https://docs.oracle.com/en/database/oracle/oracle-database/23/arpls/DBMS_SCHEDULER.html#GUID-7E744D62-13F6-40E9-91F0-1569E6C38BBC
         BEGIN
-            IF in_schedule_name IS NOT NULL THEN
-                DBMS_SCHEDULER.CREATE_JOB (
-                    job_name        => v_job_name,
-                    schedule_name   => in_schedule_name,    -- using schedule
-                    job_type        => 'PLSQL_BLOCK',
-                    job_action      => v_statement,
-                    job_class       => in_job_class,
-                    enabled         => FALSE,
-                    auto_drop       => in_autodrop,
-                    comments        => in_comments
-                );
-            ELSE
-                DBMS_SCHEDULER.CREATE_JOB (
-                    job_name        => v_job_name,
-                    job_type        => 'PLSQL_BLOCK',
-                    job_action      => v_statement,
-                    job_class       => in_job_class,
-                    start_date      => in_start_date,       -- using date
-                    enabled         => FALSE,
-                    auto_drop       => in_autodrop,
-                    comments        => in_comments
-                );
-            END IF;
+            v_query := APEX_STRING.FORMAT(
+                q'!BEGIN DBMS_SCHEDULER.CREATE_JOB (
+                  !  job_name      => '%1',
+                  !  job_type      => '%2',
+                  !  job_action    => '%3',
+                  !  job_class     => '%4',
+                  !  %5            => '%6',
+                  !  enabled       => FALSE,
+                  !  auto_drop     => %8,
+                  !  comments      => '%9'
+                  !);
+                  !END;
+                  !',
+                p1  => v_job_name,
+                p2  => NVL(in_job_type, 'PLSQL_BLOCK'),
+                p3  => REPLACE(v_statement, '''', ''''''),
+                p4  => NVL(in_job_class, 'DEFAULT_JOB_CLASS'),
+                p5  => CASE WHEN in_schedule_name IS NOT NULL THEN 'schedule_name' ELSE 'start_date' END,
+                p6  => CASE WHEN in_schedule_name IS NOT NULL THEN in_schedule_name ELSE in_start_date END,
+                p8  => CASE WHEN in_autodrop THEN 'TRUE' ELSE 'FALSE' END,
+                p9  => in_comments,
+                --
+                p_prefix        => '!',
+                p_max_length    => 32767
+            );
+            --
+            EXECUTE IMMEDIATE v_query;
         EXCEPTION
         WHEN OTHERS THEN
-            core.raise_error('CREATE_JOB_FAILED|' || v_job_name, 'query', v_statement);
+            core.raise_error (
+                'CREATE_JOB_FAILED|' || v_job_name,
+                'statement',    v_statement,
+                'query',        v_query
+            );
         END;
         --
         IF in_priority IS NOT NULL THEN

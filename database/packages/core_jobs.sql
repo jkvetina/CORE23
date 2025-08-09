@@ -30,7 +30,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
 
 
     PROCEDURE send_daily (
-        in_recipient        VARCHAR2        := NULL,
+        in_recipients       VARCHAR2        := NULL,
         in_offset           PLS_INTEGER     := 1
     )
     AS
@@ -275,7 +275,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
 
         -- send mail to all developers
         send_mail (
-            in_recipient    => in_recipient,
+            in_recipients   => in_recipients,
             in_subject      => v_subject,
             in_payload      => get_html_header(v_subject) || v_out || get_html_footer()
         );
@@ -290,7 +290,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
 
 
     PROCEDURE send_performance (
-        in_recipient        VARCHAR2        := NULL,
+        in_recipients       VARCHAR2        := NULL,
         in_offset           PLS_INTEGER     := 1
     )
     AS
@@ -394,7 +394,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
 
         -- send mail to all developers
         send_mail (
-            in_recipient    => in_recipient,
+            in_recipients   => in_recipients,
             in_subject      => v_subject,
             in_payload      => get_html_header(v_subject) || v_out || get_html_footer()
         );
@@ -409,7 +409,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
 
 
     PROCEDURE send_mail (
-        in_recipient        VARCHAR2,
+        in_recipients       VARCHAR2,
         in_subject          VARCHAR2,
         in_payload          CLOB
     )
@@ -423,11 +423,11 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
             WHERE t.is_application_developer    = 'Yes'
                 AND t.email                     LIKE core_custom.g_developers_like
                 AND t.date_last_updated         > TRUNC(SYSDATE) - 90
-                AND in_recipient IS NULL
+                AND in_recipients IS NULL
             UNION ALL
             SELECT t.column_value AS email
-            FROM TABLE(APEX_STRING.SPLIT(in_recipient, ',')) t
-            WHERE in_recipient IS NOT NULL
+            FROM TABLE(APEX_STRING.SPLIT(in_recipients, ',')) t
+            WHERE in_recipients IS NOT NULL
         ) LOOP
             v_id := APEX_MAIL.SEND (
                 p_to         => c.email,
