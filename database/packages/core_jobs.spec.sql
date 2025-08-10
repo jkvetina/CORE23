@@ -36,8 +36,7 @@ CREATE OR REPLACE PACKAGE core_jobs AS
     FUNCTION get_content (
         io_cursor           IN OUT SYS_REFCURSOR,
         --
-        in_header           VARCHAR2        := NULL,
-        in_red              NUMBER          := NULL
+        in_header           VARCHAR2        := NULL
     )
     RETURN CLOB;
 

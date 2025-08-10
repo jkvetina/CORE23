@@ -119,6 +119,10 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 t.job_name,
                 t.actual_start_date             AS start_date,
                 t.status,
+                CASE
+                    WHEN t.status != 'SUCCEEDED' THEN 'RED'
+                    END AS status__color,
+                --
                 core.get_timer(t.run_duration)  AS run_duration,
                 core.get_timer(t.cpu_used)      AS cpu_used,
                 t.errors
@@ -140,7 +144,14 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 MAX(TO_CHAR(t.last_refresh_end_time, 'YYYY-MM-DD HH24:MI:SS'))          AS last_refreshed_at,
                 MAX(ROUND(86400 * (t.last_refresh_end_time - t.last_refresh_date), 0))  AS last_timer,
                 t.staleness,
+                CASE
+                    WHEN t.staleness != 'FRESH' THEN 'RED'
+                    END AS staleness__color,
+                --
                 t.compile_state,
+                CASE
+                    WHEN t.compile_state != 'VALID' THEN 'RED'
+                    END AS compile_state__color,
                 --
                 LISTAGG(i.index_name, ', ') WITHIN GROUP (ORDER BY i.index_name) AS indexes
                 --
@@ -362,34 +373,77 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                         a.view_date,
                         a.id
                     HAVING a.request_id IS NOT NULL
+                ),
+                d AS (
+                    SELECT 
+                        t.application_id AS app_id,
+                        t.page_id,
+                        t.page_name,
+                        MAX(t.count_users) AS users_,
+                        --
+                        NULLIF(COUNT(CASE WHEN t.page_view_type = 'Rendering'   THEN t.id END), 0)              AS rendering_count,
+                        ROUND(AVG(   CASE WHEN t.page_view_type = 'Rendering'   THEN t.elapsed_time END), 2)    AS rendering_avg,
+                        ROUND(MAX(   CASE WHEN t.page_view_type = 'Rendering'   THEN t.elapsed_time END), 2)    AS rendering_max,
+                        --
+                        NULLIF(COUNT(CASE WHEN t.page_view_type = 'Processing'  THEN t.id END), 0)              AS processing_count,
+                        ROUND(AVG(   CASE WHEN t.page_view_type = 'Processing'  THEN t.elapsed_time END), 2)    AS processing_avg,
+                        ROUND(MAX(   CASE WHEN t.page_view_type = 'Processing'  THEN t.elapsed_time END), 2)    AS processing_max,
+                        --
+                        NULLIF(COUNT(CASE WHEN t.page_view_type = 'Ajax'        THEN t.id END), 0)              AS ajax_count,
+                        ROUND(AVG(   CASE WHEN t.page_view_type = 'Ajax'        THEN t.elapsed_time END), 2)    AS ajax_avg,
+                        ROUND(MAX(   CASE WHEN t.page_view_type = 'Ajax'        THEN t.elapsed_time END), 2)    AS ajax_max
+                        --
+                    FROM t
+                    GROUP BY
+                        t.application_id,
+                        t.page_id,
+                        t.page_name
                 )
+                
                 SELECT 
-                    t.application_id AS app_id,
-                    t.page_id,
-                    t.page_name,
-                    MAX(t.count_users) AS users_,
+                    d.app_id,
+                    d.page_id,
+                    d.page_name,
+                    d.users_,
                     --
-                    NULLIF(COUNT(CASE WHEN t.page_view_type = 'Rendering'   THEN t.id END), 0)              AS rendering_count,
-                    ROUND(AVG(   CASE WHEN t.page_view_type = 'Rendering'   THEN t.elapsed_time END), 2)    AS rendering_avg,
-                    ROUND(MAX(   CASE WHEN t.page_view_type = 'Rendering'   THEN t.elapsed_time END), 2)    AS rendering_max,
+                    d.rendering_count,
+                    d.rendering_avg,
+                    d.rendering_max,
+                    d.processing_count,
+                    d.processing_avg,
+                    d.processing_max,
+                    d.ajax_count,
+                    d.ajax_avg,
+                    d.ajax_max,
                     --
-                    NULLIF(COUNT(CASE WHEN t.page_view_type = 'Processing'  THEN t.id END), 0)              AS processing_count,
-                    ROUND(AVG(   CASE WHEN t.page_view_type = 'Processing'  THEN t.elapsed_time END), 2)    AS processing_avg,
-                    ROUND(MAX(   CASE WHEN t.page_view_type = 'Processing'  THEN t.elapsed_time END), 2)    AS processing_max,
+                    CASE
+                        WHEN d.rendering_avg >= 1 THEN 'RED'
+                        END AS rendering_avg__color,
                     --
-                    NULLIF(COUNT(CASE WHEN t.page_view_type = 'Ajax'        THEN t.id END), 0)              AS ajax_count,
-                    ROUND(AVG(   CASE WHEN t.page_view_type = 'Ajax'        THEN t.elapsed_time END), 2)    AS ajax_avg,
-                    ROUND(MAX(   CASE WHEN t.page_view_type = 'Ajax'        THEN t.elapsed_time END), 2)    AS ajax_max
+                    CASE
+                        WHEN d.rendering_max >= 1 THEN 'RED'
+                        END AS rendering_max__color,
                     --
-                FROM t
-                GROUP BY
-                    t.application_id,
-                    t.page_id,
-                    t.page_name
+                    CASE
+                        WHEN d.processing_avg >= 1 THEN 'RED'
+                        END AS processing_avg__color,
+                    --
+                    CASE
+                        WHEN d.processing_max >= 1 THEN 'RED'
+                        END AS processing_max__color,
+                    --
+                    CASE
+                        WHEN d.ajax_avg >= 1 THEN 'RED'
+                        END AS ajax_avg__color,
+                    --
+                    CASE
+                        WHEN d.ajax_max >= 1 THEN 'RED'
+                        END AS ajax_max__color
+                FROM d
                 ORDER BY
                     1, 2;
             --
-            v_out := v_out || get_content(v_cursor, v_header, in_red => 1);
+            v_out := v_out || get_content(v_cursor, v_header);
         END LOOP;
 
         -- send mail to all developers
@@ -473,8 +527,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
     FUNCTION get_content (
         io_cursor           IN OUT SYS_REFCURSOR,
         --
-        in_header           VARCHAR2        := NULL,
-        in_red              NUMBER          := NULL
+        in_header           VARCHAR2        := NULL
     )
     RETURN CLOB
     AS
@@ -487,25 +540,35 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         v_header            VARCHAR2(32767);
         v_line              VARCHAR2(32767);
         v_align             VARCHAR2(128);
+        v_color             VARCHAR2(64);
         v_out               CLOB            := EMPTY_CLOB();
+        --
+        TYPE t_array        IS TABLE OF PLS_INTEGER INDEX BY VARCHAR2(128);
+        v_colors t_array;
     BEGIN
         v_cursor := DBMS_SQL.TO_CURSOR_NUMBER(io_cursor);
 
         -- get column names
         DBMS_SQL.DESCRIBE_COLUMNS(v_cursor, v_cols, v_desc);
-        --
+
+        -- process headers
         FOR i IN 1 .. v_cols LOOP
-            v_align := '';
+            -- retrive value and do formatting
+            v_align := ' align="left"';
             --
             IF v_desc(i).col_type = DBMS_SQL.NUMBER_TYPE THEN
                 DBMS_SQL.DEFINE_COLUMN(v_cursor, i, v_number);
                 v_align := ' align="right"';
             ELSIF v_desc(i).col_type = DBMS_SQL.DATE_TYPE THEN
                 DBMS_SQL.DEFINE_COLUMN(v_cursor, i, v_date);
-                v_align := ' align="left"';
             ELSE
                 DBMS_SQL.DEFINE_COLUMN(v_cursor, i, v_value, 4000);
-                v_align := ' align="left"';
+            END IF;
+
+            -- identify and store column position with color value
+            IF v_desc(i).col_name LIKE '%\_\_COLOR' ESCAPE '\' THEN
+                v_colors(REPLACE(v_desc(i).col_name, '__COLOR', '')) := i;
+                CONTINUE;
             END IF;
             --
             v_line := v_line || '<th' || v_align || '>' || INITCAP(TRIM(REPLACE(v_desc(i).col_name, '_', ' '))) || '</th>';
@@ -519,25 +582,31 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
             v_line := '';
             --
             FOR i IN 1 .. v_cols LOOP
+                -- process all columns except color ones
+                IF v_desc(i).col_name LIKE '%\_\_COLOR' ESCAPE '\' THEN
+                    CONTINUE;
+                END IF;
+                --
                 v_align := '';
                 --
                 IF v_desc(i).col_type = DBMS_SQL.NUMBER_TYPE THEN
                     DBMS_SQL.COLUMN_VALUE(v_cursor, i, v_number);
                     v_value := TO_CHAR(v_number);
                     v_align := ' align="right"';
-                    --
-                    IF in_red IS NOT NULL AND v_number >= in_red AND (v_desc(i).col_name LIKE '%MAX' OR v_desc(i).col_name LIKE '%AVG') THEN
-                        v_align := v_align || ' style="color: red;"';
-                    END IF;
-                    --
                 ELSIF v_desc(i).col_type = DBMS_SQL.DATE_TYPE THEN
                     DBMS_SQL.COLUMN_VALUE(v_cursor, i, v_date);
                     v_value := TO_CHAR(v_date);
                 ELSE
                     DBMS_SQL.COLUMN_VALUE(v_cursor, i, v_value);
                 END IF;
+
+                -- apply colors
+                IF v_colors.EXISTS(v_desc(i).col_name) THEN
+                    DBMS_SQL.COLUMN_VALUE(v_cursor, v_colors(v_desc(i).col_name), v_color);
+                    v_align := v_align || ' style="color: ' || v_color || ';"';
+                END IF;
                 --
-                v_line := v_line || '<td' || v_align || '>' || v_value || '</td>';
+                v_line := v_line || '<td' || v_align || '>' || TRIM(v_value) || '</td>';
             END LOOP;
             --
             v_out := v_out || '<tr>' || v_line || '</tr>';
