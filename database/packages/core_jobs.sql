@@ -194,7 +194,8 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 t.page_id,
                 TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.error_message, '#\d+', ''), 'id "\d+"', 'id ?')) AS error,
                 --
-                COUNT(*) AS count_
+                COUNT(*) AS count_,
+                MAX(t.id) AS recent_log_id
                 --
             FROM apex_workspace_activity_log t
             WHERE 1 = 1
@@ -220,7 +221,8 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.message, '#\d+', ''), 'id "\d+"', 'id ?')) AS error,
                 t.apex_user AS user_,
                 --
-                COUNT(*) AS count_
+                COUNT(*) AS count_,
+                MAX(t.id) AS recent_log_id
                 --
             FROM apex_debug_messages t
             WHERE 1 = 1
@@ -241,12 +243,27 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         -- append content
         OPEN v_cursor FOR
             SELECT
-                t.workspace_name,
-                APEX_STRING_UTIL.GET_DOMAIN(t.url) AS host,
-                t.http_method,
+                t.workspace_name                    AS workspace,
+                APEX_STRING_UTIL.GET_DOMAIN(t.url)  AS host,
+                t.http_method                       AS method,
                 t.status_code,
                 --
+                CASE
+                    WHEN t.status_code <= 299 THEN 'Success'
+                    WHEN t.status_code <= 399 THEN 'Redirection'
+                    WHEN t.status_code <= 499 THEN 'Client Error'
+                    WHEN t.status_code <= 599 THEN 'Server Error'
+                    END AS status,
+                --
+                CASE
+                    WHEN t.status_code <= 299 THEN ''
+                    WHEN t.status_code <= 399 THEN ''
+                    WHEN t.status_code <= 499 THEN 'RED'
+                    WHEN t.status_code <= 599 THEN 'RED'
+                    END AS status__color,
+                --
                 ROUND(AVG(t.elapsed_sec), 2) AS elapsed_sec_avg,
+                ROUND(MAX(t.elapsed_sec), 2) AS elapsed_sec_max,
                 COUNT(*) AS count_
                 --
             FROM apex_webservice_log t
@@ -269,7 +286,8 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 t.app_id,
                 REPLACE(REPLACE(t.mail_send_error, '<', '"'), '>', '"') AS error,
                 --
-                SUM(t.mail_send_count) AS count_
+                SUM(t.mail_send_count) AS count_,
+                MAX(t.id) AS recent_id
                 --
             FROM apex_mail_queue t
             WHERE 1 = 1
