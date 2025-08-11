@@ -338,6 +338,24 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         --
         v_out := v_out || get_content(v_cursor, 'Mail Queue Errors');
 
+        -- append content
+        OPEN v_cursor FOR
+            SELECT
+                t.table_name,
+                'MISSING'           AS status,
+                'RED'               AS status__color
+            FROM user_tables t
+            JOIN user_tab_cols c
+                ON c.table_name     = t.table_name
+                AND c.column_name   = 'TENANT_ID'
+            LEFT JOIN user_policies p
+                ON p.object_name    = t.table_name
+            WHERE t.table_name      LIKE core_custom.global_prefix || '%' ESCAPE '\'
+                AND p.policy_name   IS NULL
+            ORDER BY 1;
+        --
+        v_out := v_out || get_content(v_cursor, 'Missing VPD Policies');
+
         -- send mail to all developers
         send_mail (
             in_recipients   => in_recipients,
