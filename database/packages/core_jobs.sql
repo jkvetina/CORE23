@@ -1,23 +1,38 @@
 CREATE OR REPLACE PACKAGE BODY core_jobs AS
 
-    PROCEDURE job_scan_apps
+    PROCEDURE job_scan_apps (
+        in_right_away       BOOLEAN         := FALSE
+    )
     AS
     BEGIN
         core.log_start();
 
+        -- make sure we have a valid APEX session
+        IF core.get_session_id() IS NULL THEN
+            core.create_session (
+                in_user_id  => USER,
+                in_app_id   => core_custom.g_app_id
+            );
+        END IF;
+
         -- rebuild requested apps
         FOR app_id IN VALUES OF core_custom.g_apps LOOP
             core.log_debug('rebuild_app', app_id);
-            core.create_job (
-                in_job_name         => 'REBUILD_APP_' || app_id,
-                in_statement        => 'APEX_APP_OBJECT_DEPENDENCY.SCAN(p_application_id => ' || app_id || ');',
-                in_job_class        => core_custom.g_job_class,
-                in_user_id          => USER,
-                in_app_id           => app_id,
-                in_session_id       => NULL,
-                in_priority         => 3,
-                in_comments         => 'Rescan ' || app_id
-            );
+            --
+            IF in_right_away THEN
+                APEX_APP_OBJECT_DEPENDENCY.SCAN(p_application_id => app_id);
+            ELSE
+                core.create_job (
+                    in_job_name         => 'REBUILD_APP_' || app_id,
+                    in_statement        => 'APEX_APP_OBJECT_DEPENDENCY.SCAN(p_application_id => ' || app_id || ');',
+                    in_job_class        => core_custom.g_job_class,
+                    in_user_id          => USER,
+                    in_app_id           => app_id,
+                    in_session_id       => NULL,
+                    in_priority         => 3,
+                    in_comments         => 'Rescan ' || app_id
+                );
+            END IF;
         END LOOP;
         --
     EXCEPTION
@@ -31,15 +46,29 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
 
     PROCEDURE send_daily (
         in_recipients       VARCHAR2        := NULL,
-        in_offset           PLS_INTEGER     := 1
+        in_offset           PLS_INTEGER     := NULL
     )
     AS
         v_out               CLOB            := EMPTY_CLOB();
-        v_subject           VARCHAR2(256)   := core_custom.g_project_name || ' - Daily Overview, ' || TO_CHAR(TRUNC(SYSDATE) - in_offset, 'YYYY-MM-DD') || ' [' || core_custom.get_env() || ']';
+        v_subject           VARCHAR2(256);
         v_cursor            SYS_REFCURSOR;
-        v_start_date        DATE            := TRUNC(SYSDATE) - in_offset;      -- >=
-        v_end_date          DATE            := TRUNC(SYSDATE) - in_offset + 1;  -- <
+        v_offset            PLS_INTEGER;
+        v_start_date        DATE;
+        v_end_date          DATE;
     BEGIN
+        v_offset            := CASE WHEN TO_CHAR(SYSDATE, 'HH24') = '00' AND in_offset IS NULL THEN 0 ELSE NVL(in_offset, 0) END;
+        v_start_date        := TRUNC(SYSDATE) - v_offset;
+        v_end_date          := TRUNC(SYSDATE) - v_offset + 1;
+        v_subject           := get_subject('Daily Overview', v_start_date);
+        --
+        core.log_start (
+            'recipients',   in_recipients,
+            'offset',       in_offset,
+            'start_date',   v_start_date,
+            'end_date',     v_end_date
+        );
+
+        -- make sure we have a valid APEX session
         IF core.get_session_id() IS NULL THEN
             core.create_session (
                 in_user_id  => USER,
@@ -47,8 +76,13 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
             );
         END IF;
 
-        --
+        -- make sure objects are valid
         recompile();
+
+        -- make sure we have fresh app scan
+        IF v_offset < 1 THEN
+            job_scan_apps(in_right_away => TRUE);
+        END IF;
 
         -- append content
         OPEN v_cursor FOR
@@ -117,23 +151,25 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
             SELECT
                 t.owner,
                 t.job_name,
-                t.actual_start_date             AS start_date,
+                MAX(t.actual_start_date)            AS last_start_date,
                 t.status,
-                CASE
-                    WHEN t.status != 'SUCCEEDED' THEN 'RED'
-                    END AS status__color,
-                --
-                core.get_timer(t.run_duration)  AS run_duration,
-                core.get_timer(t.cpu_used)      AS cpu_used,
-                t.errors
+                MAX(core.get_timer(t.run_duration)) AS run_duration,
+                MAX(core.get_timer(t.cpu_used))     AS cpu_used,
+                COUNT(*)                            AS count_,
+                t.errors                            AS error_
                 --
             FROM all_scheduler_job_run_details t
             WHERE 1 = 1
                 AND t.owner     LIKE core_custom.g_owner_like
                 AND t.log_date  >= v_start_date
                 AND t.log_date  <  v_end_date
+            GROUP BY
+                t.owner,
+                t.job_name,
+                t.status,
+                t.errors
             ORDER BY
-                1, 2, 3, 4;
+                1, 2, 3;
         --
         v_out := v_out || get_content(v_cursor, 'Schedulers');
 
@@ -320,14 +356,29 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
 
     PROCEDURE send_performance (
         in_recipients       VARCHAR2        := NULL,
-        in_offset           PLS_INTEGER     := 1
+        in_offset           PLS_INTEGER     := NULL
     )
     AS
         v_out               CLOB            := EMPTY_CLOB();
-        v_subject           VARCHAR2(256)   := core_custom.g_project_name || ' - Performance, ' || TO_CHAR(TRUNC(SYSDATE) - in_offset, 'YYYY-MM-DD') || ' [' || core_custom.get_env() || ']';
+        v_subject           VARCHAR2(256);
         v_header            VARCHAR2(256);
         v_cursor            SYS_REFCURSOR;
+        v_offset            PLS_INTEGER;
+        v_start_date        DATE;
+        v_end_date          DATE;
     BEGIN
+        v_offset            := CASE WHEN TO_CHAR(SYSDATE, 'HH24') = '00' AND in_offset IS NULL THEN 0 ELSE NVL(in_offset, 0) END;
+        v_start_date        := TRUNC(SYSDATE) - v_offset;
+        v_end_date          := TRUNC(SYSDATE) - v_offset + 1;
+        v_subject           := get_subject('Performance', v_start_date);
+        --
+        core.log_start (
+            'recipients',   in_recipients,
+            'offset',       in_offset,
+            'start_date',   v_start_date,
+            'end_date',     v_end_date
+        );
+
         -- go thru all selected apps
         FOR app_id IN VALUES OF core_custom.g_apps LOOP
             core.create_session (
@@ -378,10 +429,8 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                         FROM apex_workspace_activity_log a
                         WHERE 1 = 1
                             AND a.application_id    = app_id
-                            AND a.application_id    IS NOT NULL
-                            AND a.application_name  IS NOT NULL     -- to remove other workspaces
-                            AND a.view_date         >= CASE WHEN in_offset < 1 THEN SYSDATE ELSE TRUNC(SYSDATE) END - in_offset
-                            AND a.view_date         <  CASE WHEN in_offset < 1 THEN SYSDATE ELSE TRUNC(SYSDATE) END - in_offset + 1
+                            AND a.view_date         >= v_start_date
+                            AND a.view_date         <  v_end_date
                     ) a
                     GROUP BY
                         a.request_id,
@@ -416,8 +465,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                         t.application_id,
                         t.page_id,
                         t.page_name
-                )
-                
+                )                
                 SELECT 
                     d.app_id,
                     d.page_id,
@@ -434,29 +482,12 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                     d.ajax_avg,
                     d.ajax_max,
                     --
-                    CASE
-                        WHEN d.rendering_avg >= 1 THEN 'RED'
-                        END AS rendering_avg__color,
-                    --
-                    CASE
-                        WHEN d.rendering_max >= 1 THEN 'RED'
-                        END AS rendering_max__color,
-                    --
-                    CASE
-                        WHEN d.processing_avg >= 1 THEN 'RED'
-                        END AS processing_avg__color,
-                    --
-                    CASE
-                        WHEN d.processing_max >= 1 THEN 'RED'
-                        END AS processing_max__color,
-                    --
-                    CASE
-                        WHEN d.ajax_avg >= 1 THEN 'RED'
-                        END AS ajax_avg__color,
-                    --
-                    CASE
-                        WHEN d.ajax_max >= 1 THEN 'RED'
-                        END AS ajax_max__color
+                    CASE WHEN d.rendering_avg   >= 1 THEN 'RED' END AS rendering_avg__color,
+                    CASE WHEN d.rendering_max   >= 1 THEN 'RED' END AS rendering_max__color,
+                    CASE WHEN d.processing_avg  >= 1 THEN 'RED' END AS processing_avg__color,
+                    CASE WHEN d.processing_max  >= 1 THEN 'RED' END AS processing_max__color,
+                    CASE WHEN d.ajax_avg        >= 1 THEN 'RED' END AS ajax_avg__color,
+                    CASE WHEN d.ajax_max        >= 1 THEN 'RED' END AS ajax_max__color
                 FROM d
                 ORDER BY
                     1, 2;
@@ -538,6 +569,21 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         RAISE;
     WHEN OTHERS THEN
         core.raise_error();
+    END;
+
+
+
+    FUNCTION get_subject (
+        in_header           VARCHAR2,
+        in_date             DATE := NULL
+    )
+    RETURN VARCHAR2
+    AS
+    BEGIN
+        RETURN core_custom.g_project_name
+            || ' - ' || in_header
+            || CASE WHEN in_date IS NOT NULL THEN ', ' || REPLACE(TO_CHAR(in_date, 'YYYY-MM-DD HH24:MI'), ' 00:00', '') END
+            || ' [' || core_custom.get_env() || ']';
     END;
 
 
@@ -652,19 +698,6 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
 
 
 
-    PROCEDURE close_cursor (
-        io_cursor       IN OUT PLS_INTEGER
-    )
-    AS
-    BEGIN
-        DBMS_SQL.CLOSE_CURSOR(io_cursor);
-    EXCEPTION
-    WHEN OTHERS THEN
-        NULL;
-    END;
-
-
-
     FUNCTION get_sender (
         in_env              VARCHAR2 := NULL
     )
@@ -680,6 +713,19 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
             ),
             core_custom.g_sender
         );
+    END;
+
+
+
+    PROCEDURE close_cursor (
+        io_cursor       IN OUT PLS_INTEGER
+    )
+    AS
+    BEGIN
+        DBMS_SQL.CLOSE_CURSOR(io_cursor);
+    EXCEPTION
+    WHEN OTHERS THEN
+        NULL;
     END;
 
 

@@ -1,26 +1,21 @@
 CREATE OR REPLACE PACKAGE core_jobs AS
 
-    PROCEDURE job_scan_apps;
-
-
-
-    FUNCTION get_sender (
-        in_env              VARCHAR2 := NULL
-    )
-    RETURN VARCHAR2;
+    PROCEDURE job_scan_apps (
+        in_right_away       BOOLEAN         := FALSE
+    );
 
 
 
     PROCEDURE send_daily (
         in_recipients       VARCHAR2        := NULL,
-        in_offset           PLS_INTEGER     := 1
+        in_offset           PLS_INTEGER     := NULL
     );
 
 
 
     PROCEDURE send_performance (
         in_recipients       VARCHAR2        := NULL,
-        in_offset           PLS_INTEGER     := 1
+        in_offset           PLS_INTEGER     := NULL
     );
 
 
@@ -33,12 +28,27 @@ CREATE OR REPLACE PACKAGE core_jobs AS
 
 
 
+    FUNCTION get_subject (
+        in_header           VARCHAR2,
+        in_date             DATE := NULL
+    )
+    RETURN VARCHAR2;
+
+
+
     FUNCTION get_content (
         io_cursor           IN OUT SYS_REFCURSOR,
         --
         in_header           VARCHAR2        := NULL
     )
     RETURN CLOB;
+
+
+
+    FUNCTION get_sender (
+        in_env              VARCHAR2 := NULL
+    )
+    RETURN VARCHAR2;
 
 
 
