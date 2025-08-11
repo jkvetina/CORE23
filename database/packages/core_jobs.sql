@@ -356,6 +356,38 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         --
         v_out := v_out || get_content(v_cursor, 'Missing VPD Policies');
 
+        -- append content
+        OPEN v_cursor FOR
+            SELECT
+                t.application_id            AS app_id,
+                t.application_name          AS app_name,
+                t.authentication_method     AS auth_method,
+                t.user_name,
+                t.custom_status_text        AS error_,
+                t.ip_address,
+                --
+                COUNT(*)                    AS attempts,
+                MAX(t.access_date)          AS last_access_date
+                --
+            FROM apex_workspace_access_log t
+            WHERE t.application_schema_owner    NOT LIKE 'APEX_2%'
+                AND t.authentication_result     != 'AUTH_SUCCESS'
+                AND t.access_date               >= v_start_date
+                AND t.access_date               <  v_end_date
+            GROUP BY
+                t.application_id,
+                t.application_name,
+                t.authentication_method,
+                t.user_name,
+                t.custom_status_text,
+                t.ip_address
+            ORDER BY
+                t.application_id,
+                t.authentication_method,
+                t.user_name;                
+        --
+        v_out := v_out || get_content(v_cursor, 'Failed Authentication');
+
         -- send mail to all developers
         send_mail (
             in_recipients   => in_recipients,
