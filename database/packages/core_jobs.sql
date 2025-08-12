@@ -148,7 +148,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 t.type,
                 t.line,
                 t.position,
-                t.text              AS error
+                t.text              AS error_
             FROM all_errors t
             WHERE 1 = 1
                 AND t.owner         LIKE core_custom.g_owner_like
@@ -225,6 +225,56 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         -- append content
         OPEN v_cursor FOR
             SELECT
+                t.application_id      AS app_id,
+                t.application_name    AS app_name,
+                t.version,
+                --t.files_version,
+                t.build_status,
+                t.pages,
+                t.last_updated_by               AS updated_by,
+                t.last_updated_on               AS updated_at,
+                t.last_dependency_analyzed_at   AS analyzed_at
+            FROM apex_applications t
+            WHERE t.is_working_copy = 'No'
+            ORDER BY 1;
+        --
+        v_out := v_out || get_content(v_cursor, 'Applications');
+
+        -- append content
+        OPEN v_cursor FOR
+            SELECT
+                t.application_id            AS app_id,
+                t.application_name          AS app_name,
+                t.authentication_method     AS auth_method,
+                t.user_name,
+                t.custom_status_text        AS error_,
+                t.ip_address,
+                --
+                COUNT(*)                    AS attempts,
+                MAX(t.access_date)          AS last_access_date
+                --
+            FROM apex_workspace_access_log t
+            WHERE t.application_schema_owner    NOT LIKE 'APEX_2%'
+                AND t.authentication_result     != 'AUTH_SUCCESS'
+                AND t.access_date               >= v_start_date
+                AND t.access_date               <  v_end_date
+            GROUP BY
+                t.application_id,
+                t.application_name,
+                t.authentication_method,
+                t.user_name,
+                t.custom_status_text,
+                t.ip_address
+            ORDER BY
+                t.application_id,
+                t.authentication_method,
+                t.user_name;                
+        --
+        v_out := v_out || get_content(v_cursor, 'Failed Authentication');
+
+        -- append content
+        OPEN v_cursor FOR
+            SELECT
                 t.application_id AS app_id,
                 t.page_id,
                 t.component_type_name,
@@ -232,66 +282,13 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 t.property_group_name,
                 t.property_name,
                 DBMS_LOB.SUBSTR(t.code_fragment, 4000, 1) AS code_fragment,
-                t.error_message AS error
+                t.error_message AS error_
             FROM apex_used_db_object_comp_props t
             WHERE t.error_message IS NOT NULL
             ORDER BY
                 1, 2, 3, 4;
         --
         v_out := v_out || get_content(v_cursor, 'Broken APEX Components');
-
-        -- append content
-        OPEN v_cursor FOR
-            SELECT
-                t.application_id AS app_id,
-                t.page_id,
-                TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.error_message, '#\d+', ''), 'id "\d+"', 'id ?')) AS error,
-                --
-                COUNT(*) AS count_,
-                MAX(t.id) AS recent_log_id
-                --
-            FROM apex_workspace_activity_log t
-            WHERE 1 = 1
-                AND t.view_date         >= v_start_date
-                AND t.view_date         <  v_end_date
-                AND t.error_message     IS NOT NULL
-                AND t.error_message     NOT LIKE 'Your session has ended%'
-            GROUP BY
-                t.application_id,
-                t.page_id,
-                TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.error_message, '#\d+', ''), 'id "\d+"', 'id ?'))
-            ORDER BY
-                1, 2, 3;
-        --
-        v_out := v_out || get_content(v_cursor, 'Workspace Errors');
-
-        -- append content
-        OPEN v_cursor FOR
-            SELECT
-                t.application_id AS app_id,
-                t.page_id,
-                t.message_level AS level_,
-                TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.message, '#\d+', ''), 'id "\d+"', 'id ?')) AS error,
-                t.apex_user AS user_,
-                --
-                COUNT(*) AS count_,
-                MAX(t.id) AS recent_log_id
-                --
-            FROM apex_debug_messages t
-            WHERE 1 = 1
-                AND t.message_timestamp >= v_start_date
-                AND t.message_timestamp <  v_end_date
-                AND t.message_level     < 4
-            GROUP BY
-                t.application_id,
-                t.page_id,
-                t.message_level,
-                TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.message, '#\d+', ''), 'id "\d+"', 'id ?')),
-                t.apex_user
-            ORDER BY
-                1, 2, 3, 4;
-        --
-        v_out := v_out || get_content(v_cursor, 'APEX Debug Messages');
 
         -- append content
         OPEN v_cursor FOR
@@ -337,7 +334,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         OPEN v_cursor FOR
             SELECT
                 t.app_id,
-                REPLACE(REPLACE(t.mail_send_error, '<', '"'), '>', '"') AS error,
+                REPLACE(REPLACE(t.mail_send_error, '<', '"'), '>', '"') AS error_,
                 --
                 SUM(t.mail_send_count) AS count_,
                 MAX(t.id) AS recent_id
@@ -358,6 +355,71 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         -- append content
         OPEN v_cursor FOR
             SELECT
+                t.application_id AS app_id,
+                t.page_id,
+                TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.error_message, '#\d+', ''), 'id "\d+"', 'id ?')) AS error_,
+                --
+                COUNT(*) AS count_,
+                MAX(t.id) AS recent_log_id
+                --
+            FROM apex_workspace_activity_log t
+            WHERE 1 = 1
+                AND t.view_date         >= v_start_date
+                AND t.view_date         <  v_end_date
+                AND t.error_message     IS NOT NULL
+                AND t.error_message     NOT LIKE 'Your session has ended%'
+            GROUP BY
+                t.application_id,
+                t.page_id,
+                TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.error_message, '#\d+', ''), 'id "\d+"', 'id ?'))
+            ORDER BY
+                1, 2, 3;
+        --
+        v_out := v_out || get_content(v_cursor, 'Workspace Errors');
+
+        -- append content
+        OPEN v_cursor FOR
+            SELECT
+                t.app_id,
+                t.page_id,
+                t.level_,
+                t.error_,
+                t.user_,
+                --
+                COUNT(*) AS count_,
+                MAX(t.id) AS recent_log_id
+                --
+            FROM (
+                SELECT
+                    t.id,
+                    t.application_id    AS app_id,
+                    t.page_id,
+                    t.apex_user         AS user_,
+                    t.message_level     AS level_,
+                    --
+                    TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.message, '#\d+', ''), 'id "\d+"', 'id ?')) AS error_
+                    --
+                FROM apex_debug_messages t
+                WHERE 1 = 1
+                    AND t.message_timestamp >= v_start_date
+                    AND t.message_timestamp <  v_end_date
+                    AND t.message_level     IN (1, 2, 4)
+                    AND t.message           NOT LIKE 'Exception in "teardown": Error Stack: ORA-20876: Stop APEX Engine%'
+            ) t
+            GROUP BY
+                t.app_id,
+                t.page_id,
+                t.level_,
+                t.error_,
+                t.user_
+            ORDER BY
+                1, 2, 3, 4;
+        --
+        v_out := v_out || get_content(v_cursor, 'APEX Debug Messages');
+
+        -- append content
+        OPEN v_cursor FOR
+            SELECT
                 t.table_name,
                 'MISSING'           AS status,
                 'RED'               AS status__color
@@ -372,38 +434,6 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
             ORDER BY 1;
         --
         v_out := v_out || get_content(v_cursor, 'Missing VPD Policies');
-
-        -- append content
-        OPEN v_cursor FOR
-            SELECT
-                t.application_id            AS app_id,
-                t.application_name          AS app_name,
-                t.authentication_method     AS auth_method,
-                t.user_name,
-                t.custom_status_text        AS error_,
-                t.ip_address,
-                --
-                COUNT(*)                    AS attempts,
-                MAX(t.access_date)          AS last_access_date
-                --
-            FROM apex_workspace_access_log t
-            WHERE t.application_schema_owner    NOT LIKE 'APEX_2%'
-                AND t.authentication_result     != 'AUTH_SUCCESS'
-                AND t.access_date               >= v_start_date
-                AND t.access_date               <  v_end_date
-            GROUP BY
-                t.application_id,
-                t.application_name,
-                t.authentication_method,
-                t.user_name,
-                t.custom_status_text,
-                t.ip_address
-            ORDER BY
-                t.application_id,
-                t.authentication_method,
-                t.user_name;                
-        --
-        v_out := v_out || get_content(v_cursor, 'Failed Authentication');
 
         -- send mail to all developers
         send_mail (
