@@ -1,22 +1,34 @@
 CREATE OR REPLACE PACKAGE BODY core_jobs AS
 
     PROCEDURE job_scan_apps (
+        in_app_id           PLS_INTEGER     := NULL,
         in_right_away       BOOLEAN         := FALSE
     )
     AS
+        v_apps              apex_t_varchar2;
     BEGIN
-        core.log_start();
+        core.log_start (
+            'right_away',   CASE WHEN in_right_away THEN 'Y' ELSE 'N' END,
+            'app_id',       in_app_id
+        );
 
         -- make sure we have a valid APEX session
         IF core.get_session_id() IS NULL THEN
             core.create_session (
                 in_user_id  => USER,
-                in_app_id   => core_custom.g_app_id
+                in_app_id   => NVL(in_app_id, core_custom.g_app_id)
             );
         END IF;
 
+        -- prepare apps list
+        IF in_app_id IS NOT NULL THEN
+            v_apps := apex_t_varchar2(in_app_id);
+        ELSE
+            v_apps := core_custom.g_apps;
+        END IF;
+
         -- rebuild requested apps
-        FOR app_id IN VALUES OF core_custom.g_apps LOOP
+        FOR app_id IN VALUES OF v_apps LOOP
             core.log_debug('rebuild_app', app_id);
             --
             IF in_right_away THEN

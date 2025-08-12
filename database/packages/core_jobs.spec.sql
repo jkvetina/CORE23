@@ -1,6 +1,7 @@
 CREATE OR REPLACE PACKAGE core_jobs AS
 
     PROCEDURE job_scan_apps (
+        in_app_id           PLS_INTEGER     := NULL,
         in_right_away       BOOLEAN         := FALSE
     );
 
