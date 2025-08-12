@@ -139,6 +139,10 @@ CREATE OR REPLACE PACKAGE core_custom AUTHID CURRENT_USER AS
     )
     RETURN NUMBER;
 
+
+
+    PROCEDURE send_daily_emails;
+
 END;
 /
 
