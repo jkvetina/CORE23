@@ -58,7 +58,8 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
 
     PROCEDURE send_daily (
         in_recipients       VARCHAR2        := NULL,
-        in_offset           PLS_INTEGER     := NULL
+        in_offset           PLS_INTEGER     := NULL,
+        in_skip_scan        BOOLEAN         := FALSE
     )
     AS
         v_out               CLOB            := EMPTY_CLOB();
@@ -92,7 +93,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         recompile();
 
         -- make sure we have fresh app scan
-        IF v_offset < 1 THEN
+        IF v_offset < 1 AND NOT in_skip_scan THEN
             job_scan_apps(in_right_away => TRUE);
         END IF;
 
@@ -784,7 +785,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
 
 
     PROCEDURE close_cursor (
-        io_cursor       IN OUT PLS_INTEGER
+        io_cursor           IN OUT PLS_INTEGER
     )
     AS
     BEGIN
@@ -797,7 +798,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
 
 
     FUNCTION get_html_header (
-        in_title        VARCHAR2
+        in_title            VARCHAR2
     )
     RETURN CLOB
     AS
