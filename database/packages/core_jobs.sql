@@ -153,6 +153,10 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 t.job_name,
                 MAX(t.actual_start_date)            AS last_start_date,
                 t.status,
+                CASE
+                    WHEN t.status != 'SUCCEEDED' THEN 'RED'
+                    END AS status__color,
+                --
                 MAX(core.get_timer(t.run_duration)) AS run_duration,
                 MAX(core.get_timer(t.cpu_used))     AS cpu_used,
                 COUNT(*)                            AS count_,
