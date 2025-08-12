@@ -194,7 +194,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         OPEN v_cursor FOR
             SELECT
                 t.mview_name,
-                MAX(TO_CHAR(t.last_refresh_end_time, 'YYYY-MM-DD HH24:MI:SS'))          AS last_refreshed_at,
+                MAX(TO_CHAR(t.last_refresh_end_time, 'YYYY-MM-DD HH24:MI'))             AS last_refreshed_at,
                 MAX(ROUND(86400 * (t.last_refresh_end_time - t.last_refresh_date), 0))  AS last_timer,
                 t.staleness,
                 CASE
@@ -726,7 +726,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                     v_align := ' align="right"';
                 ELSIF v_desc(i).col_type = DBMS_SQL.DATE_TYPE THEN
                     DBMS_SQL.COLUMN_VALUE(v_cursor, i, v_date);
-                    v_value := TO_CHAR(v_date);
+                    v_value := TO_CHAR(v_date, 'YYYY-MM-DD HH24:MI');
                 ELSE
                     DBMS_SQL.COLUMN_VALUE(v_cursor, i, v_value);
                 END IF;
