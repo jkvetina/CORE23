@@ -4238,7 +4238,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
     PROCEDURE update_app_version (
         in_app_id           PLS_INTEGER     := NULL,
         in_version          VARCHAR2        := NULL,
-        in_proceed          BOOLEAN         := TRUE
+        in_proceed          BOOLEAN         := TRUE,
+        in_skip_main        BOOLEAN         := FALSE
     )
     AS
         v_apps              apex_t_varchar2;
@@ -4292,6 +4293,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
                     ORDER BY
                         1, 2, 3
                 ) LOOP
+                    CONTINUE WHEN in_skip_main AND d.table_name IN ('APEX_APPLICATIONS', 'APEX_APPL_USER_INTERFACES');
+                    --
                     EXECUTE IMMEDIATE
                         APEX_STRING.FORMAT (
                             q'!SELECT

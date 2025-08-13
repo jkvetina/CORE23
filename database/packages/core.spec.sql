@@ -1374,7 +1374,8 @@ AS
     PROCEDURE update_app_version (
         in_app_id           PLS_INTEGER     := NULL,
         in_version          VARCHAR2        := NULL,
-        in_proceed          BOOLEAN         := TRUE
+        in_proceed          BOOLEAN         := TRUE,
+        in_skip_main        BOOLEAN         := FALSE
     );
 
 END;
