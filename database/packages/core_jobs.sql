@@ -840,8 +840,8 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
     BEGIN
         RETURN COALESCE(
             core.get_constant (
-                in_name     => 'G_SENDER_' || in_env,
-                in_package  => 'CORE_CUSTOM', 
+                in_name     => 'G_SENDER_' || COALESCE(in_env, core_custom.get_env()),
+                in_package  => 'CORE_CUSTOM',
                 in_owner    => core_custom.master_owner,
                 in_silent   => TRUE
             ),
