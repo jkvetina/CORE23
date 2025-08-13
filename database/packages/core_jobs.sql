@@ -32,7 +32,12 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
             core.log_debug('rebuild_app', app_id);
             --
             IF in_right_away THEN
-                APEX_APP_OBJECT_DEPENDENCY.SCAN(p_application_id => app_id);
+                BEGIN
+                    APEX_APP_OBJECT_DEPENDENCY.SCAN(p_application_id => app_id);
+                EXCEPTION
+                WHEN OTHERS THEN
+                    core.log_error('SCAN FAILED: ' || app_id);
+                END;
             ELSE
                 core.create_job (
                     in_job_name         => 'REBUILD_APP_' || app_id,
