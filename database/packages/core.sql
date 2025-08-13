@@ -4243,9 +4243,6 @@ CREATE OR REPLACE PACKAGE BODY core AS
     )
     AS
         v_apps              apex_t_varchar2;
-        v_version_new       apex_applications.version%TYPE := in_version;
-        v_version_old       apex_applications.version%TYPE;
-        v_version_tmp       apex_applications.version%TYPE;
     BEGIN
         -- prepare apps list
         IF in_app_id IS NOT NULL THEN
@@ -4259,23 +4256,28 @@ CREATE OR REPLACE PACKAGE BODY core AS
             core.create_session(USER, core_custom.master_id);
         END IF;
         --
-        FOR app_id IN VALUES OF v_apps LOOP
-            IF (core_custom.master_id IS NULL OR in_app_id IS NOT NULL) THEN
-                core.create_session(USER, app_id);
-            END IF;
-
-            -- get current version
-            SELECT t.version
-            INTO v_version_old
+        FOR c IN (
+            SELECT
+                t.application_id        AS app_id,
+                t.application_name      AS app_name,
+                t.version               AS version_old,
+                TO_CHAR(in_version)     AS version_new,
+                LPAD('0', 18, '0')      AS version_tmp
             FROM apex_applications t
-            WHERE t.application_id = app_id;
+            JOIN TABLE(v_apps) f
+                ON TO_NUMBER(f.column_value) = t.application_id
+            ORDER BY 1
+        ) LOOP
+            IF (core_custom.master_id IS NULL OR in_app_id IS NOT NULL) THEN
+                core.create_session(USER, c.app_id);
+            END IF;
+            --
+            DBMS_OUTPUT.PUT_LINE('--');
+            DBMS_OUTPUT.PUT_LINE('APP ' || c.app_id || ' - ' || c.app_name);
 
             -- loop over all views with app_id and date column, find the maximum
-            IF v_version_new IS NULL THEN
-                v_version_tmp := '0';
-                v_version_new := '0';
-                --
-                FOR c IN (
+            IF c.version_new IS NULL THEN
+                FOR d IN (
                     SELECT
                         c.owner,
                         c.table_name,
@@ -4303,41 +4305,49 @@ CREATE OR REPLACE PACKAGE BODY core AS
                               !WHERE t.application_id = %4
                               !',
                             --
-                            p1 => c.owner,
-                            p2 => c.table_name,
-                            p3 => c.column_name,
-                            p4 => app_id,
+                            p1 => d.owner,
+                            p2 => d.table_name,
+                            p3 => d.column_name,
+                            p4 => c.app_id,
                             --
                             p_prefix        => '!',
                             p_max_length    => 32767
                         )
-                        INTO v_version_tmp;
+                        INTO c.version_tmp;
                     --
-                    IF v_version_tmp IS NOT NULL THEN
-                        v_version_new := GREATEST(v_version_new, v_version_tmp);
+                    IF c.version_tmp IS NOT NULL THEN
+                        c.version_new := GREATEST(NVL(c.version_new, c.version_old), c.version_tmp);
+                        --
+                        IF c.version_tmp != c.version_old THEN
+                            DBMS_OUTPUT.PUT_LINE('    ' || RPAD(d.table_name || ' ', 48, '.') || ' ' || c.version_tmp);
+                        END IF;
                     END IF;
                 END LOOP;
             END IF;
-    
+
             -- update version number for the app
             BEGIN
                 IF in_version IS NULL THEN
-                    v_version_new := REPLACE(TO_CHAR(TO_DATE(v_version_new, 'YYYY-MM-DD HH24:MI:SS'), 'YYYY-MM-DD fmHH24.MI'), ' ', ' 1.');
+                    c.version_new := REPLACE(TO_CHAR(TO_DATE(c.version_new, 'YYYY-MM-DD HH24:MI:SS'), 'YYYY-MM-DD fmHH24.MI'), ' ', ' 1.');
                 END IF;
                 --
-                IF v_version_new != v_version_old THEN
-                    DBMS_OUTPUT.PUT_LINE('APP ' || LPAD(app_id, 4) || ': ' || RPAD(v_version_old, 18) || ' -> ' || v_version_new);
+                IF c.version_new != c.version_old THEN
+                    DBMS_OUTPUT.PUT_LINE('    --');
+                    DBMS_OUTPUT.PUT_LINE('    UPDATING ' || c.version_old);
+                    DBMS_OUTPUT.PUT_LINE('          TO ' || c.version_new);
+                    DBMS_OUTPUT.PUT_LINE('');
+                    --
                     IF in_proceed THEN
                         APEX_APPLICATION_ADMIN.SET_APPLICATION_VERSION (
-                            p_application_id    => app_id,
-                            p_version           => v_version_new
+                            p_application_id    => c.app_id,
+                            p_version           => c.version_new
                         );
                     END IF;
                 END IF;
             EXCEPTION
             WHEN OTHERS THEN
                 IF SQLCODE = -20987 THEN
-                    DBMS_OUTPUT.PUT_LINE('APP ' || app_id || ' --> ENABLE RUNTIME_API_USAGE');
+                    DBMS_OUTPUT.PUT_LINE('    --> ENABLE RUNTIME_API_USAGE');
                 END IF;
             END;
         END LOOP;
