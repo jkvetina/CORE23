@@ -623,16 +623,25 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
     BEGIN
         -- send mail to all developers
         FOR c IN (
-            SELECT t.email
-            FROM apex_workspace_developers t
-            WHERE t.is_application_developer    = 'Yes'
-                AND t.email                     LIKE core_custom.g_developers_like
-                AND t.date_last_updated         > TRUNC(SYSDATE) - 90
-                AND in_recipients IS NULL
-            UNION ALL
-            SELECT t.column_value AS email
-            FROM TABLE(APEX_STRING.SPLIT(in_recipients, ',')) t
-            WHERE in_recipients IS NOT NULL
+            SELECT
+                t.email
+            FROM (
+                SELECT
+                    t.email
+                FROM apex_workspace_developers t
+                WHERE t.is_application_developer    = 'Yes'
+                    AND t.email                     LIKE core_custom.g_developers_like
+                    AND t.date_last_updated         > TRUNC(SYSDATE) - 90
+                    AND in_recipients IS NULL
+                UNION ALL
+                SELECT
+                    t.column_value AS email
+                FROM TABLE(APEX_STRING.SPLIT(in_recipients, ',')) t
+                WHERE in_recipients IS NOT NULL
+            ) t
+            WHERE t.email LIKE '%@%.%'
+            GROUP BY
+                t.email
         ) LOOP
             v_id := APEX_MAIL.SEND (
                 p_to         => c.email,
