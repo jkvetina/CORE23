@@ -724,14 +724,14 @@ CREATE OR REPLACE PACKAGE BODY core AS
                     p_username  => v_user_name
                 );
             END IF;
+            --
+            core.print_items();
         END IF;
 
         -- enable debug so we can use debug messages
         APEX_DEBUG.ENABLE(p_level => core_custom.default_debug_level);
         --
         COMMIT;
-        --
-        core.print_items();
         --
     EXCEPTION
     WHEN core.app_exception THEN
@@ -3005,6 +3005,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         out_result := APEX_ERROR.INIT_ERROR_RESULT(p_error => p_error);
         --
         out_result.message := REPLACE(out_result.message, '&' || 'quot;', '"');  -- replace some HTML entities
+        out_result.display_location := APEX_ERROR.C_INLINE_IN_NOTIFICATION;  -- also removes HTML entities
 
         -- get error code thown before app exception to translate constraint names
         IF p_error.ora_sqlcode = app_exception_code THEN
@@ -3074,8 +3075,6 @@ CREATE OR REPLACE PACKAGE BODY core AS
         out_result.message := CASE WHEN v_log_id IS NOT NULL THEN '#' || TO_CHAR(v_log_id) || '<br />' END
             || core.get_translated(REGEXP_REPLACE(out_result.message, '^(ORA' || TO_CHAR(app_exception_code) || ':\s*)\s*', ''));
         --out_result.message := REPLACE(out_result.message, '&' || '#X27;', '');
-        --
-        out_result.display_location := APEX_ERROR.C_INLINE_IN_NOTIFICATION;  -- also removes HTML entities
         --
         RETURN out_result;
     EXCEPTION
@@ -4232,6 +4231,113 @@ CREATE OR REPLACE PACKAGE BODY core AS
         RAISE;
     WHEN OTHERS THEN
         core.raise_error();
+    END;
+
+
+
+    PROCEDURE update_app_version (
+        in_app_id           PLS_INTEGER     := NULL,
+        in_version          VARCHAR2        := NULL,
+        in_proceed          BOOLEAN         := TRUE
+    )
+    AS
+        v_apps              apex_t_varchar2;
+        v_version_new       apex_applications.version%TYPE := in_version;
+        v_version_old       apex_applications.version%TYPE;
+        v_version_tmp       apex_applications.version%TYPE;
+    BEGIN
+        -- prepare apps list
+        IF in_app_id IS NOT NULL THEN
+            v_apps := apex_t_varchar2(in_app_id);
+        ELSE
+            v_apps := core_custom.g_apps;
+        END IF;
+
+        -- proceed with apps
+        IF core_custom.master_id IS NOT NULL THEN
+            core.create_session(USER, core_custom.master_id);
+        END IF;
+        --
+        FOR app_id IN VALUES OF v_apps LOOP
+            IF (core_custom.master_id IS NULL OR in_app_id IS NOT NULL) THEN
+                core.create_session(USER, app_id);
+            END IF;
+
+            -- get current version
+            SELECT t.version
+            INTO v_version_old
+            FROM apex_applications t
+            WHERE t.application_id = app_id;
+
+            -- loop over all views with app_id and date column, find the maximum
+            IF v_version_new IS NULL THEN
+                v_version_tmp := '0';
+                v_version_new := '0';
+                --
+                FOR c IN (
+                    SELECT
+                        c.owner,
+                        c.table_name,
+                        c.column_name
+                    FROM all_views t
+                    JOIN all_tab_cols c
+                        ON c.table_name     = t.view_name
+                        AND c.data_type     = 'DATE'
+                        AND c.column_name   IN ('CREATED_ON', 'LAST_UPDATED_ON', 'UPDATED_ON')
+                    JOIN all_tab_cols a
+                        ON a.table_name     = t.view_name
+                        AND a.column_name   = 'APPLICATION_ID'
+                    WHERE t.owner           LIKE 'APEX_2%'
+                        AND t.view_name     LIKE 'APEX_APPL%'
+                    ORDER BY
+                        1, 2, 3
+                ) LOOP
+                    EXECUTE IMMEDIATE
+                        APEX_STRING.FORMAT (
+                            q'!SELECT
+                              !    MAX(TO_CHAR(t.%3, 'YYYY-MM-DD HH24:MI:SS'))
+                              !FROM %1.%2 t
+                              !WHERE t.application_id = %4
+                              !',
+                            --
+                            p1 => c.owner,
+                            p2 => c.table_name,
+                            p3 => c.column_name,
+                            p4 => app_id,
+                            --
+                            p_prefix        => '!',
+                            p_max_length    => 32767
+                        )
+                        INTO v_version_tmp;
+                    --
+                    IF v_version_tmp IS NOT NULL THEN
+                        v_version_new := GREATEST(v_version_new, v_version_tmp);
+                    END IF;
+                END LOOP;
+            END IF;
+    
+            -- update version number for the app
+            BEGIN
+                IF in_version IS NULL THEN
+                    v_version_new := REPLACE(TO_CHAR(TO_DATE(v_version_new, 'YYYY-MM-DD HH24:MI:SS'), 'YYYY-MM-DD fmHH24.MI'), ' ', ' 1.');
+                END IF;
+                --
+                IF v_version_new != v_version_old THEN
+                    DBMS_OUTPUT.PUT_LINE('APP ' || LPAD(app_id, 4) || ': ' || RPAD(v_version_old, 18) || ' -> ' || v_version_new);
+                    IF in_proceed THEN
+                        APEX_APPLICATION_ADMIN.SET_APPLICATION_VERSION (
+                            p_application_id    => app_id,
+                            p_version           => v_version_new
+                        );
+                    END IF;
+                END IF;
+            EXCEPTION
+            WHEN OTHERS THEN
+                IF SQLCODE = -20987 THEN
+                    DBMS_OUTPUT.PUT_LINE('APP ' || app_id || ' --> ENABLE RUNTIME_API_USAGE');
+                END IF;
+            END;
+        END LOOP;
     END;
 
 END;
