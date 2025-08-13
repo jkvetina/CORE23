@@ -230,18 +230,44 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         -- append content
         OPEN v_cursor FOR
             SELECT
-                t.application_id      AS app_id,
-                t.application_name    AS app_name,
+                t.application_group     AS app_group,
+                t.application_id        AS app_id,
+                t.application_name      AS app_name,
                 t.version,
-                --t.files_version,
-                t.build_status,
+                --t.build_status,
                 t.pages,
-                t.last_updated_by               AS updated_by,
-                t.last_updated_on               AS updated_at,
-                t.last_dependency_analyzed_at   AS analyzed_at
+                t.last_updated_by       AS updated_by,
+                t.last_updated_on       AS updated_at,
+                --
+                COALESCE (
+                    TO_CHAR(t.last_dependency_analyzed_at, 'YYYY-MM-DD HH24:MI'),
+                    CASE WHEN f.column_value IS NOT NULL THEN 'MISSING' END
+                ) AS analyzed_at,
+                --
+                CASE WHEN f.column_value IS NULL THEN 'RED' END AS app_id__color,
+                CASE WHEN f.column_value IS NULL THEN 'RED' END AS app_name__color,
+                --
+                CASE WHEN f.column_value IS NOT NULL
+                    AND (t.last_dependency_analyzed_at IS NULL OR t.last_dependency_analyzed_at < TRUNC(SYSDATE))
+                    THEN 'RED' END AS analyzed_at__color,
+                --
+                NULLIF(a.page_views, 0)         AS page_views,
+                NULLIF(a.page_events, 0)        AS page_events,
+                --NULLIF(a.distinct_pages, 0)     AS pages_,
+                NULLIF(a.distinct_users, 0)     AS users_,
+                NULLIF(a.distinct_sessions, 0)  AS sessions_,
+                NULLIF(a.error_count, 0)        AS errors_,
+                ROUND(a.maximum_render_time, 2) AS render_time_max
+                --
             FROM apex_applications t
-            WHERE t.is_working_copy = 'No'
-            ORDER BY 1;
+            LEFT JOIN TABLE(core_custom.g_apps) f
+                ON TO_NUMBER(f.column_value) = t.application_id
+            LEFT JOIN apex_workspace_log_archive a
+                ON a.application_id     = t.application_id
+                AND a.log_day           = v_start_date
+            WHERE t.is_working_copy     = 'No'
+            ORDER BY
+                1, 2;
         --
         v_out := v_out || get_content(v_cursor, 'Applications');
 
@@ -271,9 +297,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 t.custom_status_text,
                 t.ip_address
             ORDER BY
-                t.application_id,
-                t.authentication_method,
-                t.user_name;                
+                1, 2, 3, 4;
         --
         v_out := v_out || get_content(v_cursor, 'Failed Authentication');
 
@@ -393,7 +417,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                     WHEN 1 THEN 'E'
                     WHEN 2 THEN 'W'
                     ELSE TO_CHAR(t.message_level)
-                    END AS lvl,
+                    END AS type_,
                 --
                 TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.message, '#\d+', ''), 'id "\d+"', 'id ?')) AS error_,
                 --
@@ -540,7 +564,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                     HAVING a.request_id IS NOT NULL
                 ),
                 d AS (
-                    SELECT 
+                    SELECT
                         t.application_id AS app_id,
                         t.page_id,
                         t.page_name,
@@ -563,8 +587,8 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                         t.application_id,
                         t.page_id,
                         t.page_name
-                )                
-                SELECT 
+                )
+                SELECT
                     d.app_id,
                     d.page_id,
                     d.page_name,
@@ -766,7 +790,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                     v_align := ' align="right"';
                 ELSIF v_desc(i).col_type = DBMS_SQL.DATE_TYPE THEN
                     DBMS_SQL.COLUMN_VALUE(v_cursor, i, v_date);
-                    v_value := TO_CHAR(v_date, 'YYYY-MM-DD HH24:MI');
+                    v_value := CASE WHEN v_date IS NOT NULL THEN TO_CHAR(v_date, 'YYYY-MM-DD HH24:MI') END;
                 ELSE
                     DBMS_SQL.COLUMN_VALUE(v_cursor, i, v_value);
                 END IF;
@@ -788,7 +812,10 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         --
         IF v_line IS NOT NULL THEN
             RETURN
-                CASE WHEN in_header IS NOT NULL THEN TO_CLOB('<h2>' || in_header || '</h2>') END ||
+                CASE
+                    WHEN in_header IS NOT NULL
+                        THEN TO_CLOB('<h2>' || in_header || '</h2>')
+                    END ||
                 v_out || TO_CLOB('</tbody></table><br />');
         ELSE
             RETURN TO_CLOB('<h2>' || in_header || '</h2><p>No data found.</p><br />');
