@@ -385,38 +385,34 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         -- append content
         OPEN v_cursor FOR
             SELECT
-                t.app_id,
+                t.application_id    AS app_id,
                 t.page_id,
-                t.level_,
-                t.error_,
-                t.user_,
+                t.apex_user         AS user_,
+                --
+                CASE t.message_level
+                    WHEN 1 THEN 'E'
+                    WHEN 2 THEN 'W'
+                    ELSE TO_CHAR(t.message_level)
+                    END AS lvl,
+                --
+                TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.message, '#\d+', ''), 'id "\d+"', 'id ?')) AS error_,
                 --
                 COUNT(*) AS count_,
                 MAX(t.id) AS recent_log_id
                 --
-            FROM (
-                SELECT
-                    t.id,
-                    t.application_id    AS app_id,
-                    t.page_id,
-                    t.apex_user         AS user_,
-                    t.message_level     AS level_,
-                    --
-                    TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.message, '#\d+', ''), 'id "\d+"', 'id ?')) AS error_
-                    --
-                FROM apex_debug_messages t
-                WHERE 1 = 1
-                    AND t.message_timestamp >= v_start_date
-                    AND t.message_timestamp <  v_end_date
-                    AND t.message_level     IN (1, 2, 4)
-                    AND t.message           NOT LIKE 'Exception in "teardown": Error Stack: ORA-20876: Stop APEX Engine%'
-            ) t
+            FROM apex_debug_messages t
+            WHERE 1 = 1
+                AND t.message_timestamp >= v_start_date
+                AND t.message_timestamp <  v_end_date
+                AND t.message_level     IN (1, 2)
+                AND t.message           NOT LIKE '%ORA-20876: Stop APEX Engine%'
             GROUP BY
-                t.app_id,
+                t.application_id,
                 t.page_id,
-                t.level_,
-                t.error_,
-                t.user_
+                t.apex_user,
+                t.message_level,
+                --
+                TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.message, '#\d+', ''), 'id "\d+"', 'id ?'))
             ORDER BY
                 1, 2, 3, 4;
         --
