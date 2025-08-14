@@ -2029,7 +2029,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         IF SQLCODE NOT IN (
             -27475      -- ORA-27475 uknown job
         ) THEN
-            core.raise_error('STOP_JOB', v_job_name, in_concat => TRUE);
+            NULL;--core.raise_error('STOP_JOB', v_job_name, in_concat => TRUE);
         END IF;
     END;
 
@@ -2057,7 +2057,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         IF SQLCODE NOT IN (
             -27475      -- ORA-27475 uknown job
         ) THEN
-            core.raise_error('DROP_JOB', v_job_name, in_concat => TRUE);
+            NULL;--core.raise_error('DROP_JOB', v_job_name, in_concat => TRUE);
         END IF;
     END;
 
