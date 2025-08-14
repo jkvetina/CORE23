@@ -722,7 +722,8 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
     FUNCTION get_content (
         io_cursor           IN OUT SYS_REFCURSOR,
         --
-        in_header           VARCHAR2        := NULL
+        in_header2          VARCHAR2        := NULL,
+        in_header3          VARCHAR2        := NULL
     )
     RETURN CLOB
     AS
@@ -766,7 +767,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 CONTINUE;
             END IF;
             --
-            v_line := v_line || '<th' || v_align || '>' || INITCAP(TRIM(REPLACE(v_desc(i).col_name, '_', ' '))) || '</th>';
+            v_line := v_line || '<th' || v_align || '>' || get_column_name(v_desc(i).col_name) || '</th>';
         END LOOP;
         --
         v_out := v_out || TO_CLOB('<table cellpadding="5" cellspacing="0" border="1"><thead><tr>' || v_line || '</tr></thead><tbody>');
@@ -809,17 +810,20 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
 
         -- cleanup
         close_cursor(v_cursor);
-        --
-        IF v_line IS NOT NULL THEN
-            RETURN
-                CASE
-                    WHEN in_header IS NOT NULL
-                        THEN TO_CLOB('<h2>' || in_header || '</h2>')
-                    END ||
-                v_out || TO_CLOB('</tbody></table><br />');
-        ELSE
-            RETURN TO_CLOB('<h2>' || in_header || '</h2><p>No data found.</p><br />');
+
+        -- prepend headers
+        IF v_line IS NULL THEN
+            v_out := '';
         END IF;
+        --
+        RETURN
+            CASE WHEN in_header2 IS NOT NULL THEN TO_CLOB('<h2>' || in_header2 || '</h2>') END ||
+            CASE WHEN in_header3 IS NOT NULL THEN TO_CLOB('<h3>' || in_header3 || '</h3>') END ||
+            v_out ||
+            CASE
+                WHEN v_line IS NOT NULL THEN TO_CLOB('</tbody></table><br />')
+                ELSE TO_CLOB('<p>No data found.</p><br />')
+                END;
         --
     EXCEPTION
     WHEN core.app_exception THEN
@@ -828,6 +832,21 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
     WHEN OTHERS THEN
         close_cursor(v_cursor);
         core.raise_error();
+    END;
+
+
+
+    FUNCTION get_column_name (
+        in_name             VARCHAR2
+    )
+    RETURN VARCHAR2
+    AS
+    BEGIN
+        RETURN REPLACE(REPLACE(REPLACE(
+            INITCAP(TRIM(REPLACE(in_name, '_', ' '))),
+            'Db ',      'DB '),
+            'Apex ',    'APEX '),
+            'Ords ',    'ORDS ');
     END;
 
 

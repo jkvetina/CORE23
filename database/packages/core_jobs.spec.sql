@@ -30,6 +30,13 @@ CREATE OR REPLACE PACKAGE core_jobs AS
 
 
 
+    FUNCTION get_column_name (
+        in_name             VARCHAR2
+    )
+    RETURN VARCHAR2;
+
+
+
     FUNCTION get_subject (
         in_header           VARCHAR2,
         in_date             DATE := NULL
@@ -41,7 +48,8 @@ CREATE OR REPLACE PACKAGE core_jobs AS
     FUNCTION get_content (
         io_cursor           IN OUT SYS_REFCURSOR,
         --
-        in_header           VARCHAR2        := NULL
+        in_header2          VARCHAR2        := NULL,
+        in_header3          VARCHAR2        := NULL
     )
     RETURN CLOB;
 
