@@ -103,19 +103,6 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         END IF;
 
         -- append content
-        OPEN v_cursor FOR
-            SELECT
-                t.owner,
-                t.object_type,
-                t.object_name
-            FROM all_objects t
-            WHERE 1 = 1
-                AND t.owner     LIKE core_custom.g_owner_like
-                AND t.status    = 'INVALID'
-            ORDER BY
-                1, 2, 3;
-        --
-        v_out := v_out || get_content(v_cursor, 'Invalid Objects');
         BEGIN
             OPEN v_cursor FOR
                 SELECT
@@ -135,347 +122,449 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         END;
 
         -- append content
-        OPEN v_cursor FOR
-            SELECT
-                'CONSTRAINT'        AS object_type,
-                t.constraint_name   AS object_name,
-                t.table_name
-            FROM user_constraints t
-            WHERE t.status = 'DISABLED'
-            UNION ALL
-            SELECT
-                'INDEX'             AS object_type,
-                t.index_name        AS object_name,
-                t.table_name
-            FROM user_indexes t
-            WHERE (t.status         != 'VALID'
-                OR t.funcidx_status != 'ENABLED')
-            UNION ALL
-            SELECT
-                'TRIGGER'           AS object_type,
-                t.trigger_name      AS object_name,
-                t.table_name
-            FROM user_triggers t
-            WHERE t.status = 'DISABLED'
-            ORDER BY
-                1, 2;
-        --
-        v_out := v_out || get_content(v_cursor, 'Disabled Objects');
+        BEGIN
+            OPEN v_cursor FOR
+                SELECT
+                    t.owner,
+                    t.object_type,
+                    t.object_name
+                FROM all_objects t
+                WHERE 1 = 1
+                    AND t.owner     LIKE core_custom.g_owner_like
+                    AND t.status    = 'INVALID'
+                ORDER BY
+                    1, 2, 3;
+            --
+            v_out := v_out || get_content(v_cursor, 'Invalid Objects');
+        EXCEPTION
+        WHEN OTHERS THEN
+            core.raise_error();
+        END;
 
         -- append content
-        OPEN v_cursor FOR
-            SELECT
-                t.owner,
-                t.name,
-                t.type,
-                t.line,
-                t.position,
-                t.text              AS error_
-            FROM all_errors t
-            WHERE 1 = 1
-                AND t.owner         LIKE core_custom.g_owner_like
-                AND t.attribute     = 'ERROR'
-            ORDER BY
-                1, 2, 3,
-                t.sequence;
-        --
-        v_out := v_out || get_content(v_cursor, 'Compile Errors');
+        BEGIN
+            OPEN v_cursor FOR
+                SELECT
+                    'CONSTRAINT'        AS object_type,
+                    t.constraint_name   AS object_name,
+                    t.table_name
+                FROM user_constraints t
+                WHERE t.status = 'DISABLED'
+                UNION ALL
+                SELECT
+                    'INDEX'             AS object_type,
+                    t.index_name        AS object_name,
+                    t.table_name
+                FROM user_indexes t
+                WHERE (t.status         != 'VALID'
+                    OR t.funcidx_status != 'ENABLED')
+                UNION ALL
+                SELECT
+                    'TRIGGER'           AS object_type,
+                    t.trigger_name      AS object_name,
+                    t.table_name
+                FROM user_triggers t
+                WHERE t.status = 'DISABLED'
+                ORDER BY
+                    1, 2;
+            --
+            v_out := v_out || get_content(v_cursor, 'Disabled Objects');
+        EXCEPTION
+        WHEN OTHERS THEN
+            core.raise_error();
+        END;
 
         -- append content
-        OPEN v_cursor FOR
-            SELECT
-                t.owner,
-                t.job_name,
-                MAX(t.actual_start_date)            AS last_start_date,
-                t.status,
-                CASE
-                    WHEN t.status != 'SUCCEEDED' THEN 'RED'
-                    END AS status__color,
-                --
-                MAX(core.get_timer(t.run_duration)) AS run_duration,
-                MAX(core.get_timer(t.cpu_used))     AS cpu_used,
-                COUNT(*)                            AS count_,
-                t.errors                            AS error_
-                --
-            FROM all_scheduler_job_run_details t
-            WHERE 1 = 1
-                AND t.owner     LIKE core_custom.g_owner_like
-                AND t.log_date  >= v_start_date
-                AND t.log_date  <  v_end_date
-            GROUP BY
-                t.owner,
-                t.job_name,
-                t.status,
-                t.errors
-            ORDER BY
-                1, 2, 3;
-        --
-        v_out := v_out || get_content(v_cursor, 'Schedulers');
+        BEGIN
+            OPEN v_cursor FOR
+                SELECT
+                    t.owner,
+                    t.name,
+                    t.type,
+                    t.line,
+                    t.position,
+                    t.text              AS error_
+                FROM all_errors t
+                WHERE 1 = 1
+                    AND t.owner         LIKE core_custom.g_owner_like
+                    AND t.attribute     = 'ERROR'
+                ORDER BY
+                    1, 2, 3,
+                    t.sequence;
+            --
+            v_out := v_out || get_content(v_cursor, 'Compile Errors');
+        EXCEPTION
+        WHEN OTHERS THEN
+            core.raise_error();
+        END;
 
         -- append content
-        OPEN v_cursor FOR
-            SELECT
-                t.mview_name,
-                MAX(TO_CHAR(t.last_refresh_end_time, 'YYYY-MM-DD HH24:MI'))             AS last_refreshed_at,
-                MAX(ROUND(86400 * (t.last_refresh_end_time - t.last_refresh_date), 0))  AS last_timer,
-                t.staleness,
-                CASE
-                    WHEN t.staleness != 'FRESH' THEN 'RED'
-                    END AS staleness__color,
-                --
-                t.compile_state,
-                CASE
-                    WHEN t.compile_state != 'VALID' THEN 'RED'
-                    END AS compile_state__color,
-                --
-                LISTAGG(i.index_name, ', ') WITHIN GROUP (ORDER BY i.index_name) AS indexes
-                --
-            FROM all_mviews t
-            LEFT JOIN all_indexes i
-                ON i.owner          = t.owner
-                AND i.table_name    = t.mview_name
-            WHERE 1 = 1
-                AND t.owner         LIKE core_custom.g_owner_like
-            GROUP BY
-                t.mview_name,
-                t.staleness,
-                t.compile_state
-            ORDER BY 1;
-        --
-        v_out := v_out || get_content(v_cursor, 'Materialized Views');
+        BEGIN
+            OPEN v_cursor FOR
+                SELECT
+                    t.owner,
+                    t.job_name,
+                    MAX(t.actual_start_date)            AS last_start_date,
+                    t.status,
+                    CASE
+                        WHEN t.status != 'SUCCEEDED' THEN 'RED'
+                        END AS status__color,
+                    --
+                    MAX(core.get_timer(t.run_duration)) AS run_duration,
+                    MAX(core.get_timer(t.cpu_used))     AS cpu_used,
+                    COUNT(*)                            AS count_,
+                    t.errors                            AS error_
+                    --
+                FROM all_scheduler_job_run_details t
+                WHERE 1 = 1
+                    AND t.owner     LIKE core_custom.g_owner_like
+                    AND t.log_date  >= v_start_date
+                    AND t.log_date  <  v_end_date
+                GROUP BY
+                    t.owner,
+                    t.job_name,
+                    t.status,
+                    t.errors
+                ORDER BY
+                    1, 2, 3;
+            --
+            v_out := v_out || get_content(v_cursor, 'Schedulers');
+        EXCEPTION
+        WHEN OTHERS THEN
+            core.raise_error();
+        END;
 
         -- append content
-        OPEN v_cursor FOR
-            SELECT
-                t.application_group     AS app_group,
-                t.application_id        AS app_id,
-                t.application_name      AS app_name,
-                t.version,
-                --t.build_status,
-                t.pages,
-                t.last_updated_by       AS updated_by,
-                t.last_updated_on       AS updated_at,
-                --
-                COALESCE (
-                    TO_CHAR(t.last_dependency_analyzed_at, 'YYYY-MM-DD HH24:MI'),
-                    CASE WHEN f.column_value IS NOT NULL THEN 'MISSING' END
-                ) AS analyzed_at,
-                --
-                CASE WHEN f.column_value IS NULL THEN 'RED' END AS app_id__color,
-                CASE WHEN f.column_value IS NULL THEN 'RED' END AS app_name__color,
-                --
-                CASE WHEN f.column_value IS NOT NULL
-                    AND (t.last_dependency_analyzed_at IS NULL OR t.last_dependency_analyzed_at < TRUNC(SYSDATE))
-                    THEN 'RED' END AS analyzed_at__color,
-                --
-                NULLIF(a.page_views, 0)         AS page_views,
-                NULLIF(a.page_events, 0)        AS page_events,
-                --NULLIF(a.distinct_pages, 0)     AS pages_,
-                NULLIF(a.distinct_users, 0)     AS users_,
-                NULLIF(a.distinct_sessions, 0)  AS sessions_,
-                NULLIF(a.error_count, 0)        AS errors_,
-                ROUND(a.maximum_render_time, 2) AS render_time_max
-                --
-            FROM apex_applications t
-            LEFT JOIN TABLE(core_custom.g_apps) f
-                ON TO_NUMBER(f.column_value) = t.application_id
-            LEFT JOIN apex_workspace_log_archive a
-                ON a.application_id     = t.application_id
-                AND a.log_day           = v_start_date
-            WHERE t.is_working_copy     = 'No'
-            ORDER BY
-                1, 2;
-        --
-        v_out := v_out || get_content(v_cursor, 'Applications');
+        BEGIN
+            OPEN v_cursor FOR
+                SELECT
+                    t.mview_name,
+                    MAX(TO_CHAR(t.last_refresh_end_time, 'YYYY-MM-DD HH24:MI'))             AS last_refreshed_at,
+                    MAX(ROUND(86400 * (t.last_refresh_end_time - t.last_refresh_date), 0))  AS last_timer,
+                    t.staleness,
+                    CASE
+                        WHEN t.staleness != 'FRESH' THEN 'RED'
+                        END AS staleness__color,
+                    --
+                    t.compile_state,
+                    CASE
+                        WHEN t.compile_state != 'VALID' THEN 'RED'
+                        END AS compile_state__color,
+                    --
+                    LISTAGG(i.index_name, ', ') WITHIN GROUP (ORDER BY i.index_name) AS indexes
+                    --
+                FROM all_mviews t
+                LEFT JOIN all_indexes i
+                    ON i.owner          = t.owner
+                    AND i.table_name    = t.mview_name
+                WHERE 1 = 1
+                    AND t.owner         LIKE core_custom.g_owner_like
+                GROUP BY
+                    t.mview_name,
+                    t.staleness,
+                    t.compile_state
+                ORDER BY 1;
+            --
+            v_out := v_out || get_content(v_cursor, 'Materialized Views');
+        EXCEPTION
+        WHEN OTHERS THEN
+            core.raise_error();
+        END;
 
         -- append content
-        OPEN v_cursor FOR
-            SELECT
-                t.application_id            AS app_id,
-                t.application_name          AS app_name,
-                t.authentication_method     AS auth_method,
-                t.user_name,
-                t.custom_status_text        AS error_,
-                t.ip_address,
-                --
-                COUNT(*)                    AS attempts,
-                MAX(t.access_date)          AS last_access_date
-                --
-            FROM apex_workspace_access_log t
-            WHERE t.application_schema_owner    NOT LIKE 'APEX_2%'
-                AND t.authentication_result     != 'AUTH_SUCCESS'
-                AND t.access_date               >= v_start_date
-                AND t.access_date               <  v_end_date
-            GROUP BY
-                t.application_id,
-                t.application_name,
-                t.authentication_method,
-                t.user_name,
-                t.custom_status_text,
-                t.ip_address
-            ORDER BY
-                1, 2, 3, 4;
-        --
-        v_out := v_out || get_content(v_cursor, 'Failed Authentication');
+        BEGIN
+            OPEN v_cursor FOR
+                SELECT
+                    t.application_group     AS app_group,
+                    t.application_id        AS app_id,
+                    t.application_name      AS app_name,
+                    t.version,
+                    --t.build_status,
+                    t.pages,
+                    t.last_updated_by       AS updated_by,
+                    t.last_updated_on       AS updated_at,
+                    --
+                    COALESCE (
+                        TO_CHAR(t.last_dependency_analyzed_at, 'YYYY-MM-DD HH24:MI'),
+                        CASE WHEN f.column_value IS NOT NULL THEN 'MISSING' END
+                    ) AS analyzed_at,
+                    --
+                    CASE WHEN f.column_value IS NULL THEN 'RED' END AS app_id__color,
+                    CASE WHEN f.column_value IS NULL THEN 'RED' END AS app_name__color,
+                    --
+                    CASE WHEN f.column_value IS NOT NULL
+                        AND (t.last_dependency_analyzed_at IS NULL OR t.last_dependency_analyzed_at < TRUNC(SYSDATE))
+                        THEN 'RED' END AS analyzed_at__color,
+                    --
+                    NULLIF(a.page_views, 0)         AS page_views,
+                    NULLIF(a.page_events, 0)        AS page_events,
+                    --NULLIF(a.distinct_pages, 0)     AS pages_,
+                    NULLIF(a.distinct_users, 0)     AS users_,
+                    NULLIF(a.distinct_sessions, 0)  AS sessions_,
+                    NULLIF(a.error_count, 0)        AS errors_,
+                    ROUND(a.maximum_render_time, 2) AS render_time_max
+                    --
+                FROM apex_applications t
+                LEFT JOIN TABLE(core_custom.g_apps) f
+                    ON TO_NUMBER(f.column_value) = t.application_id
+                LEFT JOIN apex_workspace_log_archive a
+                    ON a.application_id     = t.application_id
+                    AND a.log_day           = v_start_date
+                WHERE t.is_working_copy     = 'No'
+                ORDER BY
+                    1, 2;
+            --
+            v_out := v_out || get_content(v_cursor, 'Applications');
+        EXCEPTION
+        WHEN OTHERS THEN
+            core.raise_error();
+        END;
 
         -- append content
-        OPEN v_cursor FOR
-            SELECT
-                t.application_id AS app_id,
-                t.page_id,
-                t.component_type_name,
-                t.component_display_name,
-                t.property_group_name,
-                t.property_name,
-                DBMS_LOB.SUBSTR(t.code_fragment, 4000, 1) AS code_fragment,
-                t.error_message AS error_
-            FROM apex_used_db_object_comp_props t
-            WHERE t.error_message IS NOT NULL
-            ORDER BY
-                1, 2, 3, 4;
-        --
-        v_out := v_out || get_content(v_cursor, 'Broken APEX Components');
+        BEGIN
+            OPEN v_cursor FOR
+                SELECT
+                    f.file_name,
+                    DBMS_LOB.GETLENGTH(f.file_content) AS file_size,
+                    f.last_updated_by   AS updated_by,
+                    f.last_updated_on   AS updated_at
+                FROM apex_workspace_static_files f
+                WHERE (
+                        f.file_name     LIKE '%.css'
+                        OR f.file_name  LIKE '%.js'
+                    )
+                    AND f.file_name     NOT LIKE '%.min.%'
+                ORDER BY 1;
+            --
+            v_out := v_out || get_content(v_cursor, 'Workspace Files');
+        EXCEPTION
+        WHEN OTHERS THEN
+            core.raise_error();
+        END;
 
         -- append content
-        OPEN v_cursor FOR
-            SELECT
-                t.workspace_name                    AS workspace,
-                APEX_STRING_UTIL.GET_DOMAIN(t.url)  AS host,
-                t.http_method                       AS method,
-                t.status_code,
-                --
-                CASE
-                    WHEN t.status_code <= 299 THEN 'Success'
-                    WHEN t.status_code <= 399 THEN 'Redirection'
-                    WHEN t.status_code <= 499 THEN 'Client Error'
-                    WHEN t.status_code <= 599 THEN 'Server Error'
-                    END AS status,
-                --
-                CASE
-                    WHEN t.status_code <= 299 THEN ''
-                    WHEN t.status_code <= 399 THEN ''
-                    WHEN t.status_code <= 499 THEN 'RED'
-                    WHEN t.status_code <= 599 THEN 'RED'
-                    END AS status__color,
-                --
-                ROUND(AVG(t.elapsed_sec), 2) AS elapsed_sec_avg,
-                ROUND(MAX(t.elapsed_sec), 2) AS elapsed_sec_max,
-                COUNT(*) AS count_
-                --
-            FROM apex_webservice_log t
-            WHERE 1 = 1
-                AND t.request_date  >= v_start_date
-                AND t.request_date  <  v_end_date
-            GROUP BY
-                t.workspace_name,
-                APEX_STRING_UTIL.GET_DOMAIN(t.url),
-                t.http_method,
-                t.status_code
-            ORDER BY
-                1, 2, 3;
-        --
-        v_out := v_out || get_content(v_cursor, 'Web Service Calls');
+        BEGIN
+            OPEN v_cursor FOR
+                SELECT
+                    t.application_id            AS app_id,
+                    t.application_name          AS app_name,
+                    t.authentication_method     AS auth_method,
+                    t.user_name,
+                    t.custom_status_text        AS error_,
+                    t.ip_address,
+                    --
+                    COUNT(*)                    AS attempts,
+                    MAX(t.access_date)          AS last_access_date
+                    --
+                FROM apex_workspace_access_log t
+                WHERE t.application_schema_owner    NOT LIKE 'APEX_2%'
+                    AND t.authentication_result     != 'AUTH_SUCCESS'
+                    AND t.access_date               >= v_start_date
+                    AND t.access_date               <  v_end_date
+                GROUP BY
+                    t.application_id,
+                    t.application_name,
+                    t.authentication_method,
+                    t.user_name,
+                    t.custom_status_text,
+                    t.ip_address
+                ORDER BY
+                    1, 2, 3, 4;
+            --
+            v_out := v_out || get_content(v_cursor, 'Failed Authentication');
+        EXCEPTION
+        WHEN OTHERS THEN
+            core.raise_error();
+        END;
 
         -- append content
-        OPEN v_cursor FOR
-            SELECT
-                t.app_id,
-                REPLACE(REPLACE(t.mail_send_error, '<', '"'), '>', '"') AS error_,
-                --
-                SUM(t.mail_send_count) AS count_,
-                MAX(t.id) AS recent_id
-                --
-            FROM apex_mail_queue t
-            WHERE 1 = 1
-                AND t.mail_message_created  >= v_start_date
-                AND t.mail_message_created  <  v_end_date
-                AND t.mail_send_error       IS NOT NULL
-            GROUP BY
-                t.app_id,
-                REPLACE(REPLACE(t.mail_send_error, '<', '"'), '>', '"')
-            ORDER BY
-                1, 2;
-        --
-        v_out := v_out || get_content(v_cursor, 'Mail Queue Errors');
+        BEGIN
+            OPEN v_cursor FOR
+                SELECT
+                    t.application_id AS app_id,
+                    t.page_id,
+                    t.component_type_name,
+                    t.component_display_name,
+                    t.property_group_name,
+                    t.property_name,
+                    DBMS_LOB.SUBSTR(t.code_fragment, 4000, 1) AS code_fragment,
+                    t.error_message AS error_
+                FROM apex_used_db_object_comp_props t
+                WHERE t.error_message IS NOT NULL
+                ORDER BY
+                    1, 2, 3, 4;
+            --
+            v_out := v_out || get_content(v_cursor, 'Broken APEX Components');
+        EXCEPTION
+        WHEN OTHERS THEN
+            core.raise_error();
+        END;
 
         -- append content
-        OPEN v_cursor FOR
-            SELECT
-                t.application_id AS app_id,
-                t.page_id,
-                TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.error_message, '#\d+', ''), 'id "\d+"', 'id ?')) AS error_,
-                --
-                COUNT(*) AS count_,
-                MAX(t.id) AS recent_log_id
-                --
-            FROM apex_workspace_activity_log t
-            WHERE 1 = 1
-                AND t.view_date         >= v_start_date
-                AND t.view_date         <  v_end_date
-                AND t.error_message     IS NOT NULL
-                AND t.error_message     NOT LIKE 'Your session has ended%'
-            GROUP BY
-                t.application_id,
-                t.page_id,
-                TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.error_message, '#\d+', ''), 'id "\d+"', 'id ?'))
-            ORDER BY
-                1, 2, 3;
-        --
-        v_out := v_out || get_content(v_cursor, 'Workspace Errors');
+        BEGIN
+            OPEN v_cursor FOR
+                SELECT
+                    t.workspace_name                    AS workspace,
+                    APEX_STRING_UTIL.GET_DOMAIN(t.url)  AS host,
+                    t.http_method                       AS method,
+                    t.status_code,
+                    --
+                    CASE
+                        WHEN t.status_code <= 299 THEN 'Success'
+                        WHEN t.status_code <= 399 THEN 'Redirection'
+                        WHEN t.status_code <= 499 THEN 'Client Error'
+                        WHEN t.status_code <= 599 THEN 'Server Error'
+                        END AS status,
+                    --
+                    CASE
+                        WHEN t.status_code <= 299 THEN ''
+                        WHEN t.status_code <= 399 THEN ''
+                        WHEN t.status_code <= 499 THEN 'RED'
+                        WHEN t.status_code <= 599 THEN 'RED'
+                        END AS status__color,
+                    --
+                    ROUND(AVG(t.elapsed_sec), 2) AS elapsed_sec_avg,
+                    ROUND(MAX(t.elapsed_sec), 2) AS elapsed_sec_max,
+                    COUNT(*) AS count_
+                    --
+                FROM apex_webservice_log t
+                WHERE 1 = 1
+                    AND t.request_date  >= v_start_date
+                    AND t.request_date  <  v_end_date
+                GROUP BY
+                    t.workspace_name,
+                    APEX_STRING_UTIL.GET_DOMAIN(t.url),
+                    t.http_method,
+                    t.status_code
+                ORDER BY
+                    1, 2, 3;
+            --
+            v_out := v_out || get_content(v_cursor, 'Web Service Calls');
+        EXCEPTION
+        WHEN OTHERS THEN
+            core.raise_error();
+        END;
 
         -- append content
-        OPEN v_cursor FOR
-            SELECT
-                t.application_id    AS app_id,
-                t.page_id,
-                t.apex_user         AS user_,
-                --
-                CASE t.message_level
-                    WHEN 1 THEN 'E'
-                    WHEN 2 THEN 'W'
-                    ELSE TO_CHAR(t.message_level)
-                    END AS type_,
-                --
-                TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.message, '#\d+', ''), 'id "\d+"', 'id ?')) AS error_,
-                --
-                COUNT(*) AS count_,
-                MAX(t.id) AS recent_log_id
-                --
-            FROM apex_debug_messages t
-            WHERE 1 = 1
-                AND t.message_timestamp >= v_start_date
-                AND t.message_timestamp <  v_end_date
-                AND t.message_level     IN (1, 2)
-                AND t.message           NOT LIKE '%ORA-20876: Stop APEX Engine%'
-            GROUP BY
-                t.application_id,
-                t.page_id,
-                t.apex_user,
-                t.message_level,
-                --
-                TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.message, '#\d+', ''), 'id "\d+"', 'id ?'))
-            ORDER BY
-                1, 2, 3, 4;
-        --
-        v_out := v_out || get_content(v_cursor, 'APEX Debug Messages');
+        BEGIN
+            OPEN v_cursor FOR
+                SELECT
+                    t.app_id,
+                    REPLACE(REPLACE(t.mail_send_error, '<', '"'), '>', '"') AS error_,
+                    --
+                    SUM(t.mail_send_count) AS count_,
+                    MAX(t.id) AS recent_id
+                    --
+                FROM apex_mail_queue t
+                WHERE 1 = 1
+                    AND t.mail_message_created  >= v_start_date
+                    AND t.mail_message_created  <  v_end_date
+                    AND t.mail_send_error       IS NOT NULL
+                GROUP BY
+                    t.app_id,
+                    REPLACE(REPLACE(t.mail_send_error, '<', '"'), '>', '"')
+                ORDER BY
+                    1, 2;
+            --
+            v_out := v_out || get_content(v_cursor, 'Mail Queue Errors');
+        EXCEPTION
+        WHEN OTHERS THEN
+            core.raise_error();
+        END;
 
         -- append content
-        OPEN v_cursor FOR
-            SELECT
-                t.table_name,
-                'MISSING'           AS status,
-                'RED'               AS status__color
-            FROM user_tables t
-            JOIN user_tab_cols c
-                ON c.table_name     = t.table_name
-                AND c.column_name   = 'TENANT_ID'
-            LEFT JOIN user_policies p
-                ON p.object_name    = t.table_name
-            WHERE t.table_name      LIKE core_custom.global_prefix || '%' ESCAPE '\'
-                AND p.policy_name   IS NULL
-            ORDER BY 1;
-        --
-        v_out := v_out || get_content(v_cursor, 'Missing VPD Policies');
+        BEGIN
+            OPEN v_cursor FOR
+                SELECT
+                    t.application_id AS app_id,
+                    t.page_id,
+                    TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.error_message, '#\d+', ''), 'id "\d+"', 'id ?')) AS error_,
+                    --
+                    COUNT(*) AS count_,
+                    MAX(t.id) AS recent_log_id
+                    --
+                FROM apex_workspace_activity_log t
+                WHERE 1 = 1
+                    AND t.view_date         >= v_start_date
+                    AND t.view_date         <  v_end_date
+                    AND t.error_message     IS NOT NULL
+                    AND t.error_message     NOT LIKE 'Your session has ended%'
+                GROUP BY
+                    t.application_id,
+                    t.page_id,
+                    TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.error_message, '#\d+', ''), 'id "\d+"', 'id ?'))
+                ORDER BY
+                    1, 2, 3;
+            --
+            v_out := v_out || get_content(v_cursor, 'Workspace Errors');
+        EXCEPTION
+        WHEN OTHERS THEN
+            core.raise_error();
+        END;
+
+        -- append content
+        BEGIN
+            OPEN v_cursor FOR
+                SELECT
+                    t.application_id    AS app_id,
+                    t.page_id,
+                    t.apex_user         AS user_,
+                    --
+                    CASE t.message_level
+                        WHEN 1 THEN 'E'
+                        WHEN 2 THEN 'W'
+                        ELSE TO_CHAR(t.message_level)
+                        END AS type_,
+                    --
+                    TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.message, '#\d+', ''), 'id "\d+"', 'id ?')) AS error_,
+                    --
+                    COUNT(*) AS count_,
+                    MAX(t.id) AS recent_log_id
+                    --
+                FROM apex_debug_messages t
+                WHERE 1 = 1
+                    AND t.message_timestamp >= v_start_date
+                    AND t.message_timestamp <  v_end_date
+                    AND t.message_level     IN (1, 2)
+                    AND t.message           NOT LIKE '%ORA-20876: Stop APEX Engine%'
+                GROUP BY
+                    t.application_id,
+                    t.page_id,
+                    t.apex_user,
+                    t.message_level,
+                    --
+                    TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.message, '#\d+', ''), 'id "\d+"', 'id ?'))
+                ORDER BY
+                    1, 2, 3, 4;
+            --
+            v_out := v_out || get_content(v_cursor, 'APEX Debug Messages');
+        EXCEPTION
+        WHEN OTHERS THEN
+            core.raise_error();
+        END;
+
+        -- append content
+        BEGIN
+            OPEN v_cursor FOR
+                SELECT
+                    t.table_name,
+                    'MISSING'           AS status,
+                    'RED'               AS status__color
+                FROM user_tables t
+                JOIN user_tab_cols c
+                    ON c.table_name     = t.table_name
+                    AND c.column_name   = 'TENANT_ID'
+                LEFT JOIN user_policies p
+                    ON p.object_name    = t.table_name
+                WHERE t.table_name      LIKE core_custom.global_prefix || '%' ESCAPE '\'
+                    AND p.policy_name   IS NULL
+                ORDER BY 1;
+            --
+            v_out := v_out || get_content(v_cursor, 'Missing VPD Policies');
+        EXCEPTION
+        WHEN OTHERS THEN
+            core.raise_error();
+        END;
 
         -- send mail to all developers
         send_mail (
@@ -534,104 +623,143 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
             WHEN NO_DATA_FOUND THEN
                 CONTINUE;
             END;
-            --
-            OPEN v_cursor FOR
-                WITH t AS (
-                    SELECT
-                        a.id,
-                        --
-                        CASE WHEN GROUPING_ID(a.id) = 0 THEN a.application_id       END AS application_id,
-                        CASE WHEN GROUPING_ID(a.id) = 0 THEN a.page_id              END AS page_id,
-                        CASE WHEN GROUPING_ID(a.id) = 0 THEN a.page_name            END AS page_name,
-                        CASE WHEN GROUPING_ID(a.id) = 0 THEN a.view_date            END AS view_date,
-                        CASE WHEN GROUPING_ID(a.id) = 0 THEN MAX(a.page_view_type)  END AS page_view_type,
-                        --
-                        SUM(a.elapsed_time) AS elapsed_time,
-                        --
-                        COUNT(DISTINCT a.apex_user) AS count_users
-                        --
-                    FROM (
+
+            -- append content
+            BEGIN
+                OPEN v_cursor FOR
+                    WITH t AS (
                         SELECT
-                            CASE WHEN page_view_type = 'Rendering' THEN a.id
-                                ELSE LAG(CASE WHEN page_view_type = 'Rendering' THEN a.id END IGNORE NULLS) OVER (ORDER BY a.id)
-                                END AS request_id,
                             a.id,
+                            --
+                            CASE WHEN GROUPING_ID(a.id) = 0 THEN a.application_id       END AS application_id,
+                            CASE WHEN GROUPING_ID(a.id) = 0 THEN a.page_id              END AS page_id,
+                            CASE WHEN GROUPING_ID(a.id) = 0 THEN a.page_name            END AS page_name,
+                            CASE WHEN GROUPING_ID(a.id) = 0 THEN a.view_date            END AS view_date,
+                            CASE WHEN GROUPING_ID(a.id) = 0 THEN MAX(a.page_view_type)  END AS page_view_type,
+                            --
+                            SUM(a.elapsed_time) AS elapsed_time,
+                            --
+                            COUNT(DISTINCT a.apex_user) AS count_users
+                            --
+                        FROM (
+                            SELECT
+                                CASE WHEN page_view_type = 'Rendering' THEN a.id
+                                    ELSE LAG(CASE WHEN page_view_type = 'Rendering' THEN a.id END IGNORE NULLS) OVER (ORDER BY a.id)
+                                    END AS request_id,
+                                a.id,
+                                a.application_id,
+                                a.page_id,
+                                a.page_name,
+                                a.apex_user,
+                                a.view_date,
+                                a.elapsed_time,
+                                a.page_view_type,
+                                a.view_timestamp,
+                                a.apex_session_id
+                            FROM apex_workspace_activity_log a
+                            WHERE 1 = 1
+                                AND a.application_id    = app_id
+                                AND a.view_date         >= v_start_date
+                                AND a.view_date         <  v_end_date
+                        ) a
+                        GROUP BY
+                            a.request_id,
                             a.application_id,
                             a.page_id,
                             a.page_name,
-                            a.apex_user,
                             a.view_date,
-                            a.elapsed_time,
-                            a.page_view_type,
-                            a.view_timestamp,
-                            a.apex_session_id
-                        FROM apex_workspace_activity_log a
-                        WHERE 1 = 1
-                            AND a.application_id    = app_id
-                            AND a.view_date         >= v_start_date
-                            AND a.view_date         <  v_end_date
-                    ) a
-                    GROUP BY
-                        a.request_id,
-                        a.application_id,
-                        a.page_id,
-                        a.page_name,
-                        a.view_date,
-                        a.id
-                    HAVING a.request_id IS NOT NULL
-                ),
-                d AS (
+                            a.id
+                        HAVING a.request_id IS NOT NULL
+                    ),
+                    d AS (
+                        SELECT
+                            t.application_id AS app_id,
+                            t.page_id,
+                            t.page_name,
+                            MAX(t.count_users) AS users_,
+                            --
+                            NULLIF(COUNT(CASE WHEN t.page_view_type = 'Rendering'   THEN t.id END), 0)              AS rendering_count,
+                            ROUND(AVG(   CASE WHEN t.page_view_type = 'Rendering'   THEN t.elapsed_time END), 2)    AS rendering_avg,
+                            ROUND(MAX(   CASE WHEN t.page_view_type = 'Rendering'   THEN t.elapsed_time END), 2)    AS rendering_max,
+                            --
+                            NULLIF(COUNT(CASE WHEN t.page_view_type = 'Processing'  THEN t.id END), 0)              AS processing_count,
+                            ROUND(AVG(   CASE WHEN t.page_view_type = 'Processing'  THEN t.elapsed_time END), 2)    AS processing_avg,
+                            ROUND(MAX(   CASE WHEN t.page_view_type = 'Processing'  THEN t.elapsed_time END), 2)    AS processing_max,
+                            --
+                            NULLIF(COUNT(CASE WHEN t.page_view_type = 'Ajax'        THEN t.id END), 0)              AS ajax_count,
+                            ROUND(AVG(   CASE WHEN t.page_view_type = 'Ajax'        THEN t.elapsed_time END), 2)    AS ajax_avg,
+                            ROUND(MAX(   CASE WHEN t.page_view_type = 'Ajax'        THEN t.elapsed_time END), 2)    AS ajax_max
+                            --
+                        FROM t
+                        GROUP BY
+                            t.application_id,
+                            t.page_id,
+                            t.page_name
+                    )
                     SELECT
-                        t.application_id AS app_id,
-                        t.page_id,
-                        t.page_name,
-                        MAX(t.count_users) AS users_,
+                        d.app_id,
+                        d.page_id,
+                        d.page_name,
+                        d.users_,
                         --
-                        NULLIF(COUNT(CASE WHEN t.page_view_type = 'Rendering'   THEN t.id END), 0)              AS rendering_count,
-                        ROUND(AVG(   CASE WHEN t.page_view_type = 'Rendering'   THEN t.elapsed_time END), 2)    AS rendering_avg,
-                        ROUND(MAX(   CASE WHEN t.page_view_type = 'Rendering'   THEN t.elapsed_time END), 2)    AS rendering_max,
+                        d.rendering_count,
+                        d.rendering_avg,
+                        d.rendering_max,
+                        d.processing_count,
+                        d.processing_avg,
+                        d.processing_max,
+                        d.ajax_count,
+                        d.ajax_avg,
+                        d.ajax_max,
                         --
-                        NULLIF(COUNT(CASE WHEN t.page_view_type = 'Processing'  THEN t.id END), 0)              AS processing_count,
-                        ROUND(AVG(   CASE WHEN t.page_view_type = 'Processing'  THEN t.elapsed_time END), 2)    AS processing_avg,
-                        ROUND(MAX(   CASE WHEN t.page_view_type = 'Processing'  THEN t.elapsed_time END), 2)    AS processing_max,
+                        CASE WHEN d.rendering_avg   >= 1 THEN 'RED' END AS rendering_avg__color,
+                        CASE WHEN d.rendering_max   >= 1 THEN 'RED' END AS rendering_max__color,
+                        CASE WHEN d.processing_avg  >= 1 THEN 'RED' END AS processing_avg__color,
+                        CASE WHEN d.processing_max  >= 1 THEN 'RED' END AS processing_max__color,
+                        CASE WHEN d.ajax_avg        >= 1 THEN 'RED' END AS ajax_avg__color,
+                        CASE WHEN d.ajax_max        >= 1 THEN 'RED' END AS ajax_max__color
+                    FROM d
+                    ORDER BY
+                        1, 2;
+                --
+                v_out := v_out || get_content(v_cursor, v_header, 'Performance');
+            EXCEPTION
+            WHEN OTHERS THEN
+                core.raise_error();
+            END;
+
+            -- append content
+            BEGIN
+                OPEN v_cursor FOR
+                    SELECT
+                        g.developer,
+                        g.page_id,
+                        g.page_name,
                         --
-                        NULLIF(COUNT(CASE WHEN t.page_view_type = 'Ajax'        THEN t.id END), 0)              AS ajax_count,
-                        ROUND(AVG(   CASE WHEN t.page_view_type = 'Ajax'        THEN t.elapsed_time END), 2)    AS ajax_avg,
-                        ROUND(MAX(   CASE WHEN t.page_view_type = 'Ajax'        THEN t.elapsed_time END), 2)    AS ajax_max
+                        COUNT(DISTINCT g.component_id) AS components,
                         --
-                    FROM t
+                        NULLIF(COUNT(CASE WHEN g.audit_action = 'Insert' THEN 1 END), 0) AS inserted_,
+                        NULLIF(COUNT(CASE WHEN g.audit_action = 'Update' THEN 1 END), 0) AS updated_,
+                        NULLIF(COUNT(CASE WHEN g.audit_action = 'Delete' THEN 1 END), 0) AS deleted_
+                        --
+                    FROM apex_developer_activity_log g
+                    WHERE 1 = 1
+                        AND g.application_id    = app_id
+                        AND g.audit_date        >= v_start_date
+                        AND g.audit_date        <  v_end_date
+                        AND g.developer         != USER
                     GROUP BY
-                        t.application_id,
-                        t.page_id,
-                        t.page_name
-                )
-                SELECT
-                    d.app_id,
-                    d.page_id,
-                    d.page_name,
-                    d.users_,
-                    --
-                    d.rendering_count,
-                    d.rendering_avg,
-                    d.rendering_max,
-                    d.processing_count,
-                    d.processing_avg,
-                    d.processing_max,
-                    d.ajax_count,
-                    d.ajax_avg,
-                    d.ajax_max,
-                    --
-                    CASE WHEN d.rendering_avg   >= 1 THEN 'RED' END AS rendering_avg__color,
-                    CASE WHEN d.rendering_max   >= 1 THEN 'RED' END AS rendering_max__color,
-                    CASE WHEN d.processing_avg  >= 1 THEN 'RED' END AS processing_avg__color,
-                    CASE WHEN d.processing_max  >= 1 THEN 'RED' END AS processing_max__color,
-                    CASE WHEN d.ajax_avg        >= 1 THEN 'RED' END AS ajax_avg__color,
-                    CASE WHEN d.ajax_max        >= 1 THEN 'RED' END AS ajax_max__color
-                FROM d
-                ORDER BY
-                    1, 2;
-            --
-            v_out := v_out || get_content(v_cursor, v_header);
+                        g.developer,
+                        g.page_id,
+                        g.page_name
+                    ORDER BY
+                        1, 2, 3;
+                --
+                v_out := v_out || get_content(v_cursor, NULL, 'Component Changes');
+            EXCEPTION
+            WHEN OTHERS THEN
+                core.raise_error();
+            END;
         END LOOP;
 
         -- send mail to all developers
