@@ -116,6 +116,23 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 1, 2, 3;
         --
         v_out := v_out || get_content(v_cursor, 'Invalid Objects');
+        BEGIN
+            OPEN v_cursor FOR
+                SELECT
+                    d.version_full          AS db_version,
+                    r.version_no            AS apex_version,
+                    p.installed_on          AS apex_patched,
+                    ords.installed_version  AS ords_version
+                FROM product_component_version d
+                CROSS JOIN apex_release r
+                JOIN apex_patches p
+                    ON p.images_version = r.version_no;
+            --
+            v_out := v_out || get_content(v_cursor, 'Versions');
+        EXCEPTION
+        WHEN OTHERS THEN
+            core.raise_error();
+        END;
 
         -- append content
         OPEN v_cursor FOR
