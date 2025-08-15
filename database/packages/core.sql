@@ -4239,10 +4239,20 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_app_id           PLS_INTEGER     := NULL,
         in_version          VARCHAR2        := NULL,
         in_proceed          BOOLEAN         := TRUE,
-        in_skip_main        BOOLEAN         := FALSE
+        in_skip_main        BOOLEAN         := FALSE,
+        in_keep_older       BOOLEAN         := FALSE
     )
     AS
         v_apps              apex_t_varchar2;
+        --
+        FUNCTION get_sortable_version (
+            in_version      VARCHAR2
+        )
+        RETURN VARCHAR2
+        AS
+        BEGIN
+            RETURN REGEXP_REPLACE(REGEXP_REPLACE(in_version, '\.(\d+)', '.0\1'), '\.\d?(\d{2})', '.\1');
+        END;
     BEGIN
         -- prepare apps list
         IF in_app_id IS NOT NULL THEN
@@ -4318,7 +4328,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
                     IF c.version_tmp IS NOT NULL THEN
                         c.version_new := GREATEST(NVL(c.version_new, c.version_old), c.version_tmp);
                         --
-                        IF c.version_tmp != c.version_old THEN
+                        IF get_sortable_version(c.version_tmp) > get_sortable_version(c.version_old) THEN
                             DBMS_OUTPUT.PUT_LINE('    ' || RPAD(d.table_name || ' ', 48, '.') || ' ' || c.version_tmp);
                         END IF;
                     END IF;
@@ -4331,7 +4341,10 @@ CREATE OR REPLACE PACKAGE BODY core AS
                     c.version_new := REPLACE(TO_CHAR(TO_DATE(c.version_new, 'YYYY-MM-DD HH24:MI:SS'), 'YYYY-MM-DD fmHH24.MI'), ' ', ' 1.');
                 END IF;
                 --
-                IF c.version_new != c.version_old THEN
+                IF (                
+                    (NOT in_keep_older AND get_sortable_version(c.version_new) >  get_sortable_version(c.version_old))
+                    OR  (in_keep_older AND get_sortable_version(c.version_new) != get_sortable_version(c.version_old))
+                ) THEN
                     DBMS_OUTPUT.PUT_LINE('    --');
                     DBMS_OUTPUT.PUT_LINE('    UPDATING ' || c.version_old);
                     DBMS_OUTPUT.PUT_LINE('          TO ' || c.version_new);
