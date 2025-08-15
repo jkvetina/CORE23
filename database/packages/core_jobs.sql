@@ -275,77 +275,6 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         BEGIN
             OPEN v_cursor FOR
                 SELECT
-                    t.application_group     AS app_group,
-                    t.application_id        AS app_id,
-                    t.application_name      AS app_name,
-                    t.version,
-                    --t.build_status,
-                    t.pages,
-                    t.last_updated_by       AS updated_by,
-                    t.last_updated_on       AS updated_at,
-                    --
-                    COALESCE (
-                        TO_CHAR(t.last_dependency_analyzed_at, 'YYYY-MM-DD HH24:MI'),
-                        CASE WHEN f.column_value IS NOT NULL THEN 'MISSING' END
-                    ) AS analyzed_at,
-                    --
-                    CASE WHEN f.column_value IS NULL THEN 'RED' END AS app_id__color,
-                    CASE WHEN f.column_value IS NULL THEN 'RED' END AS app_name__color,
-                    --
-                    CASE WHEN f.column_value IS NOT NULL
-                        AND (t.last_dependency_analyzed_at IS NULL OR t.last_dependency_analyzed_at < TRUNC(SYSDATE))
-                        THEN 'RED' END AS analyzed_at__color,
-                    --
-                    NULLIF(a.page_views, 0)         AS page_views,
-                    NULLIF(a.page_events, 0)        AS page_events,
-                    --NULLIF(a.distinct_pages, 0)     AS pages_,
-                    NULLIF(a.distinct_users, 0)     AS users_,
-                    NULLIF(a.distinct_sessions, 0)  AS sessions_,
-                    NULLIF(a.error_count, 0)        AS errors_,
-                    ROUND(a.maximum_render_time, 2) AS render_time_max
-                    --
-                FROM apex_applications t
-                LEFT JOIN TABLE(core_custom.g_apps) f
-                    ON TO_NUMBER(f.column_value) = t.application_id
-                LEFT JOIN apex_workspace_log_archive a
-                    ON a.application_id     = t.application_id
-                    AND a.log_day           = v_start_date
-                WHERE t.is_working_copy     = 'No'
-                ORDER BY
-                    1, 2;
-            --
-            v_out := v_out || get_content(v_cursor, 'Applications');
-        EXCEPTION
-        WHEN OTHERS THEN
-            core.raise_error();
-        END;
-
-        -- append content
-        BEGIN
-            OPEN v_cursor FOR
-                SELECT
-                    f.file_name,
-                    DBMS_LOB.GETLENGTH(f.file_content) AS file_size,
-                    f.last_updated_by   AS updated_by,
-                    f.last_updated_on   AS updated_at
-                FROM apex_workspace_static_files f
-                WHERE (
-                        f.file_name     LIKE '%.css'
-                        OR f.file_name  LIKE '%.js'
-                    )
-                    AND f.file_name     NOT LIKE '%.min.%'
-                ORDER BY 1;
-            --
-            v_out := v_out || get_content(v_cursor, 'Workspace Files');
-        EXCEPTION
-        WHEN OTHERS THEN
-            core.raise_error();
-        END;
-
-        -- append content
-        BEGIN
-            OPEN v_cursor FOR
-                SELECT
                     t.application_id            AS app_id,
                     t.application_name          AS app_name,
                     t.authentication_method     AS auth_method,
@@ -606,6 +535,83 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
             'start_date',   v_start_date,
             'end_date',     v_end_date
         );
+
+        -- append content
+        BEGIN
+            OPEN v_cursor FOR
+                SELECT
+                    t.application_group     AS app_group,
+                    t.application_id        AS app_id,
+                    t.application_name      AS app_name,
+                    t.version,
+                    --t.build_status,
+                    t.pages,
+                    t.last_updated_by       AS updated_by,
+                    t.last_updated_on       AS updated_at,
+                    --
+                    COALESCE (
+                        TO_CHAR(t.last_dependency_analyzed_at, 'YYYY-MM-DD HH24:MI'),
+                        CASE WHEN f.column_value IS NOT NULL THEN 'MISSING' END
+                    ) AS analyzed_at,
+                    --
+                    CASE WHEN f.column_value IS NULL THEN 'RED' END AS app_id__color,
+                    CASE WHEN f.column_value IS NULL THEN 'RED' END AS app_name__color,
+                    --
+                    CASE WHEN f.column_value IS NOT NULL
+                        AND (t.last_dependency_analyzed_at IS NULL OR t.last_dependency_analyzed_at < TRUNC(SYSDATE))
+                        THEN 'RED' END AS analyzed_at__color,
+                    --
+                    NULLIF(a.page_views, 0)         AS page_views,
+                    NULLIF(a.page_events, 0)        AS page_events,
+                    --NULLIF(a.distinct_pages, 0)     AS pages_,
+                    NULLIF(a.distinct_users, 0)     AS users_,
+                    NULLIF(a.distinct_sessions, 0)  AS sessions_,
+                    NULLIF(a.error_count, 0)        AS errors_,
+                    ROUND(a.maximum_render_time, 2) AS render_time_max
+                    --
+                FROM apex_applications t
+                LEFT JOIN TABLE(core_custom.g_apps) f
+                    ON TO_NUMBER(f.column_value) = t.application_id
+                LEFT JOIN apex_workspace_log_archive a
+                    ON a.application_id     = t.application_id
+                    AND a.log_day           = v_start_date
+                WHERE t.is_working_copy     = 'No'
+                ORDER BY
+                    1, 2;
+            --
+            v_out := v_out || get_content(v_cursor, 'Applications Overview');
+        EXCEPTION
+        WHEN OTHERS THEN
+            core.raise_error();
+        END;
+
+        -- append content
+        BEGIN
+            OPEN v_cursor FOR
+                SELECT
+                    f.file_name,
+                    DBMS_LOB.GETLENGTH(f.file_content) AS file_size,
+                    f.last_updated_by   AS updated_by,
+                    f.last_updated_on   AS updated_at
+                FROM apex_workspace_static_files f
+                WHERE (
+                        f.file_name     LIKE '%.css'
+                        OR f.file_name  LIKE '%.js'
+                    )
+                    AND f.file_name     NOT LIKE '%.min.%'
+                ORDER BY 1;
+            --
+            v_out := v_out || get_content(v_cursor, 'Workspace Files');
+        EXCEPTION
+        WHEN OTHERS THEN
+            core.raise_error();
+        END;
+
+        -- REST Services
+
+        -- Developers
+
+        -- Users (pivot)
 
         -- go thru all selected apps
         FOR app_id IN VALUES OF core_custom.g_apps LOOP
