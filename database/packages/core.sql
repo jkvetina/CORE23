@@ -3563,10 +3563,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         END IF;
 
         -- prepare headers
-        UTL_SMTP.MAIL(conn, quote_address(c_smtp_from, TRUE));
-        --
-        -- @TODO: apex_applications.email_from
-        --
+        UTL_SMTP.MAIL(conn, quote_address(COALESCE(c_smtp_from, core_custom.get_sender()), TRUE));
 
         -- handle multiple recipients
         split_addresses(conn, in_to);
