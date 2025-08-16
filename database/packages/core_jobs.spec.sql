@@ -59,13 +59,6 @@ CREATE OR REPLACE PACKAGE core_jobs AS
 
 
 
-    FUNCTION get_sender (
-        in_env              VARCHAR2 := NULL
-    )
-    RETURN VARCHAR2;
-
-
-
     PROCEDURE close_cursor (
         io_cursor           IN OUT PLS_INTEGER
     );

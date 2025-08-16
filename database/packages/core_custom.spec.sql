@@ -121,6 +121,13 @@ CREATE OR REPLACE PACKAGE core_custom AUTHID CURRENT_USER AS
 
 
 
+    FUNCTION get_sender (
+        in_env              VARCHAR2 := NULL
+    )
+    RETURN VARCHAR2;
+
+
+
     FUNCTION log__ (
         in_type                 CHAR,
         in_message              VARCHAR2,

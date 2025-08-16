@@ -1021,25 +1021,6 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
 
 
 
-    FUNCTION get_sender (
-        in_env              VARCHAR2 := NULL
-    )
-    RETURN VARCHAR2
-    AS
-    BEGIN
-        RETURN COALESCE(
-            core.get_constant (
-                in_name     => 'G_SENDER_' || COALESCE(in_env, core_custom.get_env()),
-                in_package  => 'CORE_CUSTOM',
-                in_owner    => core_custom.master_owner,
-                in_silent   => TRUE
-            ),
-            core_custom.g_sender
-        );
-    END;
-
-
-
     PROCEDURE close_cursor (
         io_cursor           IN OUT PLS_INTEGER
     )

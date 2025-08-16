@@ -41,6 +41,39 @@ CREATE OR REPLACE PACKAGE BODY core_custom AS
 
 
 
+    FUNCTION get_sender (
+        in_env              VARCHAR2 := NULL
+    )
+    RETURN VARCHAR2
+    AS
+        v_sender apex_applications.email_from%TYPE;
+    BEGIN
+        v_sender := COALESCE(
+            core.get_constant (
+                in_name     => 'G_SENDER_' || COALESCE(in_env, core_custom.get_env()),
+                in_package  => 'CORE_CUSTOM',
+                in_owner    => core_custom.master_owner,
+                in_silent   => TRUE
+            ),
+            core_custom.g_sender
+        );
+        --
+        IF v_sender IS NULL THEN
+            SELECT MAX(a.email_from)
+            INTO v_sender
+            FROM apex_applications a
+            WHERE a.application_id = core.get_app_id();
+        END IF;
+        --
+        IF v_sender IS NULL THEN
+            core.raise_error('NO_MAIL_SENDER_DEFINED');
+        END IF;
+        --
+        RETURN v_sender;
+    END;
+
+
+
     FUNCTION log__ (
         in_type                 CHAR,
         in_message              VARCHAR2,
