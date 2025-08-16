@@ -61,6 +61,25 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
 
 
 
+    PROCEDURE job_daily_developers
+    AS
+        v_developers            VARCHAR2(32767);
+    BEGIN
+        v_developers := APEX_STRING.JOIN(core_custom.g_developers, ',');
+        --
+        core_jobs.send_daily(v_developers);
+        COMMIT;
+        --
+        core_jobs.send_performance(v_developers);
+        COMMIT;
+        --
+    EXCEPTION
+    WHEN OTHERS THEN
+        core.raise_error();
+    END;
+
+
+
     PROCEDURE send_daily (
         in_recipients       VARCHAR2        := NULL,
         in_offset           PLS_INTEGER     := NULL,
