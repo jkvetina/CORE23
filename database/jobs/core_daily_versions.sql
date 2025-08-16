@@ -1,5 +1,5 @@
 DECLARE
-    in_job_name             CONSTANT VARCHAR2(128)  := 'CORE_DAILY_DEVELOPERS';
+    in_job_name             CONSTANT VARCHAR2(128)  := 'CORE_DAILY_VERSIONS';
     in_run_immediatelly     CONSTANT BOOLEAN        := FALSE;
 BEGIN
     DBMS_OUTPUT.PUT_LINE('--');
@@ -16,13 +16,20 @@ BEGIN
     DBMS_SCHEDULER.CREATE_JOB (
         job_name            => in_job_name,
         job_type            => 'PLSQL_BLOCK',
-        job_action          => 'core_jobs.job_daily_developers();',
+        job_action          => 'core.update_app_version (
+    in_app_id       => NULL,
+    in_version      => NULL,
+    in_proceed      => TRUE,
+    in_skip_main    => TRUE,
+    in_keep_older   => FALSE
+);',
         number_of_arguments => 0,
-        start_date          => SYSDATE,
-        repeat_interval     => 'FREQ=DAILY; BYHOUR=0; BYMINUTE=5; BYSECOND=0',
+        start_date          => NULL,
+        repeat_interval     => 'FREQ=HOURLY; BYMINUTE=58; BYSECOND=0',
+        end_date            => NULL,
         enabled             => FALSE,
         auto_drop           => TRUE,
-        comments            => NULL
+        comments            => ''
     );
     --
     DBMS_SCHEDULER.SET_ATTRIBUTE(in_job_name, 'JOB_PRIORITY', 3);
@@ -35,3 +42,4 @@ BEGIN
     END IF;
 END;
 /
+

@@ -7,6 +7,10 @@ CREATE OR REPLACE PACKAGE core_jobs AS
 
 
 
+    PROCEDURE job_daily_developers;
+
+
+
     PROCEDURE send_daily (
         in_recipients       VARCHAR2        := NULL,
         in_offset           PLS_INTEGER     := NULL,

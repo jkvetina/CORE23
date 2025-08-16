@@ -155,25 +155,6 @@ CREATE OR REPLACE PACKAGE BODY core_custom AS
         RAISE;
     END;
 
-
-
-    PROCEDURE send_daily_emails
-    AS
-        v_developers            VARCHAR2(32767);
-    BEGIN
-        v_developers := APEX_STRING.JOIN(core_custom.g_developers, ',');
-        --
-        core_jobs.send_daily(v_developers);
-        COMMIT;
-        --
-        core_jobs.send_performance(v_developers);
-        COMMIT;
-        --
-    EXCEPTION
-    WHEN OTHERS THEN
-        core.raise_error();
-    END;
-
 END;
 /
 
