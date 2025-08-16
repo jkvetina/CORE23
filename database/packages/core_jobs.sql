@@ -89,11 +89,10 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         v_out               CLOB            := EMPTY_CLOB();
         v_subject           VARCHAR2(256);
         v_cursor            SYS_REFCURSOR;
-        v_offset            PLS_INTEGER;
+        v_offset            PLS_INTEGER     := NVL(in_offset, 0);
         v_start_date        DATE;
         v_end_date          DATE;
     BEGIN
-        v_offset            := CASE WHEN TO_CHAR(SYSDATE, 'HH24') = '00' AND in_offset IS NULL THEN 0 ELSE NVL(in_offset, 0) END;
         v_start_date        := TRUNC(SYSDATE) - v_offset;
         v_end_date          := TRUNC(SYSDATE) - v_offset + 1;
         v_subject           := get_subject('Daily Overview', v_start_date);
@@ -539,11 +538,10 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         v_subject           VARCHAR2(256);
         v_header            VARCHAR2(256);
         v_cursor            SYS_REFCURSOR;
-        v_offset            PLS_INTEGER;
+        v_offset            PLS_INTEGER     := NVL(in_offset, 0);
         v_start_date        DATE;
         v_end_date          DATE;
     BEGIN
-        v_offset            := CASE WHEN TO_CHAR(SYSDATE, 'HH24') = '00' AND in_offset IS NULL THEN 0 ELSE NVL(in_offset, 0) END;
         v_start_date        := TRUNC(SYSDATE) - v_offset;
         v_end_date          := TRUNC(SYSDATE) - v_offset + 1;
         v_subject           := get_subject('Performance', v_start_date);
@@ -835,7 +833,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         ) LOOP
             v_id := APEX_MAIL.SEND (
                 p_to         => c.email,
-                p_from       => get_sender(),
+                p_from       => core_custom.get_sender(),
                 p_body       => TO_CLOB('Enable HTML to see the content'),
                 p_body_html  => in_payload,
                 p_subj       => in_subject
