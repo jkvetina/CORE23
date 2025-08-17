@@ -226,7 +226,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                     t.status,
                     CASE
                         WHEN t.status != 'SUCCEEDED' THEN 'RED'
-                        END AS status__color,
+                        END AS status__style,
                     --
                     MAX(core.get_timer(t.run_duration)) AS run_duration,
                     MAX(core.get_timer(t.cpu_used))     AS cpu_used,
@@ -259,12 +259,12 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                     t.staleness,
                     CASE
                         WHEN t.staleness != 'FRESH' THEN 'RED'
-                        END AS staleness__color,
+                        END AS staleness__style,
                     --
                     t.compile_state,
                     CASE
                         WHEN t.compile_state != 'VALID' THEN 'RED'
-                        END AS compile_state__color,
+                        END AS compile_state__style,
                     --
                     LISTAGG(i.index_name, ', ') WITHIN GROUP (ORDER BY i.index_name) AS indexes
                     --
@@ -356,7 +356,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                         WHEN t.status_code <= 399 THEN ''
                         WHEN t.status_code <= 499 THEN 'RED'
                         WHEN t.status_code <= 599 THEN 'RED'
-                        END AS status__color,
+                        END AS status__style,
                     --
                     ROUND(AVG(t.elapsed_sec), 2) AS elapsed_sec_avg,
                     ROUND(MAX(t.elapsed_sec), 2) AS elapsed_sec_max,
@@ -473,7 +473,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 SELECT
                     t.table_name,
                     'MISSING'           AS status,
-                    'RED'               AS status__color
+                    'RED'               AS status__style
                 FROM user_tables t
                 JOIN user_tab_cols c
                     ON c.table_name     = t.table_name
@@ -548,12 +548,12 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                         CASE WHEN f.column_value IS NOT NULL THEN 'MISSING' END
                     ) AS analyzed_at,
                     --
-                    CASE WHEN f.column_value IS NULL THEN 'RED' END AS app_id__color,
-                    CASE WHEN f.column_value IS NULL THEN 'RED' END AS app_name__color,
+                    CASE WHEN f.column_value IS NULL THEN 'RED' END AS app_id__style,
+                    CASE WHEN f.column_value IS NULL THEN 'RED' END AS app_name__style,
                     --
                     CASE WHEN f.column_value IS NOT NULL
                         AND (t.last_dependency_analyzed_at IS NULL OR t.last_dependency_analyzed_at < TRUNC(SYSDATE))
-                        THEN 'RED' END AS analyzed_at__color,
+                        THEN 'RED' END AS analyzed_at__style
                     --
                     NULLIF(a.page_views, 0)         AS page_views,
                     NULLIF(a.page_events, 0)        AS page_events,
@@ -663,12 +663,13 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                                 AND a.view_date         <  v_end_date
                         ) a
                         GROUP BY
+                            a.id,
                             a.request_id,
                             a.application_id,
                             a.page_id,
                             a.page_name,
                             a.view_date,
-                            a.id
+                            a.view_date
                         HAVING a.request_id IS NOT NULL
                     ),
                     d AS (
@@ -709,12 +710,12 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                         d.ajax_avg,
                         d.ajax_max,
                         --
-                        CASE WHEN d.rendering_avg   >= 1 THEN 'RED' END AS rendering_avg__color,
-                        CASE WHEN d.rendering_max   >= 1 THEN 'RED' END AS rendering_max__color,
-                        CASE WHEN d.processing_avg  >= 1 THEN 'RED' END AS processing_avg__color,
-                        CASE WHEN d.processing_max  >= 1 THEN 'RED' END AS processing_max__color,
-                        CASE WHEN d.ajax_avg        >= 1 THEN 'RED' END AS ajax_avg__color,
-                        CASE WHEN d.ajax_max        >= 1 THEN 'RED' END AS ajax_max__color
+                        CASE WHEN d.rendering_avg   >= 1 THEN 'RED' END AS rendering_avg__style,
+                        CASE WHEN d.rendering_max   >= 1 THEN 'RED' END AS rendering_max__style,
+                        CASE WHEN d.processing_avg  >= 1 THEN 'RED' END AS processing_avg__style,
+                        CASE WHEN d.processing_max  >= 1 THEN 'RED' END AS processing_max__style,
+                        CASE WHEN d.ajax_avg        >= 1 THEN 'RED' END AS ajax_avg__style,
+                        CASE WHEN d.ajax_max        >= 1 THEN 'RED' END AS ajax_max__style
                     FROM d
                     ORDER BY
                         1, 2;
@@ -875,11 +876,11 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         v_header            VARCHAR2(32767);
         v_line              VARCHAR2(32767);
         v_align             VARCHAR2(128);
-        v_color             VARCHAR2(64);
+        v_style             VARCHAR2(64);
         v_out               CLOB            := EMPTY_CLOB();
         --
         TYPE t_array        IS TABLE OF PLS_INTEGER INDEX BY VARCHAR2(128);
-        v_colors t_array;
+        v_styles t_array;
     BEGIN
         v_cursor := DBMS_SQL.TO_CURSOR_NUMBER(io_cursor);
 
@@ -900,9 +901,9 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 DBMS_SQL.DEFINE_COLUMN(v_cursor, i, v_value, 4000);
             END IF;
 
-            -- identify and store column position with color value
-            IF v_desc(i).col_name LIKE '%\_\_COLOR' ESCAPE '\' THEN
-                v_colors(REPLACE(v_desc(i).col_name, '__COLOR', '')) := i;
+            -- identify and store column position with style value
+            IF v_desc(i).col_name LIKE '%\_\_STYLE' ESCAPE '\' THEN
+                v_styles(REPLACE(RTRIM(v_desc(i).col_name, '_'), '__STYLE', '')) := i;
                 CONTINUE;
             END IF;
             --
@@ -917,8 +918,8 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
             v_line := '';
             --
             FOR i IN 1 .. v_cols LOOP
-                -- process all columns except color ones
-                IF v_desc(i).col_name LIKE '%\_\_COLOR' ESCAPE '\' THEN
+                -- process all columns except style ones
+                IF RTRIM(v_desc(i).col_name, '_') LIKE '%\_\_STYLE' ESCAPE '\' THEN
                     CONTINUE;
                 END IF;
                 --
@@ -935,10 +936,13 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                     DBMS_SQL.COLUMN_VALUE(v_cursor, i, v_value);
                 END IF;
 
-                -- apply colors
-                IF v_colors.EXISTS(v_desc(i).col_name) THEN
-                    DBMS_SQL.COLUMN_VALUE(v_cursor, v_colors(v_desc(i).col_name), v_color);
-                    v_align := v_align || ' style="color: ' || v_color || ';"';
+                -- apply styles
+                IF v_styles.EXISTS(v_desc(i).col_name) THEN
+                    DBMS_SQL.COLUMN_VALUE(v_cursor, v_styles(v_desc(i).col_name), v_style);
+                    v_align := v_align
+                        || ' style="' || CASE
+                            WHEN v_style = 'RED' THEN 'color: #f00;'
+                            ELSE v_style END || '"';
                 END IF;
                 --
                 v_line := v_line || '<td' || v_align || '>' || TRIM(v_value) || '</td>';
