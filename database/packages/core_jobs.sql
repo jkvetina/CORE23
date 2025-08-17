@@ -239,11 +239,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                     AND t.owner     LIKE core_custom.g_owner_like
                     AND t.log_date  >= v_start_date
                     AND t.log_date  <  v_end_date
-                GROUP BY
-                    t.owner,
-                    t.job_name,
-                    t.status,
-                    t.errors
+                GROUP BY ALL
                 ORDER BY
                     1, 2, 3;
             --
@@ -278,10 +274,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                     AND i.table_name    = t.mview_name
                 WHERE 1 = 1
                     AND t.owner         LIKE core_custom.g_owner_like
-                GROUP BY
-                    t.mview_name,
-                    t.staleness,
-                    t.compile_state
+                GROUP BY ALL
                 ORDER BY 1;
             --
             v_out := v_out || get_content(v_cursor, 'Materialized Views');
@@ -309,13 +302,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                     AND t.authentication_result     != 'AUTH_SUCCESS'
                     AND t.access_date               >= v_start_date
                     AND t.access_date               <  v_end_date
-                GROUP BY
-                    t.application_id,
-                    t.application_name,
-                    t.authentication_method,
-                    t.user_name,
-                    t.custom_status_text,
-                    t.ip_address
+                GROUP BY ALL
                 ORDER BY
                     1, 2, 3, 4;
             --
@@ -379,11 +366,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 WHERE 1 = 1
                     AND t.request_date  >= v_start_date
                     AND t.request_date  <  v_end_date
-                GROUP BY
-                    t.workspace_name,
-                    APEX_STRING_UTIL.GET_DOMAIN(t.url),
-                    t.http_method,
-                    t.status_code
+                GROUP BY ALL
                 ORDER BY
                     1, 2, 3;
             --
@@ -400,17 +383,15 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                     t.app_id,
                     REPLACE(REPLACE(t.mail_send_error, '<', '"'), '>', '"') AS error_,
                     --
-                    SUM(t.mail_send_count) AS count_,
-                    MAX(t.id) AS recent_id
+                    SUM(t.mail_send_count)  AS count_,
+                    MAX(t.id)               AS recent_id
                     --
                 FROM apex_mail_queue t
                 WHERE 1 = 1
                     AND t.mail_message_created  >= v_start_date
                     AND t.mail_message_created  <  v_end_date
                     AND t.mail_send_error       IS NOT NULL
-                GROUP BY
-                    t.app_id,
-                    REPLACE(REPLACE(t.mail_send_error, '<', '"'), '>', '"')
+                GROUP BY ALL
                 ORDER BY
                     1, 2;
             --
@@ -430,8 +411,8 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                         TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.error_message, '#\d+', ''), 'id "\d+"', 'id ?')),
                         '<[^>]*>', '') AS error_,
                     --
-                    COUNT(*) AS count_,
-                    MAX(t.id) AS recent_log_id
+                    COUNT(*)    AS count_,
+                    MAX(t.id)   AS recent_log_id
                     --
                 FROM apex_workspace_activity_log t
                 WHERE 1 = 1
@@ -467,8 +448,8 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                         TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.message, '#\d+', ''), 'id "\d+"', 'id ?')),
                         '<[^>]*>', '') AS error_,
                     --
-                    COUNT(*) AS count_,
-                    MAX(t.id) AS recent_log_id
+                    COUNT(*)    AS count_,
+                    MAX(t.id)   AS recent_log_id
                     --
                 FROM apex_debug_messages t
                 WHERE 1 = 1
@@ -710,10 +691,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                             ROUND(MAX(   CASE WHEN t.page_view_type = 'Ajax'        THEN t.elapsed_time END), 2)    AS ajax_max
                             --
                         FROM t
-                        GROUP BY
-                            t.application_id,
-                            t.page_id,
-                            t.page_name
+                        GROUP BY ALL
                     )
                     SELECT
                         d.app_id,
@@ -767,10 +745,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                         AND g.audit_date        >= v_start_date
                         AND g.audit_date        <  v_end_date
                         AND g.developer         != USER
-                    GROUP BY
-                        g.developer,
-                        g.page_id,
-                        g.page_name
+                    GROUP BY ALL
                     ORDER BY
                         1, 2, 3;
                 --
