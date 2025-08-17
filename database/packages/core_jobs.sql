@@ -472,7 +472,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
             OPEN v_cursor FOR
                 SELECT
                     t.table_name,
-                    'MISSING'           AS status,
+                    '[MISSING]'         AS status,
                     'RED'               AS status__style
                 FROM user_tables t
                 JOIN user_tab_cols c
@@ -563,7 +563,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
     BEGIN
         v_start_date        := TRUNC(SYSDATE) - v_offset;
         v_end_date          := TRUNC(SYSDATE) - v_offset + 1;
-        v_subject           := get_subject('Performance', v_start_date);
+        v_subject           := get_subject('APEX Traffic and Performance', v_start_date);
         --
         core.log_start (
             'recipients',   in_recipients,
@@ -585,6 +585,8 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                     t.last_updated_by       AS updated_by,
                     t.last_updated_on       AS updated_at,
                     --
+                    CASE WHEN t.last_updated_on >= v_start_date THEN 'RED' END AS updated_at__style,
+                    --
                     COALESCE (
                         TO_CHAR(t.last_dependency_analyzed_at, 'YYYY-MM-DD HH24:MI'),
                         CASE WHEN f.column_value IS NOT NULL THEN 'MISSING' END
@@ -597,25 +599,50 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                         AND (t.last_dependency_analyzed_at IS NULL OR t.last_dependency_analyzed_at < TRUNC(SYSDATE))
                         THEN 'RED' END AS analyzed_at__style
                     --
-                    NULLIF(a.page_views, 0)         AS page_views,
-                    NULLIF(a.page_events, 0)        AS page_events,
-                    --NULLIF(a.distinct_pages, 0)     AS pages_,
-                    NULLIF(a.distinct_users, 0)     AS users_,
-                    NULLIF(a.distinct_sessions, 0)  AS sessions_,
-                    NULLIF(a.error_count, 0)        AS errors_,
-                    ROUND(a.maximum_render_time, 2) AS render_time_max
-                    --
                 FROM apex_applications t
                 LEFT JOIN TABLE(core_custom.g_apps) f
-                    ON TO_NUMBER(f.column_value) = t.application_id
-                LEFT JOIN apex_workspace_log_archive a
-                    ON a.application_id     = t.application_id
-                    AND a.log_day           = v_start_date
-                WHERE t.is_working_copy     = 'No'
+                    ON TO_NUMBER(f.column_value)    = t.application_id
+                WHERE t.is_working_copy             = 'No'
+                    AND t.application_group         NOT LIKE '\_\_%' ESCAPE '\'
                 ORDER BY
                     1, 2;
             --
-            v_out := v_out || get_content(v_cursor, 'Applications Overview');
+            v_out := v_out || get_content(v_cursor, 'APEX Applications', 'Overview');
+        EXCEPTION
+        WHEN OTHERS THEN
+            core.raise_error();
+        END;
+
+        -- append content
+        BEGIN
+            OPEN v_cursor FOR
+                SELECT
+                    t.application_id        AS app_id,
+                    t.application_name      AS app_name,
+                    --
+                    NULLIF(a.page_views, 0)         AS page_views,
+                    NULLIF(a.page_events, 0)        AS page_events,
+                    NULLIF(a.distinct_pages, 0)     AS pages_,
+                    NULLIF(a.distinct_users, 0)     AS users_,
+                    NULLIF(a.distinct_sessions, 0)  AS sessions_,
+                    NULLIF(a.error_count, 0)        AS errors_,
+                    ROUND(a.maximum_render_time, 2) AS render_time_max,
+                    --
+                    CASE WHEN a.error_count > 0         THEN 'RED' END AS errors__style,
+                    CASE WHEN a.maximum_render_time > 1 THEN 'RED' END AS render_time_max__style
+                    --
+                FROM apex_applications t
+                LEFT JOIN TABLE(core_custom.g_apps) f
+                    ON TO_NUMBER(f.column_value)    = t.application_id
+                JOIN apex_workspace_log_archive a
+                    ON a.application_id             = t.application_id
+                    AND a.log_day                   = v_start_date
+                WHERE t.is_working_copy             = 'No'
+                    AND t.application_group         NOT LIKE '\_\_%' ESCAPE '\'
+                ORDER BY
+                    1, 2;
+            --
+            v_out := v_out || get_content(v_cursor, NULL, 'Traffic');
         EXCEPTION
         WHEN OTHERS THEN
             core.raise_error();
@@ -628,7 +655,10 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                     f.file_name,
                     DBMS_LOB.GETLENGTH(f.file_content) AS file_size,
                     f.last_updated_by   AS updated_by,
-                    f.last_updated_on   AS updated_at
+                    f.last_updated_on   AS updated_at,
+                    --
+                    CASE WHEN f.last_updated_on >= v_start_date THEN 'RED' END AS updated_at__style
+                    --
                 FROM apex_workspace_static_files f
                 WHERE (
                         f.file_name     LIKE '%.css'
@@ -710,7 +740,6 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                             a.application_id,
                             a.page_id,
                             a.page_name,
-                            a.view_date,
                             a.view_date
                         HAVING a.request_id IS NOT NULL
                     ),
