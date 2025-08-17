@@ -201,7 +201,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                     t.type,
                     t.line,
                     t.position,
-                    t.text              AS error_
+                    REGEXP_REPLACE(t.text, '<[^>]*>', '') AS error_
                 FROM all_errors t
                 WHERE 1 = 1
                     AND t.owner         LIKE core_custom.g_owner_like
@@ -231,7 +231,8 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                     MAX(core.get_timer(t.run_duration)) AS run_duration,
                     MAX(core.get_timer(t.cpu_used))     AS cpu_used,
                     COUNT(*)                            AS count_,
-                    t.errors                            AS error_
+                    --
+                    REGEXP_REPLACE(t.errors, '<[^>]*>', '') AS error_
                     --
                 FROM all_scheduler_job_run_details t
                 WHERE 1 = 1
@@ -297,7 +298,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                     t.application_name          AS app_name,
                     t.authentication_method     AS auth_method,
                     t.user_name,
-                    t.custom_status_text        AS error_,
+                    REGEXP_REPLACE(t.custom_status_text, '<[^>]*>', '') AS error_,
                     t.ip_address,
                     --
                     COUNT(*)                    AS attempts,
@@ -334,8 +335,8 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                     t.component_display_name,
                     t.property_group_name,
                     t.property_name,
-                    DBMS_LOB.SUBSTR(t.code_fragment, 4000, 1) AS code_fragment,
-                    t.error_message AS error_
+                    REGEXP_REPLACE(DBMS_LOB.SUBSTR(t.code_fragment, 4000, 1), '<[^>]*>', '') AS code_fragment,
+                    REGEXP_REPLACE(t.error_message, '<[^>]*>', '') AS error_
                 FROM apex_used_db_object_comp_props t
                 WHERE t.error_message IS NOT NULL
                 ORDER BY
@@ -425,7 +426,9 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 SELECT
                     t.application_id AS app_id,
                     t.page_id,
-                    TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.error_message, '#\d+', ''), 'id "\d+"', 'id ?')) AS error_,
+                    REGEXP_REPLACE(
+                        TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.error_message, '#\d+', ''), 'id "\d+"', 'id ?')),
+                        '<[^>]*>', '') AS error_,
                     --
                     COUNT(*) AS count_,
                     MAX(t.id) AS recent_log_id
@@ -436,10 +439,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                     AND t.view_date         <  v_end_date
                     AND t.error_message     IS NOT NULL
                     AND t.error_message     NOT LIKE 'Your session has ended%'
-                GROUP BY
-                    t.application_id,
-                    t.page_id,
-                    TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.error_message, '#\d+', ''), 'id "\d+"', 'id ?'))
+                GROUP BY ALL
                 ORDER BY
                     1, 2, 3;
             --
@@ -463,7 +463,9 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                         ELSE TO_CHAR(t.message_level)
                         END AS type_,
                     --
-                    TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.message, '#\d+', ''), 'id "\d+"', 'id ?')) AS error_,
+                    REGEXP_REPLACE(
+                        TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.message, '#\d+', ''), 'id "\d+"', 'id ?')),
+                        '<[^>]*>', '') AS error_,
                     --
                     COUNT(*) AS count_,
                     MAX(t.id) AS recent_log_id
@@ -474,13 +476,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                     AND t.message_timestamp <  v_end_date
                     AND t.message_level     IN (1, 2)
                     AND t.message           NOT LIKE '%ORA-20876: Stop APEX Engine%'
-                GROUP BY
-                    t.application_id,
-                    t.page_id,
-                    t.apex_user,
-                    t.message_level,
-                    --
-                    TRIM(REGEXP_REPLACE(REGEXP_REPLACE(t.message, '#\d+', ''), 'id "\d+"', 'id ?'))
+                GROUP BY ALL
                 ORDER BY
                     1, 2, 3, 4;
             --
