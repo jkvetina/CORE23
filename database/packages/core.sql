@@ -416,6 +416,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_owner                VARCHAR2        := NULL,
         in_private              CHAR            := NULL,    -- Y = package body
         in_prefix               VARCHAR2        := NULL,
+        in_env                  VARCHAR2        := NULL,
         in_silent               BOOLEAN         := FALSE
     )
     RETURN VARCHAR2
@@ -441,12 +442,18 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 'NULL')
         INTO out_value
         FROM all_source s
-        WHERE s.owner           = COALESCE(in_owner, c_constants_owner, SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA'))
-            AND s.name          = UPPER(NVL(in_package, c_constants))
-            AND s.type          = 'PACKAGE' || CASE WHEN in_private IS NOT NULL THEN ' BODY' END
-            --
-            AND REGEXP_LIKE(s.text, '^\s*' || UPPER(in_prefix || in_name) || '\s+CONSTANT\s+', 'i')
+        WHERE s.owner   = COALESCE(in_owner, c_constants_owner, SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA'))
+            AND s.name  = UPPER(NVL(in_package, c_constants))
+            AND s.type  = 'PACKAGE' || CASE WHEN in_private IS NOT NULL THEN ' BODY' END
+            AND (
+                    (in_env IS NOT NULL AND REGEXP_LIKE(s.text, '^\s*' || UPPER(in_prefix || in_name || '_' || in_env) || '\s+CONSTANT\s+', 'i'))
+                OR  REGEXP_LIKE(s.text, '^\s*' || UPPER(in_prefix || in_name) || '\s+CONSTANT\s+', 'i')
+            )
         ORDER BY
+            CASE
+                WHEN in_env IS NOT NULL AND REGEXP_LIKE(s.text, '^\s*' || UPPER(in_prefix || in_name || '_' || NVL(in_env, '\?')) || '\s+CONSTANT\s+', 'i') THEN 1
+                WHEN REGEXP_LIKE(s.text, '^\s*' || UPPER(in_prefix || in_name) || '\s+CONSTANT\s+', 'i') THEN 2
+                END,
             s.line
         FETCH FIRST 1 ROWS ONLY;
         --
@@ -484,6 +491,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_owner                VARCHAR2        := NULL,
         in_private              CHAR            := NULL,    -- Y = package body
         in_prefix               VARCHAR2        := NULL,
+        in_env                  VARCHAR2        := NULL,
         in_silent               BOOLEAN         := FALSE
     )
     RETURN NUMBER
@@ -497,6 +505,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_owner        => in_owner,
             in_private      => in_private,
             in_prefix       => in_prefix,
+            in_env          => in_env,
             in_silent       => in_silent
         ));
     END;
