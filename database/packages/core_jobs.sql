@@ -936,8 +936,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
     FUNCTION get_content (
         io_cursor           IN OUT SYS_REFCURSOR,
         --
-        in_header2          VARCHAR2        := NULL,
-        in_header3          VARCHAR2        := NULL
+        in_header           VARCHAR2        := NULL
     )
     RETURN CLOB
     AS
@@ -1034,8 +1033,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         END IF;
         --
         RETURN
-            CASE WHEN in_header2 IS NOT NULL THEN TO_CLOB('<h2>' || in_header2 || '</h2>') END ||
-            CASE WHEN in_header3 IS NOT NULL THEN TO_CLOB('<h3>' || in_header3 || '</h3>') END ||
+            CASE WHEN in_header IS NOT NULL THEN TO_CLOB('<h3>' || in_header || '</h3>') END ||
             v_out ||
             CASE
                 WHEN v_line IS NOT NULL THEN TO_CLOB('</tbody></table><br />')
