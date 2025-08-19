@@ -934,6 +934,32 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
 
 
     FUNCTION get_content (
+        in_query            VARCHAR2,
+        in_header           VARCHAR2        := NULL
+    )
+    RETURN CLOB
+    AS
+        v_cursor            SYS_REFCURSOR;
+        v_out               CLOB;
+    BEGIN
+        OPEN v_cursor FOR in_query;
+        --
+        v_out := get_content (
+            io_cursor       => v_cursor,
+            in_header       => in_header
+        );
+        --
+        RETURN v_out;
+    EXCEPTION
+    WHEN core.app_exception THEN
+        RAISE;
+    WHEN OTHERS THEN
+        core.raise_error();
+    END;
+
+
+
+    FUNCTION get_content (
         io_cursor           IN OUT SYS_REFCURSOR,
         --
         in_header           VARCHAR2        := NULL
