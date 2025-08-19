@@ -75,6 +75,21 @@ CREATE OR REPLACE PACKAGE core_jobs AS
     FUNCTION get_html_footer
     RETURN CLOB;
 
+
+
+    FUNCTION get_start_date
+    RETURN DATE;
+
+
+
+    FUNCTION get_end_date
+    RETURN DATE;
+
+
+
+    FUNCTION get_apps
+    RETURN apex_t_varchar2;
+
 END;
 /
 

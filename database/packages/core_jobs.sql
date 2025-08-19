@@ -1,5 +1,8 @@
 CREATE OR REPLACE PACKAGE BODY core_jobs AS
 
+    g_start_date    DATE;
+    g_end_date      DATE;
+
     PROCEDURE job_scan_apps (
         in_app_id           PLS_INTEGER     := NULL,
         in_right_away       BOOLEAN         := FALSE
@@ -1114,6 +1117,33 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         RETURN TO_CLOB(
             '<div><br />&copy; ' || TO_CHAR(SYSDATE, 'YYYY') || ' ' || core_custom.g_copyright || '. All rights reserved.</div></body></html>'
         );
+    END;
+
+
+
+    FUNCTION get_start_date
+    RETURN DATE
+    AS
+    BEGIN
+        RETURN g_start_date;
+    END;
+
+
+
+    FUNCTION get_end_date
+    RETURN DATE
+    AS
+    BEGIN
+        RETURN g_end_date;
+    END;
+
+
+
+    FUNCTION get_apps
+    RETURN apex_t_varchar2
+    AS
+    BEGIN
+        RETURN core_custom.g_apps;
     END;
 
 END;
