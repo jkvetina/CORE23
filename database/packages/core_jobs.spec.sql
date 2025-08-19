@@ -19,7 +19,7 @@ CREATE OR REPLACE PACKAGE core_jobs AS
 
 
 
-    PROCEDURE send_performance (
+    PROCEDURE send_apps (
         in_recipients       VARCHAR2        := NULL,
         in_offset           PLS_INTEGER     := NULL
     );
