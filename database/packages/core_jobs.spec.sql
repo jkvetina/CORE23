@@ -97,6 +97,11 @@ CREATE OR REPLACE PACKAGE core_jobs AS
     FUNCTION get_apps
     RETURN apex_t_varchar2;
 
+
+
+    FUNCTION get_group_name
+    RETURN VARCHAR2;
+
 END;
 /
 

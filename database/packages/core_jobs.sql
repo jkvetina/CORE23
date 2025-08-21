@@ -2,6 +2,9 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
 
     g_start_date    DATE;
     g_end_date      DATE;
+    g_group_name    VARCHAR2(256);
+
+
 
     CURSOR related_views (
         in_prefix   VARCHAR2
@@ -222,14 +225,43 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
             v_out := v_out || TO_CLOB('<h2>' || c.header2 || '</h2>');
 
             -- go thru all app specific reports
-            FOR c IN related_views('CORE_APP#') LOOP
-                IF c.header2 IS NOT NULL THEN
-                    v_out := v_out || TO_CLOB('<h2>' || c.header2 || '</h2>');
+            FOR a IN related_views('CORE_APP') LOOP
+                IF a.header2 IS NOT NULL THEN
+                    v_out := v_out || TO_CLOB('<h2>' || a.header2 || '</h2>');
                 END IF;
                 --
                 v_out := v_out || get_content (
+                    in_query    => 'SELECT * FROM ' || a.view_name,
+                    in_header   => a.header3
+                );
+            END LOOP;
+        END LOOP;
+
+        -- go thru all reports
+        FOR g IN (
+            SELECT DISTINCT
+                m.name                              AS module_name,
+                '/' || c.pattern || m.uri_prefix    AS module_pattern
+            FROM user_ords_services s
+            JOIN user_ords_modules m
+                ON m.id             = s.module_id
+            JOIN user_ords_schemas c
+                ON c.id             = m.schema_id
+            WHERE s.status          = 'PUBLISHED'
+                AND m.status        = 'PUBLISHED'
+                AND c.status        = 'ENABLED'
+                AND m.uri_prefix    != '/hr/'
+            ORDER BY
+                1, 2
+        ) LOOP
+            v_out := v_out || TO_CLOB('<h2>REST Services</h2>');
+            --
+            g_group_name := g.module_name;
+            --
+            FOR c IN related_views('CORE_REST') LOOP
+                v_out := v_out || get_content (
                     in_query    => 'SELECT * FROM ' || c.view_name,
-                    in_header   => c.header3
+                    in_header   => REPLACE(c.header3, '{MODULE_NAME}', g.module_name)
                 );
             END LOOP;
         END LOOP;
@@ -571,6 +603,15 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
     AS
     BEGIN
         RETURN core_custom.g_apps;
+    END;
+
+
+
+    FUNCTION get_group_name
+    RETURN VARCHAR2
+    AS
+    BEGIN
+        RETURN g_group_name;
     END;
 
 END;
