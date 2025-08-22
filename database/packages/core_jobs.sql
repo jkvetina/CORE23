@@ -92,6 +92,11 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
     AS
         v_developers            VARCHAR2(32767);
     BEGIN
+        -- set NLS to avoid ORA-06502 issues
+        EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_NUMERIC_CHARACTERS = ''. ''';
+        EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = ''YYYY-MM-DD HH24:MI''';
+
+        -- send reports to all developers
         v_developers := APEX_STRING.JOIN(core_custom.g_developers, ',');
         --
         core_jobs.send_daily(v_developers);
@@ -100,6 +105,8 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         core_jobs.send_apps(v_developers);
         COMMIT;
         --
+        apex_mail.push_queue();
+        COMMIT;
     EXCEPTION
     WHEN OTHERS THEN
         core.raise_error();
