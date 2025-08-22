@@ -4347,7 +4347,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
                     c.version_new := REPLACE(TO_CHAR(TO_DATE(c.version_new, 'YYYY-MM-DD HH24:MI:SS'), 'YYYY-MM-DD fmHH24.MI'), ' ', ' 1.');
                 END IF;
                 --
-                IF (                
+                IF (
                     (NOT in_keep_older AND get_sortable_version(c.version_new) >  get_sortable_version(c.version_old))
                     OR  (in_keep_older AND get_sortable_version(c.version_new) != get_sortable_version(c.version_old))
                 ) THEN
