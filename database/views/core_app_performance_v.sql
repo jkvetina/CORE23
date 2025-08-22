@@ -1,4 +1,4 @@
-CREATE OR REPLACE FORCE VIEW core_app#_performance_v AS
+CREATE OR REPLACE FORCE VIEW core_app_performance_v AS
 WITH t AS (
     SELECT
         a.id,
@@ -92,25 +92,25 @@ ORDER BY
     1, 2;
 /
 --
-COMMENT ON TABLE core_app#_performance_v IS '12 | Performance';
+COMMENT ON TABLE core_app_performance_v IS '12 | Performance';
 --
-COMMENT ON COLUMN core_app#_performance_v.app_id                    IS '';
-COMMENT ON COLUMN core_app#_performance_v.page_id                   IS '';
-COMMENT ON COLUMN core_app#_performance_v.page_name                 IS '';
-COMMENT ON COLUMN core_app#_performance_v.users_                    IS '';
-COMMENT ON COLUMN core_app#_performance_v.rendering_count           IS '';
-COMMENT ON COLUMN core_app#_performance_v.rendering_avg             IS '';
-COMMENT ON COLUMN core_app#_performance_v.rendering_max             IS '';
-COMMENT ON COLUMN core_app#_performance_v.processing_count          IS '';
-COMMENT ON COLUMN core_app#_performance_v.processing_avg            IS '';
-COMMENT ON COLUMN core_app#_performance_v.processing_max            IS '';
-COMMENT ON COLUMN core_app#_performance_v.ajax_count                IS '';
-COMMENT ON COLUMN core_app#_performance_v.ajax_avg                  IS '';
-COMMENT ON COLUMN core_app#_performance_v.ajax_max                  IS '';
-COMMENT ON COLUMN core_app#_performance_v.rendering_avg__style      IS '';
-COMMENT ON COLUMN core_app#_performance_v.rendering_max__style      IS '';
-COMMENT ON COLUMN core_app#_performance_v.processing_avg__style     IS '';
-COMMENT ON COLUMN core_app#_performance_v.processing_max__style     IS '';
-COMMENT ON COLUMN core_app#_performance_v.ajax_avg__style           IS '';
-COMMENT ON COLUMN core_app#_performance_v.ajax_max__style           IS '';
+COMMENT ON COLUMN core_app_performance_v.app_id                     IS '';
+COMMENT ON COLUMN core_app_performance_v.page_id                    IS '';
+COMMENT ON COLUMN core_app_performance_v.page_name                  IS '';
+COMMENT ON COLUMN core_app_performance_v.users_                     IS '';
+COMMENT ON COLUMN core_app_performance_v.rendering_count            IS '';
+COMMENT ON COLUMN core_app_performance_v.rendering_avg              IS '';
+COMMENT ON COLUMN core_app_performance_v.rendering_max              IS '';
+COMMENT ON COLUMN core_app_performance_v.processing_count           IS '';
+COMMENT ON COLUMN core_app_performance_v.processing_avg             IS '';
+COMMENT ON COLUMN core_app_performance_v.processing_max             IS '';
+COMMENT ON COLUMN core_app_performance_v.ajax_count                 IS '';
+COMMENT ON COLUMN core_app_performance_v.ajax_avg                   IS '';
+COMMENT ON COLUMN core_app_performance_v.ajax_max                   IS '';
+COMMENT ON COLUMN core_app_performance_v.rendering_avg__style       IS '';
+COMMENT ON COLUMN core_app_performance_v.rendering_max__style       IS '';
+COMMENT ON COLUMN core_app_performance_v.processing_avg__style      IS '';
+COMMENT ON COLUMN core_app_performance_v.processing_max__style      IS '';
+COMMENT ON COLUMN core_app_performance_v.ajax_avg__style            IS '';
+COMMENT ON COLUMN core_app_performance_v.ajax_max__style            IS '';
 

@@ -1,4 +1,4 @@
-CREATE OR REPLACE FORCE VIEW core_app#_component_changes_v AS
+CREATE OR REPLACE FORCE VIEW core_app_component_changes_v AS
 SELECT
     g.developer,
     g.page_id,
@@ -21,13 +21,13 @@ ORDER BY
     1, 2, 3;
 /
 --
-COMMENT ON TABLE core_app#_component_changes_v IS '11 | Component Changes';
+COMMENT ON TABLE core_app_component_changes_v IS '11 | Component Changes';
 --
-COMMENT ON COLUMN core_app#_component_changes_v.developer       IS '';
-COMMENT ON COLUMN core_app#_component_changes_v.page_id         IS '';
-COMMENT ON COLUMN core_app#_component_changes_v.page_name       IS '';
-COMMENT ON COLUMN core_app#_component_changes_v.components      IS '';
-COMMENT ON COLUMN core_app#_component_changes_v.inserted_       IS '';
-COMMENT ON COLUMN core_app#_component_changes_v.updated_        IS '';
-COMMENT ON COLUMN core_app#_component_changes_v.deleted_        IS '';
+COMMENT ON COLUMN core_app_component_changes_v.developer    IS '';
+COMMENT ON COLUMN core_app_component_changes_v.page_id      IS '';
+COMMENT ON COLUMN core_app_component_changes_v.page_name    IS '';
+COMMENT ON COLUMN core_app_component_changes_v.components   IS '';
+COMMENT ON COLUMN core_app_component_changes_v.inserted_    IS '';
+COMMENT ON COLUMN core_app_component_changes_v.updated_     IS '';
+COMMENT ON COLUMN core_app_component_changes_v.deleted_     IS '';
 
