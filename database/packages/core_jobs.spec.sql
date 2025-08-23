@@ -35,7 +35,9 @@ CREATE OR REPLACE PACKAGE core_jobs AS
 
 
     FUNCTION get_column_name (
-        in_name             VARCHAR2
+        in_table_name       VARCHAR2,
+        in_column_name      VARCHAR2,
+        in_offset           PLS_INTEGER     := NULL
     )
     RETURN VARCHAR2;
 
@@ -50,8 +52,9 @@ CREATE OR REPLACE PACKAGE core_jobs AS
 
 
     FUNCTION get_content (
-        in_query            VARCHAR2,
-        in_header           VARCHAR2        := NULL
+        in_view_name        VARCHAR2,
+        in_header           VARCHAR2        := NULL,
+        in_offset           PLS_INTEGER     := NULL
     )
     RETURN CLOB;
 
@@ -60,7 +63,9 @@ CREATE OR REPLACE PACKAGE core_jobs AS
     FUNCTION get_content (
         io_cursor           IN OUT SYS_REFCURSOR,
         --
-        in_header           VARCHAR2        := NULL
+        in_view_name        VARCHAR2        := NULL,
+        in_header           VARCHAR2        := NULL,
+        in_offset           PLS_INTEGER     := NULL
     )
     RETURN CLOB;
 

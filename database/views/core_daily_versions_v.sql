@@ -12,8 +12,8 @@ JOIN apex_patches p
 --
 COMMENT ON TABLE core_daily_versions_v IS '10 | Versions | Database Overview';
 --
-COMMENT ON COLUMN core_daily_versions_v.db_version      IS '';
-COMMENT ON COLUMN core_daily_versions_v.apex_version    IS '';
-COMMENT ON COLUMN core_daily_versions_v.apex_patched    IS '';
-COMMENT ON COLUMN core_daily_versions_v.ords_version    IS '';
+COMMENT ON COLUMN core_daily_versions_v.db_version      IS 'DB Version';
+COMMENT ON COLUMN core_daily_versions_v.apex_version    IS 'APEX Version';
+COMMENT ON COLUMN core_daily_versions_v.apex_patched    IS 'APEX Patched';
+COMMENT ON COLUMN core_daily_versions_v.ords_version    IS 'ORDS Version';
 

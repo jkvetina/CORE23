@@ -62,23 +62,23 @@ ORDER BY
     1, 2;
 /
 --
-COMMENT ON TABLE core_app_history_v IS '15 | History';
+COMMENT ON TABLE core_app_history_v IS '15 | Requests History';
 --
 COMMENT ON COLUMN core_app_history_v.page_id        IS '';
 COMMENT ON COLUMN core_app_history_v.page_name      IS '';
-COMMENT ON COLUMN core_app_history_v.today          IS '';
-COMMENT ON COLUMN core_app_history_v.t1             IS '';
-COMMENT ON COLUMN core_app_history_v.t2             IS '';
-COMMENT ON COLUMN core_app_history_v.t3             IS '';
-COMMENT ON COLUMN core_app_history_v.t4             IS '';
-COMMENT ON COLUMN core_app_history_v.t5             IS '';
-COMMENT ON COLUMN core_app_history_v.t6             IS '';
-COMMENT ON COLUMN core_app_history_v.t7             IS '';
-COMMENT ON COLUMN core_app_history_v.t8             IS '';
-COMMENT ON COLUMN core_app_history_v.t9             IS '';
-COMMENT ON COLUMN core_app_history_v.t10            IS '';
-COMMENT ON COLUMN core_app_history_v.t11            IS '';
-COMMENT ON COLUMN core_app_history_v.t12            IS '';
-COMMENT ON COLUMN core_app_history_v.t13            IS '';
-COMMENT ON COLUMN core_app_history_v.t14            IS '';
+COMMENT ON COLUMN core_app_history_v.today          IS '{Mon fmDD, -0}';
+COMMENT ON COLUMN core_app_history_v.t1             IS '{Mon fmDD, -1}';
+COMMENT ON COLUMN core_app_history_v.t2             IS '{Mon fmDD, -2}';
+COMMENT ON COLUMN core_app_history_v.t3             IS '{Mon fmDD, -3}';
+COMMENT ON COLUMN core_app_history_v.t4             IS '{Mon fmDD, -4}';
+COMMENT ON COLUMN core_app_history_v.t5             IS '{Mon fmDD, -5}';
+COMMENT ON COLUMN core_app_history_v.t6             IS '{Mon fmDD, -6}';
+COMMENT ON COLUMN core_app_history_v.t7             IS '{Mon fmDD, -7}';
+COMMENT ON COLUMN core_app_history_v.t8             IS '{Mon fmDD, -8}';
+COMMENT ON COLUMN core_app_history_v.t9             IS '{Mon fmDD, -9}';
+COMMENT ON COLUMN core_app_history_v.t10            IS '{Mon fmDD, -10}';
+COMMENT ON COLUMN core_app_history_v.t11            IS '{Mon fmDD, -11}';
+COMMENT ON COLUMN core_app_history_v.t12            IS '{Mon fmDD, -12}';
+COMMENT ON COLUMN core_app_history_v.t13            IS '{Mon fmDD, -13}';
+COMMENT ON COLUMN core_app_history_v.t14            IS '{Mon fmDD, -14}';
 

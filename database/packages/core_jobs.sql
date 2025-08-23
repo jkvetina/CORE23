@@ -162,8 +162,9 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
             END IF;
             --
             v_out := v_out || get_content (
-                in_query    => 'SELECT * FROM ' || c.view_name,
-                in_header   => c.header3
+                in_view_name    => c.view_name,
+                in_header       => c.header3,
+                in_offset       => in_offset
             );
         END LOOP;
 
@@ -212,8 +213,9 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
             END IF;
             --
             v_out := v_out || get_content (
-                in_query    => 'SELECT * FROM ' || c.view_name,
-                in_header   => c.header3
+                in_view_name    => c.view_name,
+                in_header       => c.header3,
+                in_offset       => in_offset
             );
         END LOOP;
 
@@ -241,8 +243,9 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 END IF;
                 --
                 v_out := v_out || get_content (
-                    in_query    => 'SELECT * FROM ' || a.view_name,
-                    in_header   => a.header3
+                    in_view_name    => a.view_name,
+                    in_header       => a.header3,
+                    in_offset       => in_offset
                 );
             END LOOP;
         END LOOP;
@@ -270,8 +273,9 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
             --
             FOR c IN related_views('CORE_REST') LOOP
                 v_out := v_out || get_content (
-                    in_query    => 'SELECT * FROM ' || c.view_name,
-                    in_header   => REPLACE(c.header3, '{MODULE_NAME}', g.module_name)
+                    in_view_name    => c.view_name,
+                    in_header       => REPLACE(c.header3, '{MODULE_NAME}', g.module_name),
+                    in_offset       => in_offset
                 );
             END LOOP;
         END LOOP;
@@ -379,19 +383,23 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
 
 
     FUNCTION get_content (
-        in_query            VARCHAR2,
-        in_header           VARCHAR2        := NULL
+        in_view_name        VARCHAR2,
+        in_header           VARCHAR2        := NULL,
+        in_offset           PLS_INTEGER     := NULL
     )
     RETURN CLOB
     AS
         v_cursor            SYS_REFCURSOR;
         v_out               CLOB;
     BEGIN
-        OPEN v_cursor FOR in_query;
+        OPEN v_cursor
+            FOR 'SELECT * FROM ' || in_view_name;
         --
         v_out := get_content (
             io_cursor       => v_cursor,
-            in_header       => in_header
+            in_header       => in_header,
+            in_view_name    => in_view_name,
+            in_offset       => in_offset
         );
         --
         RETURN v_out;
@@ -407,7 +415,9 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
     FUNCTION get_content (
         io_cursor           IN OUT SYS_REFCURSOR,
         --
-        in_header           VARCHAR2        := NULL
+        in_view_name        VARCHAR2        := NULL,
+        in_header           VARCHAR2        := NULL,
+        in_offset           PLS_INTEGER     := NULL
     )
     RETURN CLOB
     AS
@@ -451,7 +461,12 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 CONTINUE;
             END IF;
             --
-            v_line := v_line || '<th' || v_align || '>' || get_column_name(v_desc(i).col_name) || '</th>';
+            v_value := get_column_name (
+                in_table_name   => in_view_name,
+                in_column_name  => v_desc(i).col_name,
+                in_offset       => in_offset
+            );
+            v_line := v_line || '<th' || v_align || '>' || v_value || '</th>';
         END LOOP;
         --
         v_out := v_out || TO_CLOB('<table cellpadding="5" cellspacing="0" border="1"><thead><tr>' || v_line || '</tr></thead><tbody>');
@@ -523,16 +538,25 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
 
 
     FUNCTION get_column_name (
-        in_name             VARCHAR2
+        in_table_name       VARCHAR2,
+        in_column_name      VARCHAR2,
+        in_offset           PLS_INTEGER     := NULL
     )
     RETURN VARCHAR2
     AS
+        v_column_name       user_col_comments.comments%TYPE;
     BEGIN
-        RETURN REPLACE(REPLACE(REPLACE(
-            INITCAP(TRIM(REPLACE(in_name, '_', ' '))),
-            'Db ',      'DB '),
-            'Apex ',    'APEX '),
-            'Ords ',    'ORDS ');
+        SELECT MAX(t.comments)
+        INTO v_column_name
+        FROM user_col_comments t
+        WHERE t.table_name      = in_table_name
+            AND t.column_name   = in_column_name;
+        --
+        IF REGEXP_LIKE(v_column_name, '\{Mon fmDD, -\d+\}') THEN
+            v_column_name := TO_CHAR(TRUNC(SYSDATE) - in_offset - TO_NUMBER(REGEXP_SUBSTR(v_column_name, '\-(\d+)', 1, 1, NULL, 1)), 'Mon fmDD');
+        END IF;
+        --
+        RETURN NVL(v_column_name, INITCAP(REPLACE(in_column_name, '_', ' ')));
     END;
 
 
