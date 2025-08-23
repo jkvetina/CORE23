@@ -4,6 +4,21 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
 
 
 
+    FUNCTION get_user
+    RETURN core_locks.locked_by%TYPE
+    AS
+    BEGIN
+        -- get username, proxy first, then SQL Workshop, APEX...
+        -- not adding schema on purpose, we dont want generic users
+        RETURN COALESCE (
+            NULLIF(SYS_CONTEXT('USERENV', 'PROXY_USER'), 'ORDS_PUBLIC_USER'),
+            REGEXP_REPLACE(SYS_CONTEXT('USERENV', 'CLIENT_IDENTIFIER'), ':\d+$', ''),
+            REGEXP_REPLACE(SYS_CONTEXT('USERENV', 'CLIENT_INFO'), '^[^:]+:', '')
+        );
+    END;
+
+
+
     PROCEDURE create_lock (
         in_object_owner     core_locks.object_owner%TYPE,
         in_object_type      core_locks.object_type%TYPE,
