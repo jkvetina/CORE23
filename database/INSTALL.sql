@@ -1,14 +1,21 @@
 --
 -- JOB .................... 2
--- PACKAGE ................ 4
--- PACKAGE BODY ........... 4
+-- PACKAGE ................ 5
+-- PACKAGE BODY ........... 5
 -- PROCEDURE .............. 1
--- VIEW .................. 23
+-- TABLE .................. 1
+-- TRIGGER ................ 1
+-- VIEW .................. 22
 --
 
 --
 -- INIT
 --
+
+--
+-- TABLES
+--
+@"./tables/core_locks.sql";
 
 --
 -- OBJECTS
@@ -34,27 +41,35 @@
 @"./views/core_daily_versions_v.sql";
 @"./views/core_daily_web_service_calls_v.sql";
 @"./views/core_daily_workspace_errors_v.sql";
-@"./views/core_daily__column_names_v.sql";
 @"./views/core_rest_services_v.sql";
 @"./procedures/recompile.sql";
 @"./packages/core_custom.spec.sql";
 @"./packages/core.spec.sql";
 @"./packages/core_gen.spec.sql";
 @"./packages/core_jobs.spec.sql";
+@"./packages/core_lock.spec.sql";
 @"./packages/core.sql";
 @"./packages/core_custom.sql";
 @"./packages/core_gen.sql";
 @"./packages/core_jobs.sql";
+@"./packages/core_lock.sql";
 
 --
 -- TRIGGERS
 --
 @"./triggers/core_prevent_create_wrong_objects.sql";
+@"./triggers/core_locksmith.sql";
 
 --
 -- GRANTS
 --
-@"./grants/XXNBL_MASTER.sql";
+@"./grants/MASTER.sql";
+
+--
+-- JOBS
+--
+@"./jobs/core_daily_developers.sql";
+@"./jobs/core_daily_versions.sql";
 
 --
 -- FINISH
