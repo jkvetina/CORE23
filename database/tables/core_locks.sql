@@ -6,12 +6,13 @@ CREATE TABLE IF NOT EXISTS core_locks (
     locked_by                       VARCHAR2(128)         NOT NULL,
     locked_at                       DATE                  NOT NULL,
     expire_at                       DATE,
+    counter                         NUMBER(4,0),
     --
     CONSTRAINT core_locks_pk
         PRIMARY KEY (lock_id)
 );
 --
-COMMENT ON TABLE core_locks IS '';
+COMMENT ON TABLE core_locks IS 'To track DDL events for objects locks';
 --
 COMMENT ON COLUMN core_locks.lock_id        IS '';
 COMMENT ON COLUMN core_locks.object_owner   IS '';
@@ -20,4 +21,5 @@ COMMENT ON COLUMN core_locks.object_name    IS '';
 COMMENT ON COLUMN core_locks.locked_by      IS '';
 COMMENT ON COLUMN core_locks.locked_at      IS '';
 COMMENT ON COLUMN core_locks.expire_at      IS '';
+COMMENT ON COLUMN core_locks.counter        IS '';
 
