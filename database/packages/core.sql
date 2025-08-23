@@ -737,6 +737,9 @@ CREATE OR REPLACE PACKAGE BODY core AS
             core.print_items();
         END IF;
 
+        -- set client identifier
+        DBMS_SESSION.SET_IDENTIFIER(in_user_id);    -- SYS_CONTEXT('USERENV', 'CLIENT_IDENTIFIER')
+
         -- enable debug so we can use debug messages
         APEX_DEBUG.ENABLE(p_level => core_custom.default_debug_level);
         --
