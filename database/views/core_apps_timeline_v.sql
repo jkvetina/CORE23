@@ -42,12 +42,31 @@ ORDER BY 1;
 /
 --
 COMMENT ON TABLE core_apps_timeline_v IS '15 | Developers Timeline';
-
-
-select *
-from apex_applications
-;
-
-
-
+--
+COMMENT ON COLUMN core_apps_timeline_v.user_id      IS '';
+COMMENT ON COLUMN core_apps_timeline_v.total        IS '';
+COMMENT ON COLUMN core_apps_timeline_v.00           IS '';
+COMMENT ON COLUMN core_apps_timeline_v.01           IS '';
+COMMENT ON COLUMN core_apps_timeline_v.02           IS '';
+COMMENT ON COLUMN core_apps_timeline_v.03           IS '';
+COMMENT ON COLUMN core_apps_timeline_v.04           IS '';
+COMMENT ON COLUMN core_apps_timeline_v.05           IS '';
+COMMENT ON COLUMN core_apps_timeline_v.06           IS '';
+COMMENT ON COLUMN core_apps_timeline_v.07           IS '';
+COMMENT ON COLUMN core_apps_timeline_v.08           IS '';
+COMMENT ON COLUMN core_apps_timeline_v.09           IS '';
+COMMENT ON COLUMN core_apps_timeline_v.10           IS '';
+COMMENT ON COLUMN core_apps_timeline_v.11           IS '';
+COMMENT ON COLUMN core_apps_timeline_v.12           IS '';
+COMMENT ON COLUMN core_apps_timeline_v.13           IS '';
+COMMENT ON COLUMN core_apps_timeline_v.14           IS '';
+COMMENT ON COLUMN core_apps_timeline_v.15           IS '';
+COMMENT ON COLUMN core_apps_timeline_v.16           IS '';
+COMMENT ON COLUMN core_apps_timeline_v.17           IS '';
+COMMENT ON COLUMN core_apps_timeline_v.18           IS '';
+COMMENT ON COLUMN core_apps_timeline_v.19           IS '';
+COMMENT ON COLUMN core_apps_timeline_v.20           IS '';
+COMMENT ON COLUMN core_apps_timeline_v.21           IS '';
+COMMENT ON COLUMN core_apps_timeline_v.22           IS '';
+COMMENT ON COLUMN core_apps_timeline_v.23           IS '';
 
