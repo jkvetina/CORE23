@@ -30,7 +30,9 @@ CREATE OR REPLACE PACKAGE BODY core_gen AS
 
     PROCEDURE create_tapi (
         in_table_name           VARCHAR2,
-        in_procedure_name       VARCHAR2
+        in_procedure_name       VARCHAR2,
+        in_grid                 BOOLEAN := TRUE,
+        in_form                 BOOLEAN := FALSE
     )
     AS
         c_procedure_name        CONSTANT user_procedures.procedure_name%TYPE    := LOWER(NVL(in_procedure_name, in_table_name));
@@ -86,19 +88,58 @@ CREATE OR REPLACE PACKAGE BODY core_gen AS
                 )
             ORDER BY c.column_id
         ) LOOP
-            DBMS_OUTPUT.PUT_LINE('        '
-                || RPAD('rec.' || LOWER(c.column_name), g_width_in)
-                || ':= COALESCE('
-                || RPAD('in_' || LOWER(c.column_name) || ',', g_width_in)
-                || CASE WHEN c.data_type = 'DATE' THEN 'core.get_date(' END
-                || 'core.get_grid_data(''' || UPPER(c.column_name) || ''')'
-                || CASE WHEN c.data_type = 'DATE' THEN ')' END
-                || ');'
-            );
+            IF in_grid THEN
+                DBMS_OUTPUT.PUT_LINE('        '
+                    || RPAD('rec.' || LOWER(c.column_name), g_width_in)
+                    || ':= COALESCE('
+                    || RPAD('in_' || LOWER(c.column_name) || ',', g_width_in)
+                    --
+                    || CASE WHEN c.data_type = 'DATE' THEN 'core.get_date(' END
+                    || 'core.get_grid_data(''' || UPPER(c.column_name) || ''')'
+                    || CASE WHEN c.data_type = 'DATE' THEN ')' END
+                    || ');'
+                );
+            ELSIF in_form THEN
+                DBMS_OUTPUT.PUT_LINE('        '
+                    || RPAD('rec.' || LOWER(c.column_name), g_width_in)
+                    || ':= COALESCE('
+                    || RPAD('in_' || LOWER(c.column_name) || ',', g_width_in)
+                    --
+                    || CASE WHEN c.data_type = 'DATE' THEN 'core.get_date(' END
+                    || 'core.get_item(''$' || UPPER(c.column_name) || ''')'
+                    || CASE WHEN c.data_type = 'DATE' THEN ')' END
+                    || ');'
+                );
+            ELSE
+                DBMS_OUTPUT.PUT_LINE('        '
+                    || RPAD('rec.' || LOWER(c.column_name), g_width_in)
+                    || ':= in_' || LOWER(c.column_name) || ';'
+                );
+            END IF;
         END LOOP;
         --
         DBMS_OUTPUT.PUT_LINE('        --');
-        DBMS_OUTPUT.PUT_LINE('        core.log_start(');
+        DBMS_OUTPUT.PUT_LINE('        core.log_start (');
+        --
+        FOR c IN (
+            SELECT
+                c.column_name,
+                CASE WHEN LEAD(c.column_name) OVER(PARTITION BY c.table_name ORDER BY c.column_id) IS NOT NULL THEN ',' END AS comma
+            FROM user_tab_columns c
+            WHERE c.table_name      = UPPER(c_table_name)
+                AND c.column_name   NOT IN (
+                    'UPDATED_BY', 'UPDATED_AT', 'UPDATED_ON',
+                    'CREATED_BY', 'CREATED_AT', 'CREATED_ON'
+                )
+            ORDER BY
+                c.column_id
+        ) LOOP
+            DBMS_OUTPUT.PUT_LINE('            '
+                || RPAD('''' || LOWER(c.column_name) || ''',', g_width_in)
+                || 'rec.' || LOWER(c.column_name) || c.comma
+            );
+        END LOOP;
+        --
         DBMS_OUTPUT.PUT_LINE('        );');
         DBMS_OUTPUT.PUT_LINE('');
 

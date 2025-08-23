@@ -1,8 +1,10 @@
 CREATE OR REPLACE PACKAGE BODY core_jobs AS
 
-    g_start_date    DATE;
-    g_end_date      DATE;
-    g_group_name    VARCHAR2(256);
+    g_start_date        DATE;
+    g_end_date          DATE;
+    g_group_name        VARCHAR2(256);
+    --
+    g_date_format       CONSTANT VARCHAR2(32) := 'YYYY-MM-DD HH24:MI';
 
 
 
@@ -94,7 +96,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
     BEGIN
         -- set NLS to avoid ORA-06502 issues
         EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_NUMERIC_CHARACTERS = ''. ''';
-        EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = ''YYYY-MM-DD HH24:MI''';
+        EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = ''' || g_date_format || '''';
 
         -- send reports to all developers
         v_developers := APEX_STRING.JOIN(core_custom.g_developers, ',');
@@ -125,6 +127,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         v_cursor            SYS_REFCURSOR;
         v_offset            PLS_INTEGER     := NVL(in_offset, 0);
     BEGIN
+        -- set variables for the views
         g_start_date        := TRUNC(SYSDATE) - v_offset;
         g_end_date          := TRUNC(SYSDATE) - v_offset + 1;
         v_subject           := get_subject('Daily Overview', g_start_date);
@@ -369,7 +372,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
     BEGIN
         RETURN core_custom.g_project_name
             || ' - ' || in_header
-            || CASE WHEN in_date IS NOT NULL THEN ', ' || REPLACE(TO_CHAR(in_date, 'YYYY-MM-DD HH24:MI'), ' 00:00', '') END
+            || CASE WHEN in_date IS NOT NULL THEN ', ' || REPLACE(TO_CHAR(in_date, g_date_format), ' 00:00', '') END
             || ' [' || core_custom.get_env() || ']';
     END;
 
@@ -416,8 +419,8 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         v_value             VARCHAR2(4000);
         v_header            VARCHAR2(32767);
         v_line              VARCHAR2(32767);
-        v_align             VARCHAR2(128);
-        v_style             VARCHAR2(64);
+        v_align             VARCHAR2(2000);
+        v_style             VARCHAR2(2000);
         v_out               CLOB            := EMPTY_CLOB();
         --
         TYPE t_array        IS TABLE OF PLS_INTEGER INDEX BY VARCHAR2(128);
@@ -472,7 +475,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                     v_align := ' align="right"';
                 ELSIF v_desc(i).col_type = DBMS_SQL.DATE_TYPE THEN
                     DBMS_SQL.COLUMN_VALUE(v_cursor, i, v_date);
-                    v_value := CASE WHEN v_date IS NOT NULL THEN TO_CHAR(v_date, 'YYYY-MM-DD HH24:MI') END;
+                    v_value := CASE WHEN v_date IS NOT NULL THEN TO_CHAR(v_date, g_date_format) END;
                 ELSE
                     DBMS_SQL.COLUMN_VALUE(v_cursor, i, v_value);
                 END IF;

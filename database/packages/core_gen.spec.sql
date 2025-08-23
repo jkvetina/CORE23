@@ -2,7 +2,9 @@ CREATE OR REPLACE PACKAGE core_gen AUTHID CURRENT_USER AS
 
     PROCEDURE create_tapi (
         in_table_name           VARCHAR2,
-        in_procedure_name       VARCHAR2
+        in_procedure_name       VARCHAR2,
+        in_grid                 BOOLEAN := TRUE,
+        in_form                 BOOLEAN := FALSE
     );
 
 

@@ -12,8 +12,8 @@ SELECT
     --
     CASE WHEN g.grantable = 'YES' THEN 'Y' END AS is_grantable,
     --
-    o.status,
-    CASE WHEN o.status != 'VALID' THEN 'RED' END AS status__style
+    NVL(o.status, 'UNKNOWN') AS status,
+    CASE WHEN NVL(o.status, 'UNKNOWN') != 'VALID' THEN 'RED' END AS status__style
     --
 FROM user_synonyms s
 LEFT JOIN user_tab_privs_recd g
