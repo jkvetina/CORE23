@@ -23,33 +23,72 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
         in_object_owner     core_locks.object_owner%TYPE,
         in_object_type      core_locks.object_type%TYPE,
         in_object_name      core_locks.object_name%TYPE,
-        in_locked_by        core_locks.locked_by%TYPE,
+        in_locked_by        core_locks.locked_by%TYPE       := NULL,
         in_expire_at        core_locks.expire_at%TYPE       := NULL
     )
     AS
+        rec                 core_locks%ROWTYPE;
     BEGIN
-        INSERT INTO core_locks (
-            object_owner,
-            object_type,
-            object_name,
-            locked_by,
-            locked_at,
-            expire_at
-        )
-        VALUES (
-            in_object_owner,
-            in_object_type,
-            in_object_name,
-            in_locked_by,
-            SYSDATE,
-            NVL(in_expire_at, SYSDATE + g_lock_length)
-        );
+        -- check if we have a valid user
+        rec.locked_by := COALESCE(in_locked_by, get_user());
+        IF rec.locked_by IS NULL THEN
+            core.raise_error('USER_ERROR: USE PROXY_USER OR CLIENT_ID', in_rollback => FALSE);
+        END IF;
+
+        -- check recent log for current object
+        FOR c IN (
+            SELECT
+                t.lock_id,
+                t.locked_by,
+                t.expire_at
+            FROM core_locks t
+            WHERE t.object_owner    = in_object_owner
+                AND t.object_type   = in_object_type
+                AND t.object_name   = in_object_name
+            ORDER BY
+                t.lock_id DESC
+            FETCH FIRST 1 ROWS ONLY
+        ) LOOP
+            IF c.locked_by = rec.locked_by THEN
+                -- same user, so update last record with new expire day
+                rec.lock_id := c.lock_id;
+                --
+            ELSIF c.expire_at >= SYSDATE THEN
+                -- for different user we need to check the expire date first
+                core.raise_error('LOCK_ERROR: OBJECT LOCKED BY "' || c.locked_by || '" [' || c.lock_id || ']', in_rollback => FALSE);
+            END IF;
+        END LOOP;
+        --
+        IF rec.lock_id IS NOT NULL THEN
+            core_lock.extend_lock (
+                in_lock_id => rec.lock_id
+            );
+        ELSE
+            INSERT INTO core_locks (
+                object_owner,
+                object_type,
+                object_name,
+                locked_by,
+                locked_at,
+                counter,
+                expire_at
+            )
+            VALUES (
+                in_object_owner,
+                in_object_type,
+                in_object_name,
+                rec.locked_by,
+                SYSDATE,
+                1,
+                NVL(in_expire_at, SYSDATE + g_lock_length)
+            );
+        END IF;
         --
     EXCEPTION
     WHEN core.app_exception THEN
         RAISE;
     WHEN OTHERS THEN
-        core.raise_error();
+        core.raise_error(in_rollback => FALSE);
     END;
 
 
@@ -61,14 +100,15 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
     AS
     BEGIN
         UPDATE core_locks t
-        SET t.expire_at     = SYSDATE + NVL(in_time, g_lock_length)
+        SET t.counter       = NVL(t.counter, 0) + 1,
+            t.expire_at     = SYSDATE + NVL(in_time, g_lock_length)
         WHERE t.lock_id     = in_lock_id;
         --
     EXCEPTION
     WHEN core.app_exception THEN
         RAISE;
     WHEN OTHERS THEN
-        core.raise_error();
+        core.raise_error(in_rollback => FALSE);
     END;
 
 
@@ -80,14 +120,15 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
     AS
     BEGIN
         UPDATE core_locks t
-        SET t.expire_at     = NVL(in_expire_at, SYSDATE + g_lock_length)
+        SET t.counter       = NVL(t.counter, 0) + 1,
+            t.expire_at     = NVL(in_expire_at, SYSDATE + g_lock_length)
         WHERE t.lock_id     = in_lock_id;
         --
     EXCEPTION
     WHEN core.app_exception THEN
         RAISE;
     WHEN OTHERS THEN
-        core.raise_error();
+        core.raise_error(in_rollback => FALSE);
     END;
 
 
@@ -105,7 +146,7 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
     WHEN core.app_exception THEN
         RAISE;
     WHEN OTHERS THEN
-        core.raise_error();
+        core.raise_error(in_rollback => FALSE);
     END;
 
 END;
