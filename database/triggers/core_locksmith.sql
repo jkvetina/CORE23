@@ -6,11 +6,7 @@ DECLARE
 BEGIN
     -- get username, proxy first, then SQL Workshop, APEX...
     -- not adding schema on purpose, we dont want generic users
-    rec.locked_by := COALESCE (
-        NULLIF(SYS_CONTEXT('USERENV', 'PROXY_USER'), 'ORDS_PUBLIC_USER'),
-        REGEXP_REPLACE(SYS_CONTEXT('USERENV', 'CLIENT_IDENTIFIER'), ':\d+$', ''),
-        REGEXP_REPLACE(SYS_CONTEXT('USERENV', 'CLIENT_INFO'), '^[^:]+:', '')
-    );
+    rec.locked_by := core_lock.get_user();
     --
     core.log_start (
         'event',            ORA_SYSEVENT,
@@ -41,51 +37,13 @@ BEGIN
             'PACKAGE', 'PACKAGE BODY', 'PROCEDURE', 'FUNCTION', 'TRIGGER'
         )
     THEN
-        -- check if we have a valid user
-        IF rec.locked_by IS NULL THEN
-            core.raise_error('USER_ERROR: USE PROXY_USER OR CLIENT_ID');
-        END IF;
-
-        -- check recent log for current object
-        FOR c IN (
-            SELECT
-                t.lock_id,
-                t.locked_by,
-                t.expire_at
-            FROM core_locks t
-            WHERE t.object_owner    = ORA_DICT_OBJ_OWNER
-                AND t.object_type   = ORA_DICT_OBJ_TYPE
-                AND t.object_name   = ORA_DICT_OBJ_NAME
-            ORDER BY
-                t.lock_id DESC
-            FETCH FIRST 1 ROWS ONLY
-        ) LOOP
-            IF c.locked_by = rec.locked_by THEN
-                -- same user, so update last record with new expire day
-                rec.lock_id := c.lock_id;
-                --
-            ELSIF c.expire_at >= SYSDATE THEN
-                -- for different user we need to check the expire date first
-                core.raise_error('LOCK_ERROR: OBJECT LOCKED BY "' || c.locked_by || '" [' || c.lock_id || ']');
-            END IF;
-        END LOOP;
-        --
-        rec.object_owner    := ORA_DICT_OBJ_OWNER;
-        rec.object_type     := ORA_DICT_OBJ_TYPE;
-        rec.object_name     := ORA_DICT_OBJ_NAME;
-        --
-        IF rec.lock_id IS NOT NULL THEN
-            core_lock.extend_lock (
-                in_lock_id          => rec.lock_id
-            );
-        ELSE
-            core_lock.create_lock (
-                in_object_owner     => rec.object_owner,
-                in_object_type      => rec.object_type,
-                in_object_name      => rec.object_name,
-                in_locked_by        => rec.locked_by
-            );
-        END IF;
+        core_lock.create_lock (
+            in_object_owner     => ORA_DICT_OBJ_OWNER,
+            in_object_type      => ORA_DICT_OBJ_TYPE,
+            in_object_name      => ORA_DICT_OBJ_NAME,
+            in_locked_by        => NULL,
+            in_expire_at        => NULL
+        );
     END IF;
     --
 EXCEPTION
