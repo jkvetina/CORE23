@@ -15,33 +15,36 @@ BEGIN
         WHERE 1 = 1
             AND u.oracle_maintained = 'N'
             AND u.cloud_maintained  = 'NO'
-            AND u.username          != v_core_owner
-                AND u.username      NOT IN ('ADMIN')
+            AND u.username          != 'MASTER'
+                AND u.username      NOT IN ('ADMIN', 'DEV')
+                AND u.username      LIKE 'XX%'
         ORDER BY 1
     ) LOOP
+        DBMS_OUTPUT.PUT_LINE('');
         DBMS_OUTPUT.PUT_LINE('-- PROCESSING: ' || c.username);
         --
         FOR o IN (
             SELECT
                 o.owner,
                 o.object_type,
-                o.object_name
+                o.object_name,
+                CASE WHEN o.object_type IN ('PACKAGE', 'PROCEDURE') THEN 'EXECUTE' ELSE 'SELECT' END AS grant_what
             FROM all_objects o
             WHERE o.owner           = v_core_owner
+                AND (o.object_name  LIKE 'CORE%' OR o.object_name = 'RECOMPILE')
                 AND o.object_type   NOT LIKE '%BODY'
+                AND o.object_type   NOT IN ('JOB', 'VIEW')
+            ORDER BY
+                o.object_type,
+                o.object_name
         ) LOOP
             EXECUTE IMMEDIATE
-                'GRANT EXECUTE ON ' || o.owner || '.' || o.object_name || ' TO ' || c.username || ' WITH GRANT OPTION';
+                'GRANT ' || o.grant_what || ' ON ' || o.owner || '.' || o.object_name
+                    || ' TO ' || c.username || ' WITH GRANT OPTION';
             --
-            EXECUTE IMMEDIATE
-                'DROP ' || o.object_type || ' IF EXISTS ' || c.username || '.' || o.object_name;
-            --
-            EXECUTE IMMEDIATE
-                'CREATE OR REPLACE SYNONYM ' || c.username || '.' || o.object_name
-                || ' FOR ' || v_core_owner || '.' || o.object_name;
+            DBMS_OUTPUT.PUT_LINE('--   ' || o.object_type || ' ' || o.object_name || ' ' || o.grant_what);
         END LOOP;
         --
-        DBMS_UTILITY.COMPILE_SCHEMA(schema => c.username);
     END LOOP;
 END;
 /
