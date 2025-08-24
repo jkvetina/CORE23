@@ -2220,7 +2220,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         --
         in_context_id           NUMBER      := NULL,
         in_payload              CLOB        := NULL,
-        in_rollback             BOOLEAN     := TRUE,
+        in_rollback             BOOLEAN     := FALSE,
         in_as_list              BOOLEAN     := FALSE,
         in_concat               BOOLEAN     := FALSE
     )

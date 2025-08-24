@@ -803,7 +803,7 @@ AS
         --
         in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
         in_payload              CLOB        := NULL,
-        in_rollback             BOOLEAN     := TRUE,
+        in_rollback             BOOLEAN     := FALSE,
         in_as_list              BOOLEAN     := FALSE,
         in_concat               BOOLEAN     := FALSE
     );
