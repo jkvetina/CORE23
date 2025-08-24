@@ -32,7 +32,7 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
         -- check if we have a valid user
         rec.locked_by := COALESCE(in_locked_by, get_user());
         IF rec.locked_by IS NULL THEN
-            core.raise_error('USER_ERROR: USE PROXY_USER OR CLIENT_ID', in_rollback => FALSE);
+            core.raise_error('USER_ERROR: USE PROXY_USER OR CLIENT_ID');
         END IF;
 
         -- check recent log for current object
@@ -55,7 +55,7 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
                 --
             ELSIF c.expire_at >= SYSDATE THEN
                 -- for different user we need to check the expire date first
-                core.raise_error('LOCK_ERROR: OBJECT LOCKED BY "' || c.locked_by || '" [' || c.lock_id || ']', in_rollback => FALSE);
+                core.raise_error('LOCK_ERROR: OBJECT LOCKED BY "' || c.locked_by || '" [' || c.lock_id || ']');
             END IF;
         END LOOP;
         --
@@ -88,7 +88,7 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
     WHEN core.app_exception THEN
         RAISE;
     WHEN OTHERS THEN
-        core.raise_error(in_rollback => FALSE);
+        core.raise_error();
     END;
 
 
@@ -108,7 +108,7 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
     WHEN core.app_exception THEN
         RAISE;
     WHEN OTHERS THEN
-        core.raise_error(in_rollback => FALSE);
+        core.raise_error();
     END;
 
 
@@ -128,7 +128,7 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
     WHEN core.app_exception THEN
         RAISE;
     WHEN OTHERS THEN
-        core.raise_error(in_rollback => FALSE);
+        core.raise_error();
     END;
 
 
@@ -146,7 +146,7 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
     WHEN core.app_exception THEN
         RAISE;
     WHEN OTHERS THEN
-        core.raise_error(in_rollback => FALSE);
+        core.raise_error();
     END;
 
 END;
