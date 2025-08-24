@@ -1,7 +1,6 @@
 CREATE OR REPLACE TRIGGER core_locksmith
 AFTER DDL ON SCHEMA
 DECLARE
-    v_sql_text      ora_name_list_t;    -- TABLE OF VARCHAR2(64);
     rec             core_locks%ROWTYPE;
 BEGIN
     -- get username, but we dont want generic users
@@ -25,17 +24,6 @@ BEGIN
         'user_zone',        SESSIONTIMEZONE
     );
 
-    /*
-    -- here you can actually stitch the chunks together and recreate the object as CLOB, store it somewhere
-    -- log whole object source in chunks of 64 bytes
-    FOR i IN 1 .. ora_sql_txt(v_sql_text) LOOP
-        core.log_debug (
-            'chunk',    i,
-            'content',  v_sql_text(i)
-        );
-    END LOOP;
-    */
-
     -- evaluate only specific events and specific object types
     IF ORA_SYSEVENT IN ('CREATE', 'ALTER', 'DROP')
         AND ORA_DICT_OBJ_TYPE IN (
@@ -48,7 +36,7 @@ BEGIN
             in_object_owner     => ORA_DICT_OBJ_OWNER,
             in_object_type      => ORA_DICT_OBJ_TYPE,
             in_object_name      => ORA_DICT_OBJ_NAME,
-            in_locked_by        => NULL,
+            in_locked_by        => rec.locked_by,
             in_expire_at        => NULL
         );
     END IF;

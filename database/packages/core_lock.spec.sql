@@ -33,6 +33,11 @@ CREATE OR REPLACE PACKAGE core_lock AS
         in_lock_id          core_locks.lock_id%TYPE
     );
 
+
+
+    FUNCTION get_object
+    RETURN CLOB;
+
 END;
 /
 

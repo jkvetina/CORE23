@@ -72,6 +72,7 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
                 locked_at,
                 counter,
                 expire_at
+                --object_payload
             )
             VALUES (
                 in_object_owner,
@@ -81,6 +82,7 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
                 SYSDATE,
                 1,
                 NVL(in_expire_at, SYSDATE + g_lock_length)
+                --get_object()
             );
         END IF;
         --
@@ -147,6 +149,21 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
         RAISE;
     WHEN OTHERS THEN
         core.raise_error();
+    END;
+
+
+
+    FUNCTION get_object
+    RETURN CLOB
+    AS
+        v_sql_text      ora_name_list_t;    -- TABLE OF VARCHAR2(64);
+        v_out           CLOB;
+    BEGIN
+        FOR i IN 1 .. ora_sql_txt(v_sql_text) LOOP
+            v_out := v_out || TO_CLOB(v_sql_text(i));
+        END LOOP;
+        --
+        RETURN v_out;
     END;
 
 END;
