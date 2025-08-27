@@ -3,6 +3,11 @@ AFTER DDL ON SCHEMA
 DECLARE
     rec             core_locks%ROWTYPE;
 BEGIN
+    -- ignore procedure scanning objects
+    IF ORA_DICT_OBJ_TYPE = 'PROCEDURE' AND ORA_DICT_OBJ_NAME LIKE 'DEPSCAN$%' THEN
+        RETURN;
+    END IF;
+
     -- get username, but we dont want generic users
     BEGIN
         rec.locked_by := core_lock.get_user();
