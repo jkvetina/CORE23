@@ -218,6 +218,8 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 in_offset       => in_offset
             );
         END LOOP;
+        --
+        v_out := v_out || TO_CLOB('<br />');
 
         -- go thru all selected apps
         FOR c IN (
@@ -249,6 +251,8 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 );
             END LOOP;
         END LOOP;
+        --
+        v_out := v_out || TO_CLOB('<br />');
 
         -- go thru all reports
         FOR g IN (
