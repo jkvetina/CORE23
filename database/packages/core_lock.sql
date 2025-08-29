@@ -27,6 +27,8 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
         in_expire_at        core_locks.expire_at%TYPE       := NULL
     )
     AS
+        PRAGMA AUTONOMOUS_TRANSACTION;
+        --
         rec                 core_locks%ROWTYPE;
     BEGIN
         -- check if we have a valid user
@@ -86,10 +88,14 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
             );
         END IF;
         --
+        COMMIT;
+        --
     EXCEPTION
     WHEN core.app_exception THEN
+        ROLLBACK;
         RAISE;
     WHEN OTHERS THEN
+        ROLLBACK;
         core.raise_error();
     END;
 
@@ -100,16 +106,22 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
         in_time             NUMBER
     )
     AS
+        PRAGMA AUTONOMOUS_TRANSACTION;
+        --
     BEGIN
         UPDATE core_locks t
         SET t.counter       = NVL(t.counter, 0) + 1,
             t.expire_at     = SYSDATE + NVL(in_time, g_lock_length)
         WHERE t.lock_id     = in_lock_id;
         --
+        COMMIT;
+        --
     EXCEPTION
     WHEN core.app_exception THEN
+        ROLLBACK;
         RAISE;
     WHEN OTHERS THEN
+        ROLLBACK;
         core.raise_error();
     END;
 
@@ -120,16 +132,22 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
         in_expire_at        core_locks.expire_at%TYPE       := NULL
     )
     AS
+        PRAGMA AUTONOMOUS_TRANSACTION;
+        --
     BEGIN
         UPDATE core_locks t
         SET t.counter       = NVL(t.counter, 0) + 1,
             t.expire_at     = NVL(in_expire_at, SYSDATE + g_lock_length)
         WHERE t.lock_id     = in_lock_id;
         --
+        COMMIT;
+        --
     EXCEPTION
     WHEN core.app_exception THEN
+        ROLLBACK;
         RAISE;
     WHEN OTHERS THEN
+        ROLLBACK;
         core.raise_error();
     END;
 
@@ -143,6 +161,8 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
         in_remove_hash      BOOLEAN                         := TRUE
     )
     AS
+        PRAGMA AUTONOMOUS_TRANSACTION;
+        --
     BEGIN
         IF in_lock_id IS NULL AND in_locked_by IS NULL AND in_object_name IS NULL THEN
             core.raise_error('ARGUMENTS_MISSING');
@@ -159,10 +179,14 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
         --
         DBMS_OUTPUT.PUT_LINE(TO_CHAR(SQL%ROWCOUNT) || ' OBJECTS UNLOCKED');
         --
+        COMMIT;
+        --
     EXCEPTION
     WHEN core.app_exception THEN
+        ROLLBACK;
         RAISE;
     WHEN OTHERS THEN
+        ROLLBACK;
         core.raise_error();
     END;
 
