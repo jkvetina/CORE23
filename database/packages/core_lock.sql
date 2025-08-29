@@ -136,13 +136,28 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
 
 
     PROCEDURE unlock (
-        in_lock_id          core_locks.lock_id%TYPE
+        in_lock_id          core_locks.lock_id%TYPE         := NULL,
+        in_locked_by        core_locks.locked_by%TYPE       := NULL,
+        in_object_name      core_locks.object_name%TYPE     := NULL,
+        in_object_type      core_locks.object_type%TYPE     := NULL,
+        in_remove_hash      BOOLEAN                         := TRUE
     )
     AS
     BEGIN
+        IF in_lock_id IS NULL AND in_locked_by IS NULL AND in_object_name IS NULL THEN
+            core.raise_error('ARGUMENTS_MISSING');
+        END IF;
+        --
         UPDATE core_locks t
-        SET t.expire_at     = NULL
-        WHERE t.lock_id     = in_lock_id;
+        SET t.expire_at         = NULL,
+            t.object_hash       = CASE WHEN NOT in_remove_hash THEN t.object_hash END
+        WHERE 1 = 1
+            AND (t.lock_id      = in_lock_id        OR in_lock_id       IS NULL)
+            AND (t.locked_by    = in_locked_by      OR in_locked_by     IS NULL)
+            AND (t.object_name  = in_object_name    OR in_object_name   IS NULL)
+            AND (t.object_type  = in_object_type    OR in_object_type   IS NULL);
+        --
+        DBMS_OUTPUT.PUT_LINE(TO_CHAR(SQL%ROWCOUNT) || ' OBJECTS UNLOCKED');
         --
     EXCEPTION
     WHEN core.app_exception THEN
