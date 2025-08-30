@@ -25,12 +25,14 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
         in_object_type      core_locks.object_type%TYPE,
         in_object_name      core_locks.object_name%TYPE,
         in_locked_by        core_locks.locked_by%TYPE       := NULL,
-        in_expire_at        core_locks.expire_at%TYPE       := NULL
+        in_expire_at        core_locks.expire_at%TYPE       := NULL,
+        in_hash_check       BOOLEAN                         := TRUE
     )
     AS
         PRAGMA AUTONOMOUS_TRANSACTION;
         --
         rec                 core_locks%ROWTYPE;
+        v_hash_check        BOOLEAN := in_hash_check;
     BEGIN
         -- check if we have a valid user
         rec.locked_by := COALESCE(in_locked_by, get_user());
@@ -42,7 +44,13 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
         rec.object_payload  := get_object();
 
         -- check hash only on objects with source code
+        IF in_object_type IN ('PACKAGE', 'PACKAGE BODY', 'PROCEDURE', 'FUNCTION', 'TRIGGER', 'VIEW') THEN
             rec.object_hash := get_clob_hash(rec.object_payload);
+        END IF;
+        --
+        IF (NOT g_check_hash OR rec.object_hash IS NULL) THEN
+            v_hash_check := FALSE;
+        END IF;
 
         -- check recent log for current object
         FOR c IN (
@@ -67,7 +75,7 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
                 -- for different user we need to check the expire date first
                 core.raise_error('LOCK_ERROR: OBJECT_LOCKED_BY `' || c.locked_by || '` [' || c.lock_id || ']');
                 --
-            ELSIF g_check_hash AND c.object_hash IS NOT NULL AND c.object_hash != rec.object_hash THEN
+            ELSIF v_hash_check AND c.object_hash IS NOT NULL AND c.object_hash != rec.object_hash THEN
                 -- check object hash
                 -- when you take over an object, you should compile it right away, without any changes
                 -- that will make sure you are not overriding any changes done by someone else in the meantime
