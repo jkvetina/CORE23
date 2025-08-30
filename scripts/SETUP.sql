@@ -7,21 +7,33 @@ CLEAR SCREEN
 -- (THIS MIGHT NEED MANUAL EXECUTION IF YOU ARE NOT DBA)
 --
 DECLARE
-    v_core_owner  CONSTANT VARCHAR2(30) := 'CORE';      -- EXECUTE SCRIPT AS THIS USER OR DBA
+    v_core_owner    VARCHAR2(30) := USER;      -- EXECUTE SCRIPT AS THIS USER OR DBA
 BEGIN
+    -- check schema
+    BEGIN
+        SELECT u.username
+        INTO v_core_owner
+        FROM all_users u
+        WHERE u.username = v_core_owner;
+    EXCEPTION
+    WHEN OTHERS THEN
+        RAISE_APPLICATION_ERROR(-20000, 'INVALID_CORE_SCHEMA');
+    END;
+
+    -- grant Core objects to other schemas
     FOR c IN (
         SELECT u.username
         FROM all_users u
         WHERE 1 = 1
             AND u.oracle_maintained = 'N'
             AND u.cloud_maintained  = 'NO'
-            AND u.username          != 'MASTER'
-                AND u.username      NOT IN ('ADMIN', 'DEV')
-                AND u.username      LIKE 'XX%'
+            AND u.username          NOT IN ('ADMIN', 'DEV', 'MASTER')
+            AND u.username          LIKE 'XX%'
         ORDER BY 1
     ) LOOP
         DBMS_OUTPUT.PUT_LINE('');
-        DBMS_OUTPUT.PUT_LINE('-- PROCESSING: ' || c.username);
+        DBMS_OUTPUT.PUT_LINE('  ' || c.username);
+        DBMS_OUTPUT.PUT_LINE('  ' || RPAD('-', LENGTH(c.username), '-'));
         --
         FOR o IN (
             SELECT
@@ -32,8 +44,7 @@ BEGIN
             FROM all_objects o
             WHERE o.owner           = v_core_owner
                 AND (o.object_name  LIKE 'CORE%' OR o.object_name = 'RECOMPILE')
-                AND o.object_type   NOT LIKE '%BODY'
-                AND o.object_type   NOT IN ('JOB', 'VIEW')
+                AND o.object_type   IN ('PACKAGE', 'PROCEDURE', 'TABLE')
             ORDER BY
                 o.object_type,
                 o.object_name
@@ -42,7 +53,7 @@ BEGIN
                 'GRANT ' || o.grant_what || ' ON ' || o.owner || '.' || o.object_name
                     || ' TO ' || c.username || ' WITH GRANT OPTION';
             --
-            DBMS_OUTPUT.PUT_LINE('--   ' || o.object_type || ' ' || o.object_name || ' ' || o.grant_what);
+            DBMS_OUTPUT.PUT_LINE('    ' || LPAD(o.object_type, 12) || ' | ' || RPAD(o.object_name, 30) || ' ' || o.grant_what);
         END LOOP;
         --
     END LOOP;
