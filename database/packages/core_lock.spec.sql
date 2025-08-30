@@ -42,6 +42,14 @@ CREATE OR REPLACE PACKAGE core_lock AS
     FUNCTION get_object
     RETURN CLOB;
 
+
+
+    FUNCTION get_clob_hash (
+        in_payload          CLOB,
+        in_type             PLS_INTEGER := NULL
+    )
+    RETURN VARCHAR2;
+
 END;
 /
 

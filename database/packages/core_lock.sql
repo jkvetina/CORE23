@@ -40,7 +40,9 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
 
         -- get current object
         rec.object_payload  := get_object();
-        rec.object_hash     := DBMS_CRYPTO.HASH(rec.object_payload, DBMS_CRYPTO.HASH_SH256);
+
+        -- check hash only on objects with source code
+            rec.object_hash := get_clob_hash(rec.object_payload);
 
         -- check recent log for current object
         FOR c IN (
@@ -113,13 +115,13 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
     BEGIN
         rec.expire_at       := SYSDATE + NVL(in_time, g_lock_length);
         rec.object_payload  := get_object();
-        rec.object_hash     := DBMS_CRYPTO.HASH(rec.object_payload, DBMS_CRYPTO.HASH_SH256);
+        rec.object_hash     := get_clob_hash(rec.object_payload);
         --
         UPDATE core_locks t
         SET t.counter           = NVL(t.counter, 0) + 1,
             t.expire_at         = rec.expire_at,
             t.object_payload    = rec.object_payload,
-            t.object_hash       = rec.object_hash
+            t.object_hash       = NVL(rec.object_hash, t.object_hash)
         WHERE t.lock_id         = in_lock_id;
         --
         COMMIT;
@@ -146,13 +148,13 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
     BEGIN
         rec.expire_at       := NVL(in_expire_at, SYSDATE + g_lock_length);
         rec.object_payload  := get_object();
-        rec.object_hash     := DBMS_CRYPTO.HASH(rec.object_payload, DBMS_CRYPTO.HASH_SH256);
+        rec.object_hash     := get_clob_hash(rec.object_payload);
         --
         UPDATE core_locks t
         SET t.counter           = NVL(t.counter, 0) + 1,
             t.expire_at         = rec.expire_at,
             t.object_payload    = rec.object_payload,
-            t.object_hash       = rec.object_hash
+            t.object_hash       = NVL(rec.object_hash, t.object_hash)
         WHERE t.lock_id         = in_lock_id;
         --
         COMMIT;
@@ -218,6 +220,21 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
         END LOOP;
         --
         RETURN v_out;
+    END;
+
+
+
+    FUNCTION get_clob_hash (
+        in_payload          CLOB,
+        in_type             PLS_INTEGER := NULL
+    )
+    RETURN VARCHAR2
+    AS
+    BEGIN
+        RETURN DBMS_CRYPTO.HASH(in_payload, NVL(in_type, DBMS_CRYPTO.HASH_SH256));
+    EXCEPTION
+    WHEN OTHERS THEN
+        core.raise_error();
     END;
 
 END;
