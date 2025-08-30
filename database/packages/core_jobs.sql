@@ -219,7 +219,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
             );
         END LOOP;
         --
-        v_out := v_out || TO_CLOB('<br />');
+        v_out := v_out || TO_CLOB('<p><br /></p>');
 
         -- go thru all selected apps
         FOR c IN (
@@ -252,7 +252,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
             END LOOP;
         END LOOP;
         --
-        v_out := v_out || TO_CLOB('<br />');
+        v_out := v_out || TO_CLOB('<p><br /></p>');
 
         -- go thru all reports
         FOR g IN (
