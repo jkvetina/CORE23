@@ -25,7 +25,7 @@ GROUP BY ALL
 ORDER BY 1;
 /
 --
-COMMENT ON TABLE core_daily_materialized_views_v IS '21 | Materialized Views';
+COMMENT ON TABLE core_daily_materialized_views_v IS '';
 --
 COMMENT ON COLUMN core_daily_materialized_views_v.mview_name                IS '';
 COMMENT ON COLUMN core_daily_materialized_views_v.last_refreshed_at         IS '';

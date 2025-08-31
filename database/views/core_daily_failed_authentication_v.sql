@@ -20,7 +20,7 @@ ORDER BY
     1, 2, 3, 4;
 /
 --
-COMMENT ON TABLE core_daily_failed_authentication_v IS '30 | Failed Authentication | Security Issues';
+COMMENT ON TABLE core_daily_failed_authentication_v IS '';
 --
 COMMENT ON COLUMN core_daily_failed_authentication_v.app_id             IS '';
 COMMENT ON COLUMN core_daily_failed_authentication_v.app_name           IS '';

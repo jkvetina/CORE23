@@ -28,7 +28,7 @@ ORDER BY
     1, 2, 3, 4;
 /
 --
-COMMENT ON TABLE core_daily_apex_debug_messages_v IS '42 | APEX Debug Messages';
+COMMENT ON TABLE core_daily_apex_debug_messages_v IS '';
 --
 COMMENT ON COLUMN core_daily_apex_debug_messages_v.app_id           IS '';
 COMMENT ON COLUMN core_daily_apex_debug_messages_v.page_id          IS '';

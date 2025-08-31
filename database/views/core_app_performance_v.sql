@@ -92,7 +92,7 @@ ORDER BY
     1, 2;
 /
 --
-COMMENT ON TABLE core_app_performance_v IS '12 | Performance';
+COMMENT ON TABLE core_app_performance_v IS '';
 --
 COMMENT ON COLUMN core_app_performance_v.app_id                     IS '';
 COMMENT ON COLUMN core_app_performance_v.page_id                    IS '';

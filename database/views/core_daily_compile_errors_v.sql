@@ -15,7 +15,7 @@ ORDER BY
     t.sequence;
 /
 --
-COMMENT ON TABLE core_daily_compile_errors_v IS '13 | Compile Errors';
+COMMENT ON TABLE core_daily_compile_errors_v IS '';
 --
 COMMENT ON COLUMN core_daily_compile_errors_v.owner         IS '';
 COMMENT ON COLUMN core_daily_compile_errors_v.name          IS '';

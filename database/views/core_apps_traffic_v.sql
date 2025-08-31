@@ -26,7 +26,7 @@ ORDER BY
     1, 2;
 /
 --
-COMMENT ON TABLE core_apps_traffic_v IS '11 | Traffic Overview';
+COMMENT ON TABLE core_apps_traffic_v IS '';
 --
 COMMENT ON COLUMN core_apps_traffic_v.app_id                    IS '';
 COMMENT ON COLUMN core_apps_traffic_v.app_name                  IS '';

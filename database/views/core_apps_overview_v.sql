@@ -32,7 +32,7 @@ ORDER BY
     1, 2;
 /
 --
-COMMENT ON TABLE core_apps_overview_v IS '10 | Overview | APEX Applications';
+COMMENT ON TABLE core_apps_overview_v IS '';
 --
 COMMENT ON COLUMN core_apps_overview_v.app_group            IS '';
 COMMENT ON COLUMN core_apps_overview_v.app_id               IS '';

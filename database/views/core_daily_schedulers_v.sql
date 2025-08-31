@@ -24,7 +24,7 @@ ORDER BY
     1, 2, 3;
 /
 --
-COMMENT ON TABLE core_daily_schedulers_v IS '20 | Schedulers | Schedulers & Materialized Views';
+COMMENT ON TABLE core_daily_schedulers_v IS '';
 --
 COMMENT ON COLUMN core_daily_schedulers_v.owner             IS '';
 COMMENT ON COLUMN core_daily_schedulers_v.job_name          IS '';

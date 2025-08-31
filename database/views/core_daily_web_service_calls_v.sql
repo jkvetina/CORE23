@@ -32,7 +32,7 @@ ORDER BY
     1, 2, 3;
 /
 --
-COMMENT ON TABLE core_daily_web_service_calls_v IS '44 | Web Service Calls';
+COMMENT ON TABLE core_daily_web_service_calls_v IS '';
 --
 COMMENT ON COLUMN core_daily_web_service_calls_v.workspace          IS '';
 COMMENT ON COLUMN core_daily_web_service_calls_v.host               IS '';

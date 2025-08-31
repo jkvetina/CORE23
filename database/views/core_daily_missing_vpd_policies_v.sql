@@ -19,7 +19,7 @@ WHERE 1 = 1
 ORDER BY 1;
 /
 --
-COMMENT ON TABLE core_daily_missing_vpd_policies_v IS '31 | Missing VPD Policies';
+COMMENT ON TABLE core_daily_missing_vpd_policies_v IS '';
 --
 COMMENT ON COLUMN core_daily_missing_vpd_policies_v.owner           IS '';
 COMMENT ON COLUMN core_daily_missing_vpd_policies_v.table_name      IS '';

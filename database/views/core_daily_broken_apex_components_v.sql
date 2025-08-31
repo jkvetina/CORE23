@@ -14,7 +14,7 @@ ORDER BY
     1, 2, 3, 4;
 /
 --
-COMMENT ON TABLE core_daily_broken_apex_components_v IS '40 | Broken APEX Components | APEX Issues';
+COMMENT ON TABLE core_daily_broken_apex_components_v IS '';
 --
 COMMENT ON COLUMN core_daily_broken_apex_components_v.app_id                    IS '';
 COMMENT ON COLUMN core_daily_broken_apex_components_v.page_id                   IS '';

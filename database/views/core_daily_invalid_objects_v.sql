@@ -11,7 +11,7 @@ ORDER BY
     1, 2, 3;
 /
 --
-COMMENT ON TABLE core_daily_invalid_objects_v IS '11 | Invalid Objects';
+COMMENT ON TABLE core_daily_invalid_objects_v IS '';
 --
 COMMENT ON COLUMN core_daily_invalid_objects_v.owner            IS '';
 COMMENT ON COLUMN core_daily_invalid_objects_v.object_type      IS '';

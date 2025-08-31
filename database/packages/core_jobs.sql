@@ -14,18 +14,16 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
     IS
         SELECT
             t.view_name,
-            COALESCE(
-                REGEXP_SUBSTR(c.comments, '\|\s*([^\|]+)', 1, 1, NULL, 1),
-                INITCAP(REPLACE(REGEXP_SUBSTR(t.view_name, '^' || in_prefix || '_(.*)_V$', 1, 1, NULL, 1), '_', ' '))
-            ) AS header3,
-            REGEXP_SUBSTR(c.comments, '\|\s*([^\|]+)', 1, 2, NULL, 1) AS header2
+            r.group_name    AS header3,
+            r.report_name   AS header2
         FROM user_views t
-        LEFT JOIN user_tab_comments c
-            ON c.table_name     = t.view_name
-        WHERE t.view_name           LIKE in_prefix || '\_%\_V'   ESCAPE '\'
-            AND t.view_name     NOT LIKE in_prefix || '\_\_%\_V' ESCAPE '\'
+        JOIN core_reports r
+            ON r.view_name  = t.view_name
+            AND r.sort#     > 0
+        WHERE t.view_name   LIKE in_prefix || '%'
         ORDER BY
-            c.comments || t.view_name;
+            r.sort#,
+            r.view_name;
 
 
 
@@ -548,12 +546,12 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
     )
     RETURN VARCHAR2
     AS
-        v_column_name       user_col_comments.comments%TYPE;
+        v_column_name       core_report_cols.report_name%TYPE;
     BEGIN
-        SELECT MAX(t.comments)
+        SELECT MAX(t.report_name)
         INTO v_column_name
-        FROM user_col_comments t
-        WHERE t.table_name      = in_table_name
+        FROM core_report_cols t
+        WHERE t.view_name       = in_table_name
             AND t.column_name   = in_column_name;
         --
         IF REGEXP_LIKE(v_column_name, '\{Mon fmDD, -\d+\}') THEN

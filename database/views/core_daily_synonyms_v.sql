@@ -33,7 +33,7 @@ GROUP BY
 ORDER BY 1;
 /
 --
-COMMENT ON TABLE core_daily_synonyms_v IS '22 | Synonyms ';
+COMMENT ON TABLE core_daily_synonyms_v IS '';
 --
 COMMENT ON COLUMN core_daily_synonyms_v.synonym_name    IS '';
 COMMENT ON COLUMN core_daily_synonyms_v.object_type     IS '';

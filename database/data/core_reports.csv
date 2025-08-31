@@ -1,0 +1,22 @@
+"VIEW_NAME";"REPORT_NAME";"GROUP_NAME";"SORT#"
+"CORE_APPS_OVERVIEW_V";"Overview ";"APEX Applications";10
+"CORE_APPS_TIMELINE_V";"Developers Timeline";"";15
+"CORE_APPS_TRAFFIC_V";"Traffic Overview";"";11
+"CORE_APPS_WORKSPACE_FILES_V";"Workspace Files";"";12
+"CORE_APP_COMPONENT_CHANGES_V";"Component Changes";"";11
+"CORE_APP_HISTORY_V";"Requests History";"";15
+"CORE_APP_PERFORMANCE_V";"Performance";"";12
+"CORE_DAILY_APEX_DEBUG_MESSAGES_V";"APEX Debug Messages";"";42
+"CORE_DAILY_BROKEN_APEX_COMPONENTS_V";"Broken APEX Components ";"APEX Issues";40
+"CORE_DAILY_COMPILE_ERRORS_V";"Compile Errors";"";13
+"CORE_DAILY_DISABLED_OBJECTS_V";"Disabled Objects";"";12
+"CORE_DAILY_FAILED_AUTHENTICATION_V";"Failed Authentication ";"Security Issues";30
+"CORE_DAILY_INVALID_OBJECTS_V";"Invalid Objects";"";11
+"CORE_DAILY_MAIL_QUEUE_ERRORS_V";"Mail Queue Errors";"";43
+"CORE_DAILY_MATERIALIZED_VIEWS_V";"Materialized Views";"";21
+"CORE_DAILY_MISSING_VPD_POLICIES_V";"Missing VPD Policies";"";31
+"CORE_DAILY_SCHEDULERS_V";"Schedulers ";"Schedulers & Materialized Views";20
+"CORE_DAILY_SYNONYMS_V";"Synonyms ";"";22
+"CORE_DAILY_VERSIONS_V";"Versions ";"Database Overview";10
+"CORE_DAILY_WEB_SERVICE_CALLS_V";"Web Service Calls";"";44
+"CORE_DAILY_WORKSPACE_ERRORS_V";"Workspace Errors";"";41

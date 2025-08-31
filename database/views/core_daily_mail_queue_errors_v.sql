@@ -16,7 +16,7 @@ ORDER BY
     1, 2;
 /
 --
-COMMENT ON TABLE core_daily_mail_queue_errors_v IS '43 | Mail Queue Errors';
+COMMENT ON TABLE core_daily_mail_queue_errors_v IS '';
 --
 COMMENT ON COLUMN core_daily_mail_queue_errors_v.app_id         IS '';
 COMMENT ON COLUMN core_daily_mail_queue_errors_v.error_         IS '';

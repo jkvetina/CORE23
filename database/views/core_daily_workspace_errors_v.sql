@@ -20,7 +20,7 @@ ORDER BY
     1, 2, 3;
 /
 --
-COMMENT ON TABLE core_daily_workspace_errors_v IS '41 | Workspace Errors';
+COMMENT ON TABLE core_daily_workspace_errors_v IS '';
 --
 COMMENT ON COLUMN core_daily_workspace_errors_v.app_id          IS '';
 COMMENT ON COLUMN core_daily_workspace_errors_v.page_id         IS '';

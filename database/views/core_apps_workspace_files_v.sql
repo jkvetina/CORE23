@@ -19,7 +19,7 @@ WHERE (
 ORDER BY 1;
 /
 --
-COMMENT ON TABLE core_apps_workspace_files_v IS '12 | Workspace Files';
+COMMENT ON TABLE core_apps_workspace_files_v IS '';
 --
 COMMENT ON COLUMN core_apps_workspace_files_v.file_name             IS '';
 COMMENT ON COLUMN core_apps_workspace_files_v.file_size             IS '';
