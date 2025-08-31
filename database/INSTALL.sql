@@ -1,9 +1,11 @@
 --
+-- DATA ................... 2
 -- JOB .................... 2
 -- PACKAGE ................ 5
 -- PACKAGE BODY ........... 5
 -- PROCEDURE .............. 1
--- TABLE .................. 1
+-- SEQUENCE ............... 1
+-- TABLE .................. 3
 -- TRIGGER ................ 1
 -- VIEW .................. 22
 --
@@ -13,9 +15,16 @@
 --
 
 --
+-- SEQUENCES
+--
+@"./sequences/core_lock_id.sql";
+
+--
 -- TABLES
 --
 @"./tables/core_locks.sql";
+@"./tables/core_reports.sql";
+@"./tables/core_report_cols.sql";
 
 --
 -- OBJECTS
@@ -59,6 +68,12 @@
 --
 @"./triggers/core_prevent_create_wrong_objects.sql";
 @"./triggers/core_locksmith.sql";
+
+--
+-- DATA
+--
+@"./data/core_report_cols.sql";
+@"./data/core_reports.sql";
 
 --
 -- GRANTS
