@@ -61,14 +61,30 @@ END;
 /
 
 --
--- CHECK GRANTS - ALSO CHECK IF SYNONYMS EXISTS - SHOW AS PIVOT
+-- CREATE SYNONYMS FOR CORE OBJECTS IN ANOTHER SCHEMA
 --
-SELECT *
-FROM all_tab_privs
-WHERE grantor = 'CORE';
+BEGIN
+    FOR c IN (
+        SELECT
+            t.table_schema          AS object_schema,
+            t.table_name            AS object_name
+        FROM all_tab_privs t
+        JOIN all_users u
+            ON u.username           = t.table_schema
+            AND u.oracle_maintained = 'N'
+        WHERE 1 = 1
+            AND t.grantee           = USER
+            AND t.table_name        LIKE 'CORE%'
+    ) LOOP
+        EXECUTE IMMEDIATE
+            'CREATE OR REPLACE SYNONYM ' || c.object_name
+            || ' FOR ' || c.object_schema || '.' || c.object_name;
+    END LOOP;
+END;
+/
 
 --
--- VERIFY SYNONYMS FROM TARGET SCHEMA
+-- VERIFY SYNONYMS
 --
 SELECT
     s.synonym_name,
@@ -92,6 +108,8 @@ LEFT JOIN all_objects o
     ON o.owner          = s.table_owner
     AND o.object_name   = s.table_name
     AND o.object_type   = g.type
+WHERE 1 = 1
+    AND s.synonym_name  LIKE 'CORE%'
 GROUP BY
     s.synonym_name,
     s.table_owner,
