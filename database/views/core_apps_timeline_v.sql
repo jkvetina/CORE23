@@ -36,13 +36,10 @@ WHERE 1 = 1
     AND a.application_id    IS NULL
     AND l.apex_user         NOT LIKE '%MONITOR%'
     --
-    AND TO_CHAR(l.view_timestamp, 'YYYY-MM-DD') = core_jobs.get_start_date()
+    AND TO_CHAR(l.view_timestamp, 'YYYY-MM-DD') = core_reports.get_start_date()
 GROUP BY ALL
 ORDER BY 1;
 /
 --
 COMMENT ON TABLE core_apps_timeline_v IS '15 | Developers Timeline';
---
-COMMENT ON COLUMN core_apps_timeline_v.user_id      IS '';
-COMMENT ON COLUMN core_apps_timeline_v.total        IS '';
 

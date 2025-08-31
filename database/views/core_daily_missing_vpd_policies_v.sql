@@ -18,11 +18,4 @@ WHERE 1 = 1
     AND p.policy_name   IS NULL
 ORDER BY 1;
 /
---
-COMMENT ON TABLE core_daily_missing_vpd_policies_v IS '';
---
-COMMENT ON COLUMN core_daily_missing_vpd_policies_v.owner           IS '';
-COMMENT ON COLUMN core_daily_missing_vpd_policies_v.table_name      IS '';
-COMMENT ON COLUMN core_daily_missing_vpd_policies_v.status          IS '';
-COMMENT ON COLUMN core_daily_missing_vpd_policies_v.status__style   IS '';
 

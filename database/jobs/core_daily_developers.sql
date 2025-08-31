@@ -16,7 +16,7 @@ BEGIN
     DBMS_SCHEDULER.CREATE_JOB (
         job_name            => in_job_name,
         job_type            => 'PLSQL_BLOCK',
-        job_action          => 'core_jobs.job_daily_developers();',
+        job_action          => 'core_reports.job_daily_developers();',
         number_of_arguments => 0,
         start_date          => SYSDATE,
         repeat_interval     => 'FREQ=DAILY; BYHOUR=0; BYMINUTE=5; BYSECOND=0',

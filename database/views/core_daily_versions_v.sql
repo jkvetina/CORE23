@@ -9,11 +9,4 @@ CROSS JOIN apex_release r
 JOIN apex_patches p
     ON p.images_version = r.version_no;
 /
---
-COMMENT ON TABLE core_daily_versions_v IS '';
---
-COMMENT ON COLUMN core_daily_versions_v.db_version      IS '';
-COMMENT ON COLUMN core_daily_versions_v.apex_version    IS '';
-COMMENT ON COLUMN core_daily_versions_v.apex_patched    IS '';
-COMMENT ON COLUMN core_daily_versions_v.ords_version    IS '';
 

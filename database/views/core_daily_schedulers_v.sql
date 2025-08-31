@@ -17,22 +17,10 @@ SELECT
 FROM all_scheduler_job_run_details t
 WHERE 1 = 1
     AND t.owner         LIKE core.get_constant('G_OWNER_LIKE', 'CORE_CUSTOM')
-    AND t.log_date      >= core_jobs.get_start_date()
-    AND t.log_date      <  core_jobs.get_end_date()
+    AND t.log_date      >= core_reports.get_start_date()
+    AND t.log_date      <  core_reports.get_end_date()
 GROUP BY ALL
 ORDER BY
     1, 2, 3;
 /
---
-COMMENT ON TABLE core_daily_schedulers_v IS '';
---
-COMMENT ON COLUMN core_daily_schedulers_v.owner             IS '';
-COMMENT ON COLUMN core_daily_schedulers_v.job_name          IS '';
-COMMENT ON COLUMN core_daily_schedulers_v.last_start_date   IS '';
-COMMENT ON COLUMN core_daily_schedulers_v.status            IS '';
-COMMENT ON COLUMN core_daily_schedulers_v.status__style     IS '';
-COMMENT ON COLUMN core_daily_schedulers_v.run_duration      IS '';
-COMMENT ON COLUMN core_daily_schedulers_v.cpu_used          IS '';
-COMMENT ON COLUMN core_daily_schedulers_v.count_            IS '';
-COMMENT ON COLUMN core_daily_schedulers_v.error_            IS '';
 

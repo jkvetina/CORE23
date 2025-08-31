@@ -61,24 +61,4 @@ GROUP BY
 ORDER BY
     1, 2;
 /
---
-COMMENT ON TABLE core_app_history_v IS '';
---
-COMMENT ON COLUMN core_app_history_v.page_id        IS '';
-COMMENT ON COLUMN core_app_history_v.page_name      IS '';
-COMMENT ON COLUMN core_app_history_v.today          IS '';
-COMMENT ON COLUMN core_app_history_v.t1             IS '';
-COMMENT ON COLUMN core_app_history_v.t2             IS '';
-COMMENT ON COLUMN core_app_history_v.t3             IS '';
-COMMENT ON COLUMN core_app_history_v.t4             IS '';
-COMMENT ON COLUMN core_app_history_v.t5             IS '';
-COMMENT ON COLUMN core_app_history_v.t6             IS '';
-COMMENT ON COLUMN core_app_history_v.t7             IS '';
-COMMENT ON COLUMN core_app_history_v.t8             IS '';
-COMMENT ON COLUMN core_app_history_v.t9             IS '';
-COMMENT ON COLUMN core_app_history_v.t10            IS '';
-COMMENT ON COLUMN core_app_history_v.t11            IS '';
-COMMENT ON COLUMN core_app_history_v.t12            IS '';
-COMMENT ON COLUMN core_app_history_v.t13            IS '';
-COMMENT ON COLUMN core_app_history_v.t14            IS '';
 

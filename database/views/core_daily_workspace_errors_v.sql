@@ -11,20 +11,12 @@ SELECT
     --
 FROM apex_workspace_activity_log t
 WHERE 1 = 1
-    AND t.view_date         >= core_jobs.get_start_date()
-    AND t.view_date         <  core_jobs.get_end_date()
+    AND t.view_date         >= core_reports.get_start_date()
+    AND t.view_date         <  core_reports.get_end_date()
     AND t.error_message     IS NOT NULL
     AND t.error_message     NOT LIKE 'Your session has ended%'
 GROUP BY ALL
 ORDER BY
     1, 2, 3;
 /
---
-COMMENT ON TABLE core_daily_workspace_errors_v IS '';
---
-COMMENT ON COLUMN core_daily_workspace_errors_v.app_id          IS '';
-COMMENT ON COLUMN core_daily_workspace_errors_v.page_id         IS '';
-COMMENT ON COLUMN core_daily_workspace_errors_v.error_          IS '';
-COMMENT ON COLUMN core_daily_workspace_errors_v.count_          IS '';
-COMMENT ON COLUMN core_daily_workspace_errors_v.recent_log_id   IS '';
 

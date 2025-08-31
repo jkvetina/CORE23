@@ -19,22 +19,12 @@ SELECT
     --
 FROM apex_debug_messages t
 WHERE 1 = 1
-    AND t.message_timestamp >= core_jobs.get_start_date()
-    AND t.message_timestamp <  core_jobs.get_end_date()
+    AND t.message_timestamp >= core_reports.get_start_date()
+    AND t.message_timestamp <  core_reports.get_end_date()
     AND t.message_level     IN (1, 2)
     AND t.message           NOT LIKE '%ORA-20876: Stop APEX Engine%'
 GROUP BY ALL
 ORDER BY
     1, 2, 3, 4;
 /
---
-COMMENT ON TABLE core_daily_apex_debug_messages_v IS '';
---
-COMMENT ON COLUMN core_daily_apex_debug_messages_v.app_id           IS '';
-COMMENT ON COLUMN core_daily_apex_debug_messages_v.page_id          IS '';
-COMMENT ON COLUMN core_daily_apex_debug_messages_v.user_            IS '';
-COMMENT ON COLUMN core_daily_apex_debug_messages_v.type_            IS '';
-COMMENT ON COLUMN core_daily_apex_debug_messages_v.error_           IS '';
-COMMENT ON COLUMN core_daily_apex_debug_messages_v.count_           IS '';
-COMMENT ON COLUMN core_daily_apex_debug_messages_v.recent_log_id    IS '';
 

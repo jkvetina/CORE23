@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE BODY core_jobs AS
+CREATE OR REPLACE PACKAGE BODY core_reports AS
 
     g_start_date        DATE;
     g_end_date          DATE;
@@ -14,13 +14,13 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
     IS
         SELECT
             t.view_name,
-            r.group_name    AS header3,
-            r.report_name   AS header2
+            r.group_name,
+            r.report_name
         FROM user_views t
-        JOIN core_reports r
+        JOIN core_report_views r
             ON r.view_name  = t.view_name
             AND r.sort#     > 0
-        WHERE t.view_name   LIKE in_prefix || '%'
+        WHERE t.view_name   LIKE in_prefix || '\_%' ESCAPE '\'
         ORDER BY
             r.sort#,
             r.view_name;
@@ -99,10 +99,10 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         -- send reports to all developers
         v_developers := APEX_STRING.JOIN(core_custom.g_developers, ',');
         --
-        core_jobs.send_daily(v_developers);
+        core_reports.send_daily(v_developers);
         COMMIT;
         --
-        core_jobs.send_apps(v_developers);
+        core_reports.send_apps(v_developers);
         COMMIT;
         --
         apex_mail.push_queue();
@@ -155,13 +155,13 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
 
         -- go thru all reports
         FOR c IN related_views('CORE_DAILY') LOOP
-            IF c.header2 IS NOT NULL THEN
-                v_out := v_out || TO_CLOB('<h2>' || c.header2 || '</h2>');
+            IF c.group_name IS NOT NULL THEN
+                v_out := v_out || TO_CLOB('<h2>' || c.group_name || '</h2>');
             END IF;
             --
             v_out := v_out || get_content (
                 in_view_name    => c.view_name,
-                in_header       => c.header3,
+                in_header       => c.report_name,
                 in_offset       => in_offset
             );
         END LOOP;
@@ -206,13 +206,13 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
 
         -- go thru all reports
         FOR c IN related_views('CORE_APPS') LOOP
-            IF c.header2 IS NOT NULL THEN
-                v_out := v_out || TO_CLOB('<h2>' || c.header2 || '</h2>');
+            IF c.group_name IS NOT NULL THEN
+                v_out := v_out || TO_CLOB('<h2>' || c.group_name || '</h2>');
             END IF;
             --
             v_out := v_out || get_content (
                 in_view_name    => c.view_name,
-                in_header       => c.header3,
+                in_header       => c.report_name,
                 in_offset       => in_offset
             );
         END LOOP;
@@ -223,9 +223,9 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
         FOR c IN (
             SELECT
                 a.application_id,
-                'Application ' || a.application_id || ' &ndash; ' || a.application_name AS header2
+                'Application ' || a.application_id || ' &ndash; ' || a.application_name AS group_name
             FROM apex_applications a
-            JOIN TABLE (core_jobs.get_apps()) f
+            JOIN TABLE (core_reports.get_apps()) f
                 ON TO_NUMBER(f.column_value) = a.application_id
             ORDER BY 1
         ) LOOP
@@ -233,18 +233,14 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
                 in_user_id  => USER,
                 in_app_id   => c.application_id
             );
-
-            v_out := v_out || TO_CLOB('<h2>' || c.header2 || '</h2>');
+            --
+            v_out := v_out || TO_CLOB('<h2>' || c.group_name || '</h2>');
 
             -- go thru all app specific reports
             FOR a IN related_views('CORE_APP') LOOP
-                IF a.header2 IS NOT NULL THEN
-                    v_out := v_out || TO_CLOB('<h2>' || a.header2 || '</h2>');
-                END IF;
-                --
                 v_out := v_out || get_content (
                     in_view_name    => a.view_name,
-                    in_header       => a.header3,
+                    in_header       => a.report_name,
                     in_offset       => in_offset
                 );
             END LOOP;
@@ -276,7 +272,7 @@ CREATE OR REPLACE PACKAGE BODY core_jobs AS
             FOR c IN related_views('CORE_REST') LOOP
                 v_out := v_out || get_content (
                     in_view_name    => c.view_name,
-                    in_header       => REPLACE(c.header3, '{MODULE_NAME}', g.module_name),
+                    in_header       => REPLACE(c.report_name, '{MODULE_NAME}', g.module_name),
                     in_offset       => in_offset
                 );
             END LOOP;

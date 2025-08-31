@@ -10,10 +10,4 @@ WHERE 1 = 1
 ORDER BY
     1, 2, 3;
 /
---
-COMMENT ON TABLE core_daily_invalid_objects_v IS '';
---
-COMMENT ON COLUMN core_daily_invalid_objects_v.owner            IS '';
-COMMENT ON COLUMN core_daily_invalid_objects_v.object_type      IS '';
-COMMENT ON COLUMN core_daily_invalid_objects_v.object_name      IS '';
 

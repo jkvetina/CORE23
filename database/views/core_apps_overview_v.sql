@@ -9,7 +9,7 @@ SELECT
     t.last_updated_by       AS updated_by,
     t.last_updated_on       AS updated_at,
     --
-    CASE WHEN t.last_updated_on >= core_jobs.get_start_date() THEN 'RED' END AS updated_at__style,
+    CASE WHEN t.last_updated_on >= core_reports.get_start_date() THEN 'RED' END AS updated_at__style,
     --
     COALESCE (
         TO_CHAR(t.last_dependency_analyzed_at, 'YYYY-MM-DD HH24:MI'),
@@ -24,24 +24,11 @@ SELECT
         THEN 'RED' END AS analyzed_at__style
     --
 FROM apex_applications t
-LEFT JOIN TABLE (core_jobs.get_apps()) f
+LEFT JOIN TABLE (core_reports.get_apps()) f
     ON TO_NUMBER(f.column_value)    = t.application_id
 WHERE t.is_working_copy             = 'No'
     AND t.application_group         NOT LIKE '\_\_%' ESCAPE '\'
 ORDER BY
     1, 2;
 /
---
-COMMENT ON TABLE core_apps_overview_v IS '';
---
-COMMENT ON COLUMN core_apps_overview_v.app_group            IS '';
-COMMENT ON COLUMN core_apps_overview_v.app_id               IS '';
-COMMENT ON COLUMN core_apps_overview_v.app_name             IS '';
-COMMENT ON COLUMN core_apps_overview_v.version              IS '';
-COMMENT ON COLUMN core_apps_overview_v.pages                IS '';
-COMMENT ON COLUMN core_apps_overview_v.updated_at__style    IS '';
-COMMENT ON COLUMN core_apps_overview_v.analyzed_at          IS '';
-COMMENT ON COLUMN core_apps_overview_v.app_id__style        IS '';
-COMMENT ON COLUMN core_apps_overview_v.app_name__style      IS '';
-COMMENT ON COLUMN core_apps_overview_v.analyzed_at__style   IS '';
 

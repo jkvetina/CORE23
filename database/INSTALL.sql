@@ -23,7 +23,7 @@
 -- TABLES
 --
 @"./tables/core_locks.sql";
-@"./tables/core_reports.sql";
+@"./tables/core_report_views.sql";
 @"./tables/core_report_cols.sql";
 
 --
@@ -55,13 +55,13 @@
 @"./packages/core_custom.spec.sql";
 @"./packages/core.spec.sql";
 @"./packages/core_gen.spec.sql";
-@"./packages/core_jobs.spec.sql";
 @"./packages/core_lock.spec.sql";
+@"./packages/core_reports.spec.sql";
 @"./packages/core.sql";
 @"./packages/core_custom.sql";
 @"./packages/core_gen.sql";
-@"./packages/core_jobs.sql";
 @"./packages/core_lock.sql";
+@"./packages/core_reports.sql";
 
 --
 -- TRIGGERS
@@ -73,7 +73,7 @@
 -- DATA
 --
 @"./data/core_report_cols.sql";
-@"./data/core_reports.sql";
+@"./data/core_report_views.sql";
 
 --
 -- GRANTS

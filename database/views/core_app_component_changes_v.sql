@@ -13,21 +13,11 @@ SELECT
 FROM apex_developer_activity_log g
 WHERE 1 = 1
     AND g.application_id    = core.get_app_id()
-    AND g.audit_date        >= core_jobs.get_start_date()
-    AND g.audit_date        <  core_jobs.get_end_date()
+    AND g.audit_date        >= core_reports.get_start_date()
+    AND g.audit_date        <  core_reports.get_end_date()
     AND g.developer         != USER
 GROUP BY ALL
 ORDER BY
     1, 2, 3;
 /
---
-COMMENT ON TABLE core_app_component_changes_v IS '';
---
-COMMENT ON COLUMN core_app_component_changes_v.developer    IS '';
-COMMENT ON COLUMN core_app_component_changes_v.page_id      IS '';
-COMMENT ON COLUMN core_app_component_changes_v.page_name    IS '';
-COMMENT ON COLUMN core_app_component_changes_v.components   IS '';
-COMMENT ON COLUMN core_app_component_changes_v.inserted_    IS '';
-COMMENT ON COLUMN core_app_component_changes_v.updated_     IS '';
-COMMENT ON COLUMN core_app_component_changes_v.deleted_     IS '';
 

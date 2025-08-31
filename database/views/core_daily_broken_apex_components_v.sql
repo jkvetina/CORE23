@@ -13,15 +13,4 @@ WHERE t.error_message IS NOT NULL
 ORDER BY
     1, 2, 3, 4;
 /
---
-COMMENT ON TABLE core_daily_broken_apex_components_v IS '';
---
-COMMENT ON COLUMN core_daily_broken_apex_components_v.app_id                    IS '';
-COMMENT ON COLUMN core_daily_broken_apex_components_v.page_id                   IS '';
-COMMENT ON COLUMN core_daily_broken_apex_components_v.component_type_name       IS '';
-COMMENT ON COLUMN core_daily_broken_apex_components_v.component_display_name    IS '';
-COMMENT ON COLUMN core_daily_broken_apex_components_v.property_group_name       IS '';
-COMMENT ON COLUMN core_daily_broken_apex_components_v.property_name             IS '';
-COMMENT ON COLUMN core_daily_broken_apex_components_v.code_fragment             IS '';
-COMMENT ON COLUMN core_daily_broken_apex_components_v.error_                    IS '';
 

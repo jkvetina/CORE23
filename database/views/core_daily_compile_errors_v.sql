@@ -14,13 +14,4 @@ ORDER BY
     1, 2, 3,
     t.sequence;
 /
---
-COMMENT ON TABLE core_daily_compile_errors_v IS '';
---
-COMMENT ON COLUMN core_daily_compile_errors_v.owner         IS '';
-COMMENT ON COLUMN core_daily_compile_errors_v.name          IS '';
-COMMENT ON COLUMN core_daily_compile_errors_v.type          IS '';
-COMMENT ON COLUMN core_daily_compile_errors_v.line          IS '';
-COMMENT ON COLUMN core_daily_compile_errors_v.position      IS '';
-COMMENT ON COLUMN core_daily_compile_errors_v.error_        IS '';
 

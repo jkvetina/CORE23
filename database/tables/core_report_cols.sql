@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS core_report_cols (
     --
     CONSTRAINT core_report_cols_fk_view_name
         FOREIGN KEY (view_name)
-        REFERENCES core_reports (view_name)
+        REFERENCES core_report_views (view_name)
 );
 --
 COMMENT ON TABLE core_report_cols IS '';

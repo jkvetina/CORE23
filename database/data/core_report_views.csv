@@ -1,7 +1,7 @@
 "VIEW_NAME";"REPORT_NAME";"GROUP_NAME";"SORT#"
 "CORE_APPS_OVERVIEW_V";"Overview ";"APEX Applications";10
 "CORE_APPS_TIMELINE_V";"Developers Timeline";"";15
-"CORE_APPS_TRAFFIC_V";"Traffic Overview";"";11
+"CORE_APPS_TRAFFIC_V";"Traffic Today";"";11
 "CORE_APPS_WORKSPACE_FILES_V";"Workspace Files";"";12
 "CORE_APP_COMPONENT_CHANGES_V";"Component Changes";"";11
 "CORE_APP_HISTORY_V";"Requests History";"";15
@@ -20,4 +20,4 @@
 "CORE_DAILY_VERSIONS_V";"Versions ";"Database Overview";10
 "CORE_DAILY_WEB_SERVICE_CALLS_V";"Web Service Calls";"";44
 "CORE_DAILY_WORKSPACE_ERRORS_V";"Workspace Errors";"";41
-"CORE_REST_SERVICES_V";"REST Services";"{MODULE_NAME} Module";10
+"CORE_REST_SERVICES_V";"{MODULE_NAME} Module";"";10

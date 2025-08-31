@@ -31,8 +31,8 @@ WITH t AS (
         FROM apex_workspace_activity_log a
         WHERE 1 = 1
             AND a.application_id    = core.get_app_id()
-            AND a.view_date         >= core_jobs.get_start_date()
-            AND a.view_date         <  core_jobs.get_end_date()
+            AND a.view_date         >= core_reports.get_start_date()
+            AND a.view_date         <  core_reports.get_end_date()
     ) a
     GROUP BY
         a.id,
@@ -91,26 +91,4 @@ FROM d
 ORDER BY
     1, 2;
 /
---
-COMMENT ON TABLE core_app_performance_v IS '';
---
-COMMENT ON COLUMN core_app_performance_v.app_id                     IS '';
-COMMENT ON COLUMN core_app_performance_v.page_id                    IS '';
-COMMENT ON COLUMN core_app_performance_v.page_name                  IS '';
-COMMENT ON COLUMN core_app_performance_v.users_                     IS '';
-COMMENT ON COLUMN core_app_performance_v.rendering_count            IS '';
-COMMENT ON COLUMN core_app_performance_v.rendering_avg              IS '';
-COMMENT ON COLUMN core_app_performance_v.rendering_max              IS '';
-COMMENT ON COLUMN core_app_performance_v.processing_count           IS '';
-COMMENT ON COLUMN core_app_performance_v.processing_avg             IS '';
-COMMENT ON COLUMN core_app_performance_v.processing_max             IS '';
-COMMENT ON COLUMN core_app_performance_v.ajax_count                 IS '';
-COMMENT ON COLUMN core_app_performance_v.ajax_avg                   IS '';
-COMMENT ON COLUMN core_app_performance_v.ajax_max                   IS '';
-COMMENT ON COLUMN core_app_performance_v.rendering_avg__style       IS '';
-COMMENT ON COLUMN core_app_performance_v.rendering_max__style       IS '';
-COMMENT ON COLUMN core_app_performance_v.processing_avg__style      IS '';
-COMMENT ON COLUMN core_app_performance_v.processing_max__style      IS '';
-COMMENT ON COLUMN core_app_performance_v.ajax_avg__style            IS '';
-COMMENT ON COLUMN core_app_performance_v.ajax_max__style            IS '';
 

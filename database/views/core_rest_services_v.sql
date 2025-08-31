@@ -38,7 +38,7 @@ WITH t AS (
     WHERE s.status      = 'PUBLISHED'
         AND m.status    = 'PUBLISHED'
         AND c.status    = 'ENABLED'
-        AND m.name      = core_jobs.get_group_name()
+        AND m.name      = core_reports.get_group_name()
 ),
 b AS (
     SELECT

@@ -32,15 +32,4 @@ GROUP BY
     o.status
 ORDER BY 1;
 /
---
-COMMENT ON TABLE core_daily_synonyms_v IS '';
---
-COMMENT ON COLUMN core_daily_synonyms_v.synonym_name    IS '';
-COMMENT ON COLUMN core_daily_synonyms_v.object_type     IS '';
-COMMENT ON COLUMN core_daily_synonyms_v.owner           IS '';
-COMMENT ON COLUMN core_daily_synonyms_v.object_name     IS '';
-COMMENT ON COLUMN core_daily_synonyms_v.privileges      IS '';
-COMMENT ON COLUMN core_daily_synonyms_v.is_grantable    IS '';
-COMMENT ON COLUMN core_daily_synonyms_v.status          IS '';
-COMMENT ON COLUMN core_daily_synonyms_v.status__style   IS '';
 

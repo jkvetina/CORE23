@@ -6,7 +6,7 @@ SELECT
     f.last_updated_on   AS updated_at,
     --
     CASE
-        WHEN f.last_updated_on >= core_jobs.get_start_date()
+        WHEN f.last_updated_on >= core_reports.get_start_date()
             THEN 'RED'
         END AS updated_at__style
     --
@@ -18,10 +18,4 @@ WHERE (
     AND f.file_name     NOT LIKE '%.min.%'
 ORDER BY 1;
 /
---
-COMMENT ON TABLE core_apps_workspace_files_v IS '';
---
-COMMENT ON COLUMN core_apps_workspace_files_v.file_name             IS '';
-COMMENT ON COLUMN core_apps_workspace_files_v.file_size             IS '';
-COMMENT ON COLUMN core_apps_workspace_files_v.updated_at__style     IS '';
 

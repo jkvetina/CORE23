@@ -25,22 +25,10 @@ SELECT
     --
 FROM apex_webservice_log t
 WHERE 1 = 1
-    AND t.request_date  >= core_jobs.get_start_date()
-    AND t.request_date  <  core_jobs.get_end_date()
+    AND t.request_date  >= core_reports.get_start_date()
+    AND t.request_date  <  core_reports.get_end_date()
 GROUP BY ALL
 ORDER BY
     1, 2, 3;
 /
---
-COMMENT ON TABLE core_daily_web_service_calls_v IS '';
---
-COMMENT ON COLUMN core_daily_web_service_calls_v.workspace          IS '';
-COMMENT ON COLUMN core_daily_web_service_calls_v.host               IS '';
-COMMENT ON COLUMN core_daily_web_service_calls_v.method             IS '';
-COMMENT ON COLUMN core_daily_web_service_calls_v.status_code        IS '';
-COMMENT ON COLUMN core_daily_web_service_calls_v.status             IS '';
-COMMENT ON COLUMN core_daily_web_service_calls_v.status__style      IS '';
-COMMENT ON COLUMN core_daily_web_service_calls_v.elapsed_sec_avg    IS '';
-COMMENT ON COLUMN core_daily_web_service_calls_v.elapsed_sec_max    IS '';
-COMMENT ON COLUMN core_daily_web_service_calls_v.count_             IS '';
 
