@@ -69,11 +69,13 @@
 @"./triggers/core_prevent_create_wrong_objects.sql";
 @"./triggers/core_locksmith.sql";
 
+EXEC recompile;
+
 --
 -- DATA
 --
-@"./data/core_report_cols.sql";
 @"./data/core_report_views.sql";
+@"./data/core_report_cols.sql";
 
 --
 -- GRANTS
