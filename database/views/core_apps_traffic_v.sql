@@ -1,7 +1,8 @@
 CREATE OR REPLACE FORCE VIEW core_apps_traffic_v AS
 WITH f AS (
     SELECT /*+ MATERIALIZE */
-        TO_NUMBER(f.column_value) AS app_id
+        TO_NUMBER(f.column_value)       AS app_id,
+        core_reports.get_start_date()   AS start_date
     FROM TABLE (core_reports.get_apps()) f
 ),
 t AS (
@@ -19,8 +20,8 @@ t AS (
     FROM apex_workspace_activity_log t
     JOIN f
         ON f.app_id         = t.application_id
-    WHERE t.view_date       >= core_reports.get_start_date()
-        AND t.view_date     <  core_reports.get_start_date() + 1
+    WHERE t.view_date       >= f.start_date
+        AND t.view_date     <  f.start_date + 1
     GROUP BY
         t.application_id
 ),
@@ -32,8 +33,8 @@ e AS (
     JOIN f
         ON f.app_id             = e.application_id
     WHERE e.message_level       = 1
-        AND e.message_timestamp >= core_reports.get_start_date()
-        AND e.message_timestamp <  core_reports.get_start_date() + 1
+        AND e.message_timestamp >= f.start_date
+        AND e.message_timestamp <  f.start_date + 1
     GROUP BY
         e.application_id
 )
