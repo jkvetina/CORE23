@@ -1,5 +1,5 @@
 -- DROP SEQUENCE core_lock_id;
 CREATE SEQUENCE core_lock_id
-    MINVALUE 1;
+    MINVALUE 10000;
 /
 
