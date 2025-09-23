@@ -193,16 +193,28 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
             core.raise_error('ARGUMENTS_MISSING');
         END IF;
         --
-        UPDATE core_locks t
-        SET t.expire_at         = NULL,
-            t.object_hash       = CASE WHEN NOT in_remove_hash THEN t.object_hash END
-        WHERE 1 = 1
-            AND (t.lock_id      = in_lock_id        OR in_lock_id       IS NULL)
-            AND (t.locked_by    = in_locked_by      OR in_locked_by     IS NULL)
-            AND (t.object_name  = in_object_name    OR in_object_name   IS NULL)
-            AND (t.object_type  = in_object_type    OR in_object_type   IS NULL);
-        --
-        DBMS_OUTPUT.PUT_LINE(TO_CHAR(SQL%ROWCOUNT) || ' OBJECTS UNLOCKED');
+        FOR c IN (
+            SELECT
+                t.object_type,
+                t.object_name,
+                MAX(t.lock_id) AS lock_id
+            FROM core_locks t
+            WHERE 1 = 1
+                AND (t.lock_id      = in_lock_id        OR in_lock_id       IS NULL)
+                AND (t.locked_by    = in_locked_by      OR in_locked_by     IS NULL)
+                AND (t.object_name  = in_object_name    OR in_object_name   IS NULL)
+                AND (t.object_type  = in_object_type    OR in_object_type   IS NULL)
+            GROUP BY
+                t.object_type,
+                t.object_name
+        ) LOOP
+            UPDATE core_locks t
+            SET t.expire_at     = NULL,
+                t.object_hash   = CASE WHEN NOT in_remove_hash THEN t.object_hash END
+            WHERE t.lock_id     = c.lock_id;
+            --
+            DBMS_OUTPUT.PUT_LINE(c.object_type || ' ' || c.object_name || ' UNLOCKED');
+        END LOOP;
         --
         COMMIT;
         --
