@@ -89,6 +89,12 @@ CREATE OR REPLACE PACKAGE core_reports AS
 
 
 
+    PROCEDURE set_date (
+        in_date             DATE := NULL
+    );
+
+
+
     FUNCTION get_start_date
     RETURN DATE;
 

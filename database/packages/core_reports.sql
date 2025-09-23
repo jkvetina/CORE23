@@ -612,6 +612,23 @@ CREATE OR REPLACE PACKAGE BODY core_reports AS
 
 
 
+    PROCEDURE set_date (
+        in_date             DATE := NULL
+    )
+    AS
+    BEGIN
+        g_start_date        := TRUNC(COALESCE(in_date, SYSDATE));
+        g_end_date          := TRUNC(COALESCE(in_date, SYSDATE)) + 1;
+        --
+    EXCEPTION
+    WHEN core.app_exception THEN
+        RAISE;
+    WHEN OTHERS THEN
+        core.raise_error();
+    END;
+
+
+
     FUNCTION get_start_date
     RETURN DATE
     AS
