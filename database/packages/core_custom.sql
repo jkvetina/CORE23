@@ -96,6 +96,14 @@ CREATE OR REPLACE PACKAGE BODY core_custom AS
         --
         v_message       VARCHAR2(32767);
     BEGIN
+        -- enable debug for non APEX sessions
+        IF (
+            NVL(SYS_CONTEXT('USERENV', 'CLIENT_INFO'), '?') != SYS_CONTEXT('APEX$SESSION', 'WORKSPACE_ID') || ':' || SYS_CONTEXT('APEX$SESSION', 'APP_USER') OR
+            NVL(SYS_CONTEXT('USERENV', 'CLIENT_IDENTIFIER'), '?') != SYS_CONTEXT('APEX$SESSION', 'APP_USER') || ':' || SYS_CONTEXT('APEX$SESSION', 'APP_SESSION')
+        ) THEN
+            APEX_DEBUG.ENABLE(p_level => core_custom.default_debug_level);
+        END IF;
+
         -- prepare message
         v_message := CASE
             WHEN in_type IN (core.flag_error, core.flag_warning)
