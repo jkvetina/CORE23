@@ -204,6 +204,8 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
                 AND (t.locked_by    = in_locked_by      OR in_locked_by     IS NULL)
                 AND (t.object_name  = in_object_name    OR in_object_name   IS NULL)
                 AND (t.object_type  = in_object_type    OR in_object_type   IS NULL)
+                --
+                AND t.expire_at >= SYSDATE
             GROUP BY
                 t.object_type,
                 t.object_name
@@ -213,7 +215,9 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
                 t.object_hash   = CASE WHEN NOT in_remove_hash THEN t.object_hash END
             WHERE t.lock_id     = c.lock_id;
             --
-            DBMS_OUTPUT.PUT_LINE(c.object_type || ' ' || c.object_name || ' UNLOCKED');
+            IF SQL%ROWCOUNT > 0 THEN
+                DBMS_OUTPUT.PUT_LINE(c.object_type || ' ' || c.object_name || ' UNLOCKED');
+            END IF;
         END LOOP;
         --
         COMMIT;
