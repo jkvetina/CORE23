@@ -77,11 +77,16 @@ CREATE OR REPLACE PACKAGE BODY core AS
     )
     RETURN NUMBER
     AS
+        v_app_id PLS_INTEGER;
     BEGIN
-        RETURN COALESCE (
-            core.get_number_item(NVL(in_context_name, c_context_name_app)),
-            APEX_APPLICATION.G_FLOW_ID
-        );
+        BEGIN
+            v_app_id := core.get_number_item(NVL(in_context_name, c_context_name_app));
+        EXCEPTION
+        WHEN OTHERS THEN
+            NULL;
+        END;
+        --
+        RETURN COALESCE(v_app_id, APEX_APPLICATION.G_FLOW_ID);
     END;
 
 
@@ -91,11 +96,16 @@ CREATE OR REPLACE PACKAGE BODY core AS
     )
     RETURN NUMBER
     AS
+        v_page_id PLS_INTEGER;
     BEGIN
-        RETURN COALESCE (
-            core.get_number_item(NVL(in_context_name, c_context_name_page)),
-            APEX_APPLICATION.G_FLOW_STEP_ID
-        );
+        BEGIN
+            v_page_id := core.get_number_item(NVL(in_context_name, c_context_name_page));
+        EXCEPTION
+        WHEN OTHERS THEN
+            NULL;
+        END;
+        --
+        RETURN COALESCE(v_page_id, APEX_APPLICATION.G_FLOW_STEP_ID);
     END;
 
 
