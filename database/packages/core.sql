@@ -3120,8 +3120,12 @@ CREATE OR REPLACE PACKAGE BODY core AS
     AS
         v_message               VARCHAR2(32767) := in_message;
     BEGIN
-        IF REGEXP_LIKE(in_message, '^[A-Za-z][A-Za-z0-9_\|]*$') THEN
-            v_message := NVL(NULLIF(APEX_LANG.MESSAGE(in_message), UPPER(in_message)), v_message);
+        IF REGEXP_LIKE(in_message, '^[A-Z][A-Z0-9_\.\|]+') THEN
+            v_message := APEX_LANG.MESSAGE(REGEXP_SUBSTR(in_message, '^[A-Z][A-Z0-9_\.\|]+'));
+        END IF;
+        --
+        IF (v_message IS NULL OR v_message = UPPER(in_message)) THEN
+            v_message := in_message;
         END IF;
         --
         RETURN REPLACE(REPLACE(REPLACE(
