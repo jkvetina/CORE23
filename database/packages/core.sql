@@ -1962,7 +1962,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
                   !  job_type      => '%2',
                   !  job_action    => '%3',
                   !  job_class     => '%4',
-                  !  %5            => '%6',
+                  !  %5            => %6,
                   !  enabled       => FALSE,
                   !  auto_drop     => %8,
                   !  comments      => '%9'
@@ -1974,7 +1974,11 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 p3  => REPLACE(v_statement, '''', ''''''),
                 p4  => NVL(in_job_class, 'DEFAULT_JOB_CLASS'),
                 p5  => CASE WHEN in_schedule_name IS NOT NULL THEN 'schedule_name' ELSE 'start_date' END,
-                p6  => CASE WHEN in_schedule_name IS NOT NULL THEN in_schedule_name ELSE in_start_date END,
+                p6  => CASE
+                            WHEN in_schedule_name IS NOT NULL
+                                THEN '''' || in_schedule_name || ''''
+                            WHEN in_start_date IS NOT NULL THEN '''' || in_start_date || ''''
+                            ELSE 'NULL' END,
                 p8  => CASE WHEN in_autodrop THEN 'TRUE' ELSE 'FALSE' END,
                 p9  => in_comments,
                 --
@@ -1988,7 +1992,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
             core.raise_error (
                 'CREATE_JOB_FAILED|' || v_job_name,
                 'statement',    v_statement,
-                'query',        v_query
+                'query',        v_query,
+                'reason',       SQLERRM
             );
         END;
         --
