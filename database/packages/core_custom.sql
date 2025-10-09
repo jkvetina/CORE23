@@ -101,7 +101,9 @@ CREATE OR REPLACE PACKAGE BODY core_custom AS
             NVL(SYS_CONTEXT('USERENV', 'CLIENT_INFO'), '?') != SYS_CONTEXT('APEX$SESSION', 'WORKSPACE_ID') || ':' || SYS_CONTEXT('APEX$SESSION', 'APP_USER') OR
             NVL(SYS_CONTEXT('USERENV', 'CLIENT_IDENTIFIER'), '?') != SYS_CONTEXT('APEX$SESSION', 'APP_USER') || ':' || SYS_CONTEXT('APEX$SESSION', 'APP_SESSION')
         ) THEN
-            APEX_DEBUG.ENABLE(p_level => core_custom.default_debug_level);
+            IF NULLIF(core.get_page_id(), 0) IS NULL AND core.get_page_id() NOT IN (9999) THEN
+                APEX_DEBUG.ENABLE(p_level => core_custom.default_debug_level);
+            END IF;
         END IF;
 
         -- prepare message
