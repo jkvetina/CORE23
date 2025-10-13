@@ -73,13 +73,13 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
                 --
             ELSIF c.expire_at >= SYSDATE THEN
                 -- for different user we need to check the expire date first
-                core.raise_error('LOCK_ERROR: OBJECT_LOCKED_BY `' || c.locked_by || '` [' || c.lock_id || ']');
+                core.raise_error('LOCK_TIME_ERROR: OBJECT_LOCKED_BY `' || c.locked_by || '` [' || c.lock_id || ']');
                 --
             ELSIF v_hash_check AND c.object_hash IS NOT NULL AND c.object_hash != rec.object_hash THEN
                 -- check object hash
                 -- when you take over an object, you should compile it right away, without any changes
                 -- that will make sure you are not overriding any changes done by someone else in the meantime
-                core.raise_error('LOCK_ERROR: OBJECT_CHANGED_BY `' || c.locked_by || '` [' || c.lock_id || ']');
+                core.raise_error('LOCK_HASH_ERROR: OBJECT_CHANGED_BY `' || c.locked_by || '` [' || c.lock_id || ']');
             END IF;
         END LOOP;
         --
@@ -182,8 +182,7 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
         in_lock_id          core_locks.lock_id%TYPE         := NULL,
         in_locked_by        core_locks.locked_by%TYPE       := NULL,
         in_object_name      core_locks.object_name%TYPE     := NULL,
-        in_object_type      core_locks.object_type%TYPE     := NULL,
-        in_remove_hash      BOOLEAN                         := TRUE
+        in_object_type      core_locks.object_type%TYPE     := NULL
     )
     AS
         PRAGMA AUTONOMOUS_TRANSACTION;
@@ -197,6 +196,19 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
             SELECT
                 t.object_type,
                 t.object_name,
+                t.lock_id
+            FROM core_locks t
+            WHERE 1 = 1
+                AND (t.lock_id      = in_lock_id        OR in_lock_id       IS NULL)
+                AND (t.locked_by    = in_locked_by      OR in_locked_by     IS NULL)
+                AND (t.object_name  = in_object_name    OR in_object_name   IS NULL)
+                AND (t.object_type  = in_object_type    OR in_object_type   IS NULL)
+                AND (t.expire_at    >= SYSDATE)
+            UNION ALL
+            --
+            SELECT
+                t.object_type,
+                t.object_name,
                 MAX(t.lock_id) AS lock_id
             FROM core_locks t
             WHERE 1 = 1
@@ -204,19 +216,17 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
                 AND (t.locked_by    = in_locked_by      OR in_locked_by     IS NULL)
                 AND (t.object_name  = in_object_name    OR in_object_name   IS NULL)
                 AND (t.object_type  = in_object_type    OR in_object_type   IS NULL)
-                --
-                AND t.expire_at >= SYSDATE
             GROUP BY
                 t.object_type,
                 t.object_name
         ) LOOP
             UPDATE core_locks t
             SET t.expire_at     = NULL,
-                t.object_hash   = CASE WHEN NOT in_remove_hash THEN t.object_hash END
+                t.object_hash   = ''
             WHERE t.lock_id     = c.lock_id;
             --
             IF SQL%ROWCOUNT > 0 THEN
-                DBMS_OUTPUT.PUT_LINE(c.object_type || ' ' || c.object_name || ' UNLOCKED');
+                DBMS_OUTPUT.PUT_LINE(c.object_type || ' ' || c.object_name || ' UNLOCKED [' || c.lock_id || ']');
             END IF;
         END LOOP;
         --
@@ -263,4 +273,6 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
 
 END;
 /
+
+
 
