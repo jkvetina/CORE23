@@ -198,6 +198,71 @@ CREATE OR REPLACE PACKAGE BODY core_custom AS
         RAISE;
     END;
 
+
+
+    PROCEDURE custom_log (
+        in_flag                 core_logs.flag%TYPE,
+        in_action_name          core_logs.action_name%TYPE,
+        in_module_name          core_logs.module_name%TYPE  := NULL,
+        in_module_line          core_logs.module_line%TYPE  := NULL,
+        in_arguments            core_logs.arguments%TYPE    := NULL,
+        in_payload              core_logs.payload%TYPE      := NULL,
+        in_debug_id             core_logs.debug_id%TYPE     := NULL,
+        in_parent               core_logs.log_parent%TYPE   := NULL
+    )
+    AS
+        PRAGMA AUTONOMOUS_TRANSACTION;
+    BEGIN
+        INSERT INTO core_logs (
+            --log_id,
+            log_parent,
+            app_id,
+            page_id,
+            user_id,
+            flag,
+            --
+            action_name,
+            module_name,
+            module_line,
+            arguments,
+            payload,
+            --
+            debug_id,
+            session_id,
+            created_at
+        )
+        VALUES (
+            --NULL,--core_log_id.NEXTVAL,
+            in_parent,
+            core.get_app_id(),
+            core.get_page_id(),
+            core.get_user_id(),
+            in_flag,
+            --
+            in_action_name,
+            in_module_name,
+            in_module_line,
+            in_arguments,
+            in_payload,
+            --
+            in_debug_id,
+            core.get_session_id(),
+            SYSDATE
+        );
+        --
+        COMMIT;
+        --
+    EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        RAISE;
+    END;
+
 END;
 /
 
+
+exec recompile;
+
+alter trigger CORE_LOCKSMITH disable;
+alter trigger CORE_LOCKSMITH enable;

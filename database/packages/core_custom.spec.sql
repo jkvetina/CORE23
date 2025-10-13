@@ -146,6 +146,19 @@ CREATE OR REPLACE PACKAGE core_custom AUTHID CURRENT_USER AS
     )
     RETURN NUMBER;
 
+
+
+    PROCEDURE custom_log (
+        in_flag                 core_logs.flag%TYPE,
+        in_action_name          core_logs.action_name%TYPE,
+        in_module_name          core_logs.module_name%TYPE  := NULL,
+        in_module_line          core_logs.module_line%TYPE  := NULL,
+        in_arguments            core_logs.arguments%TYPE    := NULL,
+        in_payload              core_logs.payload%TYPE      := NULL,
+        in_debug_id             core_logs.debug_id%TYPE     := NULL,
+        in_parent               core_logs.log_parent%TYPE   := NULL
+    );
+
 END;
 /
 
