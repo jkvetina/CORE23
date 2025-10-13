@@ -240,7 +240,7 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
         v_out           CLOB;
     BEGIN
         FOR i IN 1 .. ora_sql_txt(v_sql_text) LOOP
-            v_out := v_out || TO_CLOB(v_sql_text(i));
+            v_out := v_out || TO_CLOB(RTRIM(v_sql_text(i)));
         END LOOP;
         --
         RETURN v_out;
