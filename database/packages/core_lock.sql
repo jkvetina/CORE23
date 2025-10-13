@@ -246,11 +246,46 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
     FUNCTION get_object
     RETURN CLOB
     AS
-        v_sql_text      ora_name_list_t;    -- TABLE OF VARCHAR2(64);
+        v_sql_text      ora_name_list_t;            -- TABLE OF VARCHAR2(64);
+        v_temp          CLOB;
         v_out           CLOB;
     BEGIN
+        -- get object source into a CLOB
         FOR i IN 1 .. ora_sql_txt(v_sql_text) LOOP
-            v_out := v_out || TO_CLOB(RTRIM(v_sql_text(i)));
+            v_temp := v_temp || TO_CLOB(v_sql_text(i));
+        END LOOP;
+
+        -- tweak the CLOB slightly so it matches for different clients
+        FOR c IN (
+            SELECT
+                t.column_value,
+                t.r#,
+                COUNT(*) OVER() AS total#
+            FROM (
+                SELECT
+                    t.column_value,
+                    ROWNUM AS r#
+                FROM TABLE(APEX_STRING.SPLIT_CLOBS(
+                    p_str => v_temp,
+                    p_sep => CHR(10)
+                )) t
+            ) t
+        ) LOOP
+            -- fix wrong first line, uppercase it
+            IF c.r# = 1 THEN
+                c.column_value := REPLACE(REPLACE(REPLACE(c.column_value, 'create ', 'CREATE '), ' replace', ' REPLACE'), ' or ', ' OR ');
+            END IF;
+            --
+            c.column_value := RTRIM(c.column_value);
+
+            -- fix wrong last line
+            IF c.r# = c.total# THEN
+                c.column_value := REGEXP_REPLACE(c.column_value, '[^\w]$', '');
+            END IF;
+            --
+            IF c.column_value IS NOT NULL AND LENGTH(c.column_value) > 0 THEN
+                v_out := v_out || c.column_value || '~|~';
+            END IF;
         END LOOP;
         --
         RETURN v_out;
