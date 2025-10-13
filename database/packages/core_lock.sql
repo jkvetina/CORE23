@@ -41,7 +41,11 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
         END IF;
 
         -- get current object
-        rec.object_payload  := get_object();
+        rec.object_payload := get_object();
+        --
+        IF rec.object_payload IS NULL THEN
+            RETURN;
+        END IF;
 
         -- check hash only on objects with source code
         IF in_object_type IN ('PACKAGE', 'PACKAGE BODY', 'PROCEDURE', 'FUNCTION', 'TRIGGER', 'VIEW') THEN
@@ -249,6 +253,8 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
         v_sql_text      ora_name_list_t;            -- TABLE OF VARCHAR2(64);
         v_temp          CLOB;
         v_out           CLOB;
+        v_rows          PLS_INTEGER;
+        v_alter         BOOLEAN := FALSE;
     BEGIN
         -- get object source into a CLOB
         FOR i IN 1 .. ora_sql_txt(v_sql_text) LOOP
@@ -274,6 +280,10 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
             -- fix wrong first line, uppercase it
             IF c.r# = 1 THEN
                 c.column_value := REPLACE(REPLACE(REPLACE(c.column_value, 'create ', 'CREATE '), ' replace', ' REPLACE'), ' or ', ' OR ');
+                --
+                IF UPPER(c.column_value) LIKE 'ALTER%' THEN
+                    v_alter := TRUE;
+                END IF;
             END IF;
             --
             c.column_value := RTRIM(c.column_value);
@@ -286,7 +296,13 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
             IF c.column_value IS NOT NULL AND LENGTH(c.column_value) > 0 THEN
                 v_out := v_out || c.column_value || '~|~';
             END IF;
+            --
+            v_rows := c.total#;
         END LOOP;
+        --
+        IF v_alter AND INSTR(UPPER(v_out), 'COMPILE') > 0 THEN
+            RETURN NULL;
+        END IF;
         --
         RETURN v_out;
     END;
@@ -300,6 +316,10 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
     RETURN VARCHAR2
     AS
     BEGIN
+        IF in_payload IS NULL THEN
+            RETURN NULL;
+        END IF;
+        --
         RETURN DBMS_CRYPTO.HASH(in_payload, NVL(in_type, DBMS_CRYPTO.HASH_SH256));
     EXCEPTION
     WHEN OTHERS THEN
