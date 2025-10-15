@@ -61,6 +61,7 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
             SELECT
                 t.lock_id,
                 t.locked_by,
+                t.locked_at,
                 t.expire_at,
                 t.object_hash
             FROM core_locks t
@@ -79,11 +80,11 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
                 -- for different user we need to check the expire date first
                 core.raise_error('LOCK_TIME_ERROR: OBJECT_LOCKED_BY `' || c.locked_by || '` [' || c.lock_id || ']');
                 --
-            ELSIF v_hash_check AND c.object_hash IS NOT NULL AND c.object_hash != rec.object_hash THEN
+            ELSIF v_hash_check AND c.object_hash IS NOT NULL AND c.object_hash != rec.object_hash AND c.locked_at + 1/1440 > SYSDATE THEN
                 -- check object hash
                 -- when you take over an object, you should compile it right away, without any changes
                 -- that will make sure you are not overriding any changes done by someone else in the meantime
-                core.raise_error('LOCK_HASH_ERROR: OBJECT_CHANGED_BY `' || c.locked_by || '` [' || c.lock_id || ']');
+                core.raise_error('LOCK_HASH_ERROR: OBJECT_CHANGED_BY `' || c.locked_by || TO_CHAR(c.expire_at, 'YYYY-MM-DD HH24:MI') || '` [' || c.lock_id || ']');
             END IF;
         END LOOP;
         --
@@ -294,7 +295,7 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
             END IF;
             --
             IF c.column_value IS NOT NULL AND LENGTH(c.column_value) > 0 THEN
-                v_out := v_out || c.column_value || '~|~';
+                v_out := v_out || c.column_value || CHR(10);
             END IF;
             --
             v_rows := c.total#;
