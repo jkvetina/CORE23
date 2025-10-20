@@ -1290,21 +1290,23 @@ CREATE OR REPLACE PACKAGE BODY core AS
     )
     RETURN DATE
     AS
-        v_name VARCHAR2(256);
+        v_value VARCHAR2(256);
     BEGIN
-        v_name := core.get_item(in_name);
+        v_value := core.get_item(in_name);
         --
-        IF v_name IS NULL THEN
+        IF v_value IS NULL THEN
             RETURN NULL;
         END IF;
         --
-        RETURN core.get_date(v_name, in_format);
+        RETURN core.get_date(v_value, in_format);
     EXCEPTION
+    WHEN core.app_exception THEN
+        RAISE;
     WHEN OTHERS THEN
         core.raise_error('INVALID_DATE',
-            'name',         core.get_item(in_name),
-            'requested',    in_name,
-            'format',       in_format
+            'name',     in_name,
+            'value',    v_value,
+            'format',   in_format
         );
     END;
 
@@ -1324,7 +1326,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         END IF;
         --
         IF in_format IS NOT NULL THEN
-            out_date := TO_DATE(l_value DEFAULT NULL ON CONVERSION ERROR, in_format);
+            out_date := TO_DATE(l_value, in_format);
         ELSE
             -- try different formats
             out_date := COALESCE (
@@ -1519,7 +1521,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         IF (v_exists IS NOT NULL OR NOT in_if_exists) THEN
             APEX_UTIL.SET_SESSION_STATE (
                 p_name      => v_item_name,
-                p_value     => core.get_translated(in_value),
+                p_value     => in_value,
                 p_commit    => FALSE
             );
         END IF;
@@ -3028,6 +3030,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         --
         v_log_id                NUMBER;                     -- log_id from your log_error function (returning most likely sequence)
         v_constraint_code       PLS_INTEGER;
+        v_message               VARCHAR2(32767);
     BEGIN
         out_result := APEX_ERROR.INIT_ERROR_RESULT(p_error => p_error);
         --
@@ -3094,13 +3097,37 @@ CREATE OR REPLACE PACKAGE BODY core AS
             );
         END IF;
 
+        --
+        /*
+        IF p_error.ora_sqlcode = app_exception_code THEN-- AND out_result.message LIKE '%{"%' THEN
+            out_result.message := NVL(REGEXP_SUBSTR(out_result.message, '({[^}]+})', 1 ,1, NULL, 1), out_result.message);
+            RETURN out_result;
+        END IF;
+        */
+
         -- translate message (custom) just for user (not for the log)
         -- with APEX globalization - text messages - we can also auto add new messages there through APEX_LANG.CREATE_MESSAGE
         -- for custom table out_result.message := NVL(core.get_translated(out_result.message), out_result.message);
 
-        -- show only the latest error message to common users
-        out_result.message := CASE WHEN v_log_id IS NOT NULL THEN '#' || TO_CHAR(v_log_id) || '<br />' END
-            || core.get_translated(REGEXP_REPLACE(out_result.message, '^(ORA' || TO_CHAR(app_exception_code) || ':\s*)\s*', ''));
+        -- remove error numbers
+        out_result.message := RTRIM(REGEXP_REPLACE(out_result.message, '(#\d{8,}+)\s*(<br>)?(--)?\s*', ' '));
+
+        -- translate message without the app main error code
+        v_message := core.get_translated(REGEXP_REPLACE(out_result.message, '^(ORA' || TO_CHAR(app_exception_code) || ':\s*)\s*', ''));
+
+        -- detect if message was not translated
+        --IF v_message = UPPER(REGEXP_REPLACE(out_result.message, '^(ORA' || TO_CHAR(app_exception_code) || ':\s*)\s*', '')) THEN
+        --    v_message := out_result.message;    -- restore original message
+        --END IF;
+
+        -- replace some parts to make it readable
+        v_message := REPLACE(REPLACE(REPLACE(v_message,
+            '| ', '<br />'),
+            '|', ' | '),
+            '[', ' [');
+
+        -- show only the latest error message prepended with log_id for support
+        out_result.message := CASE WHEN v_log_id IS NOT NULL THEN '#' || TO_CHAR(v_log_id) || '<br>' END || v_message;
         --out_result.message := REPLACE(out_result.message, '&' || '#X27;', '');
         --
         RETURN out_result;
@@ -3120,19 +3147,21 @@ CREATE OR REPLACE PACKAGE BODY core AS
     AS
         v_message               VARCHAR2(32767) := in_message;
     BEGIN
-        IF REGEXP_LIKE(in_message, '^[A-Z][A-Z0-9_\.\|]+') THEN
-            v_message := APEX_LANG.MESSAGE(REGEXP_SUBSTR(in_message, '^[A-Z][A-Z0-9_\.\|]+'));
+        -- dont translate unexpected app errors
+        IF in_message LIKE 'ORA-%' THEN
+            RETURN in_message;
+        END IF;
+
+        -- whole message must match the translation
+        IF REGEXP_LIKE(in_message, '^[A-Z][A-Z0-9_\.\|]+$') THEN
+            v_message := APEX_LANG.MESSAGE(REGEXP_SUBSTR(in_message, '^[A-Z][A-Z0-9_\.\|]+$'));
         END IF;
         --
         IF (v_message IS NULL OR v_message = UPPER(in_message)) THEN
-            v_message := in_message;
+            RETURN in_message;
         END IF;
         --
-        RETURN REPLACE(REPLACE(REPLACE(
-            v_message,
-            '| ', '<br />'),
-            '|', ' | '),
-            '[', ' [');
+        RETURN v_message;
     END;
 
 
