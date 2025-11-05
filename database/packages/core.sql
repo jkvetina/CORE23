@@ -4231,7 +4231,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
     )
     RETURN BOOLEAN
     AS
-        v_id PLS_INTEGER;
+        v_id NUMBER;
     BEGIN
         FOR c IN (
             SELECT
