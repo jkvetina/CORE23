@@ -530,7 +530,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         is_valid                CHAR;
     BEGIN
         -- check if we have APEX Builder session
-        IF NV('APP_BUILDER_SESSION') > 0 THEN
+        IF in_user IS NULL AND NV('APP_BUILDER_SESSION') > 0 THEN
             RETURN TRUE;
         END IF;
 
