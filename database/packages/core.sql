@@ -1979,7 +1979,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 p6  => CASE
                             WHEN in_schedule_name IS NOT NULL
                                 THEN '''' || in_schedule_name || ''''
-                            WHEN in_start_date IS NOT NULL THEN '''' || in_start_date || ''''
+                            WHEN in_start_date IS NOT NULL
+                                THEN 'TO_DATE(''' || TO_CHAR(in_start_date, 'YYYY-MM-DD HH24:MI:SS') || ''', ''YYYY-MM-DD HH24:MI:SS'')'
                             ELSE 'NULL' END,
                 p8  => CASE WHEN in_autodrop THEN 'TRUE' ELSE 'FALSE' END,
                 p9  => in_comments,
