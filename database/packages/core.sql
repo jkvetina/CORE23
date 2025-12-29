@@ -62,12 +62,30 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     FUNCTION get_slug (
-        in_name                 VARCHAR2
+        in_name                 VARCHAR2,
+        in_separator            VARCHAR2    := NULL,
+        in_lowercase            BOOLEAN     := FALSE,
+        in_envelope             BOOLEAN     := FALSE
     )
     RETURN VARCHAR2
     AS
+        v_content               VARCHAR2(32767);
     BEGIN
-        RETURN NVL(UPPER(REPLACE(APEX_STRING_UTIL.GET_SLUG(in_name), '-', '_')), '_');
+        v_content := NVL(UPPER(REPLACE(APEX_STRING_UTIL.GET_SLUG(in_name), '-', '_')), '_');
+        --
+        IF in_separator IS NOT NULL THEN
+            v_content := REPLACE(v_content, '_', in_separator);
+        END IF;
+        --
+        IF in_lowercase THEN
+            v_content := LOWER(v_content);
+        END IF;
+        --
+        IF in_envelope THEN
+            v_content := NVL(in_separator, '_') || v_content || NVL(in_separator, '_');
+        END IF;
+        --
+        RETURN v_content;
     END;
 
 

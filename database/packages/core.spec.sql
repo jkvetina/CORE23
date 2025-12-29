@@ -141,7 +141,10 @@ AS
 
 
     FUNCTION get_slug (
-        in_name                 VARCHAR2
+        in_name                 VARCHAR2,
+        in_separator            VARCHAR2    := NULL,
+        in_lowercase            BOOLEAN     := FALSE,
+        in_envelope             BOOLEAN     := FALSE
     )
     RETURN VARCHAR2;
 
