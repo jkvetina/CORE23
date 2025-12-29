@@ -71,7 +71,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
     AS
         v_content               VARCHAR2(32767);
     BEGIN
-        v_content := NVL(UPPER(REPLACE(APEX_STRING_UTIL.GET_SLUG(in_name), '-', '_')), '_');
+        v_content := NVL(UPPER(REPLACE(APEX_STRING_UTIL.GET_SLUG(APEX_ESCAPE.STRIPHTML(in_name)), '-', '_')), '_');
         --
         IF in_separator IS NOT NULL THEN
             v_content := REPLACE(v_content, '_', in_separator);
