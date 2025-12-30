@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS core_report_views (
-    view_name                       VARCHAR2(64)          NOT NULL,
-    report_name                     VARCHAR2(256)         NOT NULL,
+    view_name                       VARCHAR2(64)          CONSTRAINT core_report_views_nn_view_name NOT NULL,
+    report_name                     VARCHAR2(256)         CONSTRAINT core_report_views_nn_report_name NOT NULL,
     group_name                      VARCHAR2(256),
     sort#                           NUMBER(4,0),
     --

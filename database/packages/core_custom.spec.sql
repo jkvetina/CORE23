@@ -1,4 +1,6 @@
-CREATE OR REPLACE PACKAGE core_custom AUTHID CURRENT_USER AS
+CREATE OR REPLACE PACKAGE core_custom
+AUTHID CURRENT_USER RESETTABLE
+AS
 
     --
     -- CONSTANTS SHARED IN BETWEEN ALL APPS, WHICH YOU SET JUST ONCE
@@ -11,7 +13,7 @@ CREATE OR REPLACE PACKAGE core_custom AUTHID CURRENT_USER AS
     env_name_strip              CONSTANT VARCHAR2(30)   := '';
 
     -- id for the Master application
-    master_id                   CONSTANT PLS_INTEGER    := 800;
+    master_id                   CONSTANT PLS_INTEGER    := 9000;
 
     -- package name holding constants, used as get_constant() default
     master_owner                CONSTANT VARCHAR2(30)   := 'MASTER';
@@ -33,7 +35,7 @@ CREATE OR REPLACE PACKAGE core_custom AUTHID CURRENT_USER AS
     flag_warning                CONSTANT CHAR           := 'W';     -- warning
     flag_debug                  CONSTANT CHAR           := 'D';     -- debug
     flag_start                  CONSTANT CHAR           := 'S';     -- start of any module (procedure/function)
-    flag_end                    CONSTANT CHAR           := 'F';     -- end of the module (with timer)
+    flag_end                    CONSTANT CHAR           := 'Q';     -- end of the module (with timer)
 
     -- start assert messages with these prefixes
     global_assert_message       CONSTANT VARCHAR2(30)   := 'ASSERT_FAILED|';
@@ -52,11 +54,11 @@ CREATE OR REPLACE PACKAGE core_custom AUTHID CURRENT_USER AS
     format_integer_currency     CONSTANT VARCHAR2(32)   := 'FML999G999G999G999G999G990';
 
     -- global item names
-    global_context_app          CONSTANT VARCHAR2(30)   := 'CONTEXT_APP';
-    global_context_page         CONSTANT VARCHAR2(30)   := 'CONTEXT_PAGE';
-    global_workspace            CONSTANT VARCHAR2(30)   := 'WORKSPACE';
-    global_env                  CONSTANT VARCHAR2(30)   := 'ENV';
     global_page_name            CONSTANT VARCHAR2(30)   := 'PAGE_NAME';
+    global_context_app          CONSTANT VARCHAR2(30)   := 'G_CONTEXT_APP';
+    global_context_page         CONSTANT VARCHAR2(30)   := 'G_CONTEXT_PAGE';
+    global_workspace            CONSTANT VARCHAR2(30)   := 'G_WORKSPACE';
+    global_env                  CONSTANT VARCHAR2(30)   := 'G_ENV';
     global_formats              CONSTANT VARCHAR2(30)   := 'FORMAT_';
 
     -- for old school http requests
@@ -93,7 +95,7 @@ CREATE OR REPLACE PACKAGE core_custom AUTHID CURRENT_USER AS
     );
 
     -- list of developers to receive reports from all environments
-    g_developers_like           CONSTANT VARCHAR2(128)  := '%@...com';
+    g_developers_like           CONSTANT VARCHAR2(128)  := '%';
     g_developers                apex_t_varchar2 := apex_t_varchar2(
         '@....com'
     );
@@ -129,35 +131,22 @@ CREATE OR REPLACE PACKAGE core_custom AUTHID CURRENT_USER AS
 
 
     FUNCTION log__ (
-        in_type                 CHAR,
-        in_message              VARCHAR2,
-        in_arguments            VARCHAR2,
-        in_payload              CLOB        := NULL,
-        in_context_id           NUMBER      := NULL,
+        in_type             CHAR,
+        in_message          VARCHAR2,
+        in_arguments        VARCHAR2    := NULL,
+        in_payload          CLOB        := NULL,
+        in_context_id       NUMBER      := NULL,
         --
-        in_app_id               NUMBER      := NULL,
-        in_page_id              NUMBER      := NULL,
-        in_user_id              VARCHAR2    := NULL,
-        in_session_id           NUMBER      := NULL,
+        in_app_id           NUMBER      := NULL,
+        in_page_id          NUMBER      := NULL,
+        in_user_id          VARCHAR2    := NULL,
+        in_session_id       NUMBER      := NULL,
         --
-        in_caller               VARCHAR2    := NULL,
-        in_backtrace            VARCHAR2    := NULL,
-        in_callstack            VARCHAR2    := NULL
+        in_caller           VARCHAR2    := NULL,
+        in_backtrace        VARCHAR2    := NULL,
+        in_callstack        VARCHAR2    := NULL
     )
     RETURN NUMBER;
-
-
-
-    PROCEDURE custom_log (
-        in_flag                 core_logs.flag%TYPE,
-        in_action_name          core_logs.action_name%TYPE,
-        in_module_name          core_logs.module_name%TYPE  := NULL,
-        in_module_line          core_logs.module_line%TYPE  := NULL,
-        in_arguments            core_logs.arguments%TYPE    := NULL,
-        in_payload              core_logs.payload%TYPE      := NULL,
-        in_debug_id             core_logs.debug_id%TYPE     := NULL,
-        in_parent               core_logs.log_parent%TYPE   := NULL
-    );
 
 END;
 /

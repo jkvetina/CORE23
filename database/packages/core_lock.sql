@@ -330,5 +330,3 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
 END;
 /
 
-
-
