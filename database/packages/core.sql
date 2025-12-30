@@ -2273,8 +2273,16 @@ CREATE OR REPLACE PACKAGE BODY core AS
         END IF;
 
         -- construct message for user: source_procedure|message_or_source_line
-        v_caller    := core.get_caller_name(3, TRUE);
-        v_message   := REGEXP_REPLACE(v_caller, '\[\d+\]', '') || '|' || COALESCE(in_message, REGEXP_SUBSTR(v_caller, '\[(\d+)\]', 1, 1, NULL, 1));
+        v_caller := core.get_caller_name(3, TRUE);
+        --
+        IF v_caller LIKE '__anonymous_block%' THEN
+            v_caller := SUBSTR(''
+                || 'BLOCK_P' || REGEXP_SUBSTR(SYS_CONTEXT('USERENV', 'MODULE'), ':(\d+)$', 1, 1, NULL, 1)
+                || '_' || RTRIM(REGEXP_SUBSTR(SYS_CONTEXT('USERENV', 'ACTION'), ':\s*([^:]+)$', 1, 1, NULL, 1), ',')
+                || ' ' || REGEXP_SUBSTR(v_caller, '(\[.*)$', 1, 1, NULL, 1), 1, 128);
+        END IF;
+        --
+        v_message := v_caller || '|' || in_message;
 
         -- convert passed arguments
         IF in_concat THEN
@@ -2341,21 +2349,22 @@ CREATE OR REPLACE PACKAGE BODY core AS
         -- append #log_id, args and error message
         v_message := SUBSTR(v_message
             || NULLIF(' #' || TO_CHAR(v_id) || '', ' #')
-            || CASE WHEN v_arguments IS NOT NULL        THEN CHR(10) || '^ARGS: ' || v_arguments END
-            || CASE WHEN SQLERRM NOT LIKE 'ORA-0000:%'  THEN CHR(10) || '^ERR: ' || SQLERRM END
+            || CASE WHEN NULLIF(v_arguments, '{}') IS NOT NULL THEN CHR(10) || '^ARGS: ' || v_arguments END
+            || CASE WHEN SQLERRM NOT LIKE 'ORA-0000:%'         THEN CHR(10) || '^ERR: '  || SQLERRM END
             || CHR(10) || '-- ',
             1, 32767);
 
         -- add backtrace to the message (in debug mode) to quickly find the problem
-        IF core.get_debug_level() >= 4 THEN
-            v_backtrace := SUBSTR(
-                CHR(10) || '^BACKTRACE: ' || get_shorter_stack(DBMS_UTILITY.FORMAT_ERROR_BACKTRACE),
-                1, 32767);
+        IF core.is_developer() THEN
+            v_backtrace := get_shorter_stack(DBMS_UTILITY.FORMAT_ERROR_BACKTRACE);
+            IF v_backtrace IS NOT NULL THEN
+                v_backtrace := SUBSTR(CHR(10) || '^BACKTRACE: ' || v_backtrace, 1, 32767);
+            END IF;
         END IF;
         --
         RAISE_APPLICATION_ERROR (
             core.app_exception_code,
-            REPLACE(REPLACE(v_message || v_backtrace, '"', ''), '&' || 'quot;', ''),
+            REPLACE(v_message || REPLACE(v_backtrace, '"', ''), '&' || 'quot;', ''),
             TRUE
         );
     END;
