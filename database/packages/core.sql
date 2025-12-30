@@ -3148,6 +3148,21 @@ CREATE OR REPLACE PACKAGE BODY core AS
         --    v_message := out_result.message;    -- restore original message
         --END IF;
 
+        v_message := v_message
+            || '<br>^ARGS: {'
+            || '"component_type":"' || REPLACE(p_error.component.type, 'APEX_APPLICATION_', '') || '",'
+            || '"component_name":"' || p_error.component.name || '",'
+            || CASE
+                WHEN out_result.page_item_name IS NOT NULL
+                    THEN '"page_item":"'      || out_result.page_item_name || '",'
+                END
+            || CASE
+                WHEN out_result.column_alias IS NOT NULL
+                    THEN '"column_alias":"'   || out_result.column_alias || '",'
+                END
+            || '"process_point":"'  || REPLACE(SYS_CONTEXT('USERENV', 'ACTION'), 'Processes - point: ', '') || '"'
+            || '}';
+
         -- replace some parts to make it readable
         v_message := REPLACE(REPLACE(REPLACE(v_message,
             '| ', '<br />'),
