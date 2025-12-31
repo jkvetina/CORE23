@@ -3105,7 +3105,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 'page',             TO_CHAR(APEX_APPLICATION.G_FLOW_STEP_ID),
                 'component_type',   REPLACE(p_error.component.type, 'APEX_APPLICATION_', ''),
                 'component_name',   p_error.component.name,
-                'process_point',    REPLACE(SYS_CONTEXT('USERENV', 'ACTION'), 'Processes - point: ', ''),
+                'process_point',    RTRIM(REPLACE(SYS_CONTEXT('USERENV', 'ACTION'), 'Processes - point: ', ''), ','),
                 'page_item',        out_result.page_item_name,
                 'column_alias',     out_result.column_alias,
                 'error',            APEX_ERROR.GET_FIRST_ORA_ERROR_TEXT(p_error => p_error),
@@ -3148,20 +3148,22 @@ CREATE OR REPLACE PACKAGE BODY core AS
         --    v_message := out_result.message;    -- restore original message
         --END IF;
 
-        v_message := v_message
-            || '<br>^ARGS: {'
-            || '"component_type":"' || REPLACE(p_error.component.type, 'APEX_APPLICATION_', '') || '",'
-            || '"component_name":"' || p_error.component.name || '",'
-            || CASE
-                WHEN out_result.page_item_name IS NOT NULL
-                    THEN '"page_item":"'      || out_result.page_item_name || '",'
-                END
-            || CASE
-                WHEN out_result.column_alias IS NOT NULL
-                    THEN '"column_alias":"'   || out_result.column_alias || '",'
-                END
-            || '"process_point":"'  || REPLACE(SYS_CONTEXT('USERENV', 'ACTION'), 'Processes - point: ', '') || '"'
-            || '}';
+        IF core.is_developer() THEN
+            v_message := v_message
+                || '<br>^APEX: {'
+                || '"name":"' || p_error.component.name || '",'
+                || '"type":"' || REPLACE(p_error.component.type, 'APEX_APPLICATION_', '') || '",'
+                || CASE
+                    WHEN out_result.page_item_name IS NOT NULL
+                        THEN '"page_item":"' || out_result.page_item_name || '",'
+                    END
+                || CASE
+                    WHEN out_result.column_alias IS NOT NULL
+                        THEN '"column":"' || out_result.column_alias || '",'
+                    END
+                || '"point":"'  || RTRIM(REPLACE(SYS_CONTEXT('USERENV', 'ACTION'), 'Processes - point: ', ''), ',') || '"'
+                || '}';
+        END IF;
 
         -- replace some parts to make it readable
         v_message := REPLACE(REPLACE(REPLACE(v_message,
