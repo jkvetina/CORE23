@@ -2272,6 +2272,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
         v_arguments             VARCHAR2(32767);
         v_message               VARCHAR2(32767);
         v_backtrace             VARCHAR2(32767);
+        --
+        is_dev                  CONSTANT BOOLEAN := core.is_developer();
     BEGIN
         -- rollback transaction if requested (cant do this from trigger)
         IF in_rollback THEN
@@ -2283,7 +2285,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         --
         IF v_caller LIKE '__anonymous_block%' THEN
             v_caller := SUBSTR(''
-                || 'BLOCK_P' || REGEXP_SUBSTR(SYS_CONTEXT('USERENV', 'MODULE'), ':(\d+)$', 1, 1, NULL, 1)
+                || 'P' || REGEXP_SUBSTR(SYS_CONTEXT('USERENV', 'MODULE'), ':(\d+)$', 1, 1, NULL, 1)
                 || '_' || RTRIM(REGEXP_SUBSTR(SYS_CONTEXT('USERENV', 'ACTION'), ':\s*([^:]+)$', 1, 1, NULL, 1), ',')
                 || ' ' || REGEXP_SUBSTR(v_caller, '(\[.*)$', 1, 1, NULL, 1), 1, 128);
         END IF;
@@ -2353,15 +2355,16 @@ CREATE OR REPLACE PACKAGE BODY core AS
         );
 
         -- append #log_id, args and error message
-        v_message := SUBSTR(v_message
-            || NULLIF(' #' || TO_CHAR(v_id) || '', ' #')
-            || CASE WHEN NULLIF(v_arguments, '{}') IS NOT NULL THEN CHR(10) || '^ARGS: ' || v_arguments END
-            || CASE WHEN SQLERRM NOT LIKE 'ORA-0000:%'         THEN CHR(10) || '^ERR: '  || SQLERRM END
-            || CHR(10) || '-- ',
-            1, 32767);
+        v_message := SUBSTR(v_message || NULLIF(' #' || TO_CHAR(v_id), ' #'), 1, 32767);
 
-        -- add backtrace to the message (in debug mode) to quickly find the problem
-        IF core.is_developer() THEN
+        -- add extra details just for developers
+        IF is_dev THEN
+            v_message := SUBSTR(v_message
+                || CASE WHEN NULLIF(v_arguments, '{}') IS NOT NULL  THEN CHR(10) || '^ARGS: ' || v_arguments END
+                || CASE WHEN SQLERRM NOT LIKE 'ORA-0000:%'          THEN CHR(10) || '^ERR: '  || SQLERRM END,
+                1, 32767);
+
+            -- add backtrace to the message to quickly find the problem
             v_backtrace := get_shorter_stack(DBMS_UTILITY.FORMAT_ERROR_BACKTRACE);
             IF v_backtrace IS NOT NULL THEN
                 v_backtrace := SUBSTR(CHR(10) || '^BACKTRACE: ' || v_backtrace, 1, 32767);
@@ -3065,6 +3068,10 @@ CREATE OR REPLACE PACKAGE BODY core AS
         v_log_id                NUMBER;                     -- log_id from your log_error function (returning most likely sequence)
         v_constraint_code       PLS_INTEGER;
         v_message               VARCHAR2(32767);
+        v_translate             VARCHAR2(32767);
+        v_translated            VARCHAR2(32767);
+        --
+        is_dev                  CONSTANT BOOLEAN := core.is_developer();
     BEGIN
         out_result := APEX_ERROR.INIT_ERROR_RESULT(p_error => p_error);
         --
@@ -3131,30 +3138,29 @@ CREATE OR REPLACE PACKAGE BODY core AS
             );
         END IF;
 
-        --
-        /*
-        IF p_error.ora_sqlcode = app_exception_code THEN-- AND out_result.message LIKE '%{"%' THEN
-            out_result.message := NVL(REGEXP_SUBSTR(out_result.message, '({[^}]+})', 1 ,1, NULL, 1), out_result.message);
-            RETURN out_result;
-        END IF;
-        */
+        -- remove other error numbers
+        v_message := RTRIM(REGEXP_REPLACE(out_result.message, '(#\d{5,}+)\s*(<br>)?(--)?\s*', ' '));
+
+        -- remove app exception
+        v_message := REGEXP_REPLACE(v_message, '^(ORA' || TO_CHAR(app_exception_code) || ':\s*)\s*', '');
+
+        -- translate message without the app main error code and line number (because that can move easily)
+        v_translate := v_message;
+        v_translate := REGEXP_REPLACE(v_translate, '\s*\[\d+\]\s*', '');                -- remove number lines
+        v_translate := RTRIM(REGEXP_REPLACE(v_translate, '\s*\|\s*', '|'), '|');        -- unify splitters
+        v_translate := RTRIM(REGEXP_REPLACE(v_translate, '\^ARGS:\s*\{[^\}]*\}', ''));  -- remove arguments
 
         -- translate message (custom) just for user (not for the log)
         -- with APEX globalization - text messages - we can also auto add new messages there through APEX_LANG.CREATE_MESSAGE
-        -- for custom table out_result.message := NVL(core.get_translated(out_result.message), out_result.message);
+        v_translated := core.get_translated(v_translate);
 
-        -- remove error numbers
-        out_result.message := RTRIM(REGEXP_REPLACE(out_result.message, '(#\d{8,}+)\s*(<br>)?(--)?\s*', ' '));
+        -- if we have a translation, replace Klingon with human friendly message
+        IF NOT is_dev THEN
+            v_message := CASE WHEN v_translated != v_translate THEN v_translated ELSE v_translate END;
+        ELSE
+            v_message := CASE WHEN v_translated != v_translate THEN v_translated || '</p><p>' END || v_message;
 
-        -- translate message without the app main error code
-        v_message := core.get_translated(REGEXP_REPLACE(out_result.message, '^(ORA' || TO_CHAR(app_exception_code) || ':\s*)\s*', ''));
-
-        -- detect if message was not translated
-        --IF v_message = UPPER(REGEXP_REPLACE(out_result.message, '^(ORA' || TO_CHAR(app_exception_code) || ':\s*)\s*', '')) THEN
-        --    v_message := out_result.message;    -- restore original message
-        --END IF;
-
-        IF core.is_developer() THEN
+            -- add point of origin just for developers
             v_message := v_message
                 || '<br>^APEX: {'
                 || '"name":"' || p_error.component.name || '",'
@@ -3171,9 +3177,14 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 || '}';
         END IF;
 
+        -- check if it is a validation and mark if for the JS to show it properly
+        IF RTRIM(SYS_CONTEXT('USERENV', 'ACTION')) = 'Validations' THEN
+            v_message := '[VAL]' || v_message;
+        END IF;
+
         -- replace some parts to make it readable
         v_message := REPLACE(REPLACE(REPLACE(v_message,
-            '| ', '<br />'),
+            '| ', '<br>'),
             '|', ' | '),
             '[', ' [');
 
@@ -3207,8 +3218,10 @@ CREATE OR REPLACE PACKAGE BODY core AS
         IF REGEXP_LIKE(in_message, '^[A-Z][A-Z0-9_\.\|]+$') THEN
             v_message := APEX_LANG.MESSAGE(REGEXP_SUBSTR(in_message, '^[A-Z][A-Z0-9_\.\|]+$'));
         END IF;
-        --
+
+        -- unfortunatelly when message is not translated/translatable, APEX return string uppercased
         IF (v_message IS NULL OR v_message = UPPER(in_message)) THEN
+            -- at that point we will return original message
             RETURN in_message;
         END IF;
         --
