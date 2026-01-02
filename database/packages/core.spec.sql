@@ -302,14 +302,16 @@ AS
 
 
     FUNCTION is_developer (
-        in_user                 VARCHAR2        := NULL
+        in_user                 VARCHAR2        := NULL,
+        in_deep_check           BOOLEAN         := FALSE
     )
     RETURN BOOLEAN;
 
 
 
     FUNCTION is_developer_y (
-        in_user                 VARCHAR2        := NULL
+        in_user                 VARCHAR2        := NULL,
+        in_deep_check           BOOLEAN         := FALSE
     )
     RETURN CHAR;
 

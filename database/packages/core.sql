@@ -541,7 +541,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     FUNCTION is_developer (
-        in_user                 VARCHAR2        := NULL
+        in_user                 VARCHAR2        := NULL,
+        in_deep_check           BOOLEAN         := FALSE    -- split to make it faster
     )
     RETURN BOOLEAN
     AS
@@ -552,28 +553,27 @@ CREATE OR REPLACE PACKAGE BODY core AS
             RETURN TRUE;
         END IF;
 
-        -- check if we are running as database user
-        IF in_user IS NULL AND core.get_user_id() = USER THEN
+        -- check if we have a record in APEX Developers table
+        IF in_deep_check THEN
+            WITH u AS (
+                SELECT core.get_user_id() AS user_id    FROM DUAL UNION ALL
+                SELECT in_user                          FROM DUAL
+            )
+            SELECT 'Y' INTO is_valid
+            FROM apex_workspace_developers d
+            JOIN apex_applications a
+                ON a.workspace                  = d.workspace_name
+            JOIN u
+                ON UPPER(u.user_id)             IN (UPPER(d.user_name), UPPER(d.email))
+            WHERE a.application_id              = core.get_app_id()
+                AND d.is_application_developer  = 'Yes'
+                AND d.account_locked            = 'No'
+                AND ROWNUM                      = 1;
+            --
             RETURN TRUE;
         END IF;
-
-        -- check if we have a record in APEX Developers table
-        WITH u AS (
-            SELECT core.get_user_id() AS user_id    FROM DUAL UNION ALL
-            SELECT in_user                          FROM DUAL
-        )
-        SELECT 'Y' INTO is_valid
-        FROM apex_workspace_developers d
-        JOIN apex_applications a
-            ON a.workspace                  = d.workspace_name
-        JOIN u
-            ON UPPER(u.user_id)             IN (UPPER(d.user_name), UPPER(d.email))
-        WHERE a.application_id              = core.get_app_id()
-            AND d.is_application_developer  = 'Yes'
-            AND d.account_locked            = 'No'
-            AND ROWNUM                      = 1;
         --
-        RETURN TRUE;
+        RETURN FALSE;
     EXCEPTION
     WHEN NO_DATA_FOUND THEN
         RETURN FALSE;
@@ -582,12 +582,18 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     FUNCTION is_developer_y (
-        in_user                 VARCHAR2        := NULL
+        in_user                 VARCHAR2        := NULL,
+        in_deep_check           BOOLEAN         := FALSE
     )
     RETURN CHAR
     AS
     BEGIN
-        RETURN CASE WHEN core.is_developer(in_user) THEN 'Y' END;
+        RETURN CASE
+            WHEN core.is_developer (
+                in_user         => in_user,
+                in_deep_check   => in_deep_check
+            )
+            THEN 'Y' END;
     END;
 
 
