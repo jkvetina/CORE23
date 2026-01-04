@@ -850,8 +850,7 @@ AS
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
         in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
-        in_payload              CLOB        := NULL,
-        in_as_list              BOOLEAN     := FALSE
+        in_payload              CLOB        := NULL
     )
     RETURN NUMBER;
 
@@ -880,8 +879,7 @@ AS
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
         in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
-        in_payload              CLOB        := NULL,
-        in_as_list              BOOLEAN     := FALSE
+        in_payload              CLOB        := NULL
     );
 
 
@@ -909,8 +907,7 @@ AS
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
         in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
-        in_payload              CLOB        := NULL,
-        in_as_list              BOOLEAN     := FALSE
+        in_payload              CLOB        := NULL
     )
     RETURN NUMBER;
 
@@ -939,8 +936,7 @@ AS
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
         in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
-        in_payload              CLOB        := NULL,
-        in_as_list              BOOLEAN     := FALSE
+        in_payload              CLOB        := NULL
     );
 
 
@@ -968,8 +964,7 @@ AS
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
         in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
-        in_payload              CLOB        := NULL,
-        in_as_list              BOOLEAN     := FALSE
+        in_payload              CLOB        := NULL
     )
     RETURN NUMBER;
 
@@ -998,8 +993,7 @@ AS
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
         in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
-        in_payload              CLOB        := NULL,
-        in_as_list              BOOLEAN     := FALSE
+        in_payload              CLOB        := NULL
     );
 
 
@@ -1027,8 +1021,7 @@ AS
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
         in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
-        in_payload              CLOB        := NULL,
-        in_as_list              BOOLEAN     := FALSE
+        in_payload              CLOB        := NULL
     )
     RETURN NUMBER;
 
@@ -1057,8 +1050,7 @@ AS
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
         in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
-        in_payload              CLOB        := NULL,
-        in_as_list              BOOLEAN     := FALSE
+        in_payload              CLOB        := NULL
     );
 
 
@@ -1086,8 +1078,7 @@ AS
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
         in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
-        in_payload              CLOB        := NULL,
-        in_as_list              BOOLEAN     := FALSE
+        in_payload              CLOB        := NULL
     )
     RETURN NUMBER;
 
@@ -1116,8 +1107,7 @@ AS
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
         in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
-        in_payload              CLOB        := NULL,
-        in_as_list              BOOLEAN     := FALSE
+        in_payload              CLOB        := NULL
     );
 
 

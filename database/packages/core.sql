@@ -2451,8 +2451,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
         in_context_id           NUMBER      := NULL,
-        in_payload              CLOB        := NULL,
-        in_as_list              BOOLEAN     := FALSE
+        in_payload              CLOB        := NULL
     )
     RETURN NUMBER
     AS
@@ -2487,8 +2486,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_type         => core.flag_error,
             in_message      => NULL,
             in_arguments    => v_arguments,
-            in_payload      => in_payload,
-            in_context_id   => in_context_id
+            in_payload      => in_payload
         );
     END;
 
@@ -2517,8 +2515,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
         in_context_id           NUMBER      := NULL,
-        in_payload              CLOB        := NULL,
-        in_as_list              BOOLEAN     := FALSE
+        in_payload              CLOB        := NULL
     )
     AS
         v_id NUMBER;
@@ -2546,8 +2543,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_name20       => in_name20,       in_value20  => in_value20,
             --
             in_context_id   => in_context_id,
-            in_payload      => in_payload,
-            in_as_list      => in_as_list
+            in_payload      => in_payload
         );
     END;
 
@@ -2576,8 +2572,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
         in_context_id           NUMBER      := NULL,
-        in_payload              CLOB        := NULL,
-        in_as_list              BOOLEAN     := FALSE
+        in_payload              CLOB        := NULL
     )
     RETURN NUMBER
     AS
@@ -2612,8 +2607,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_type         => core.flag_warning,
             in_message      => NULL,
             in_arguments    => v_arguments,
-            in_payload      => in_payload,
-            in_context_id   => in_context_id
+            in_payload      => in_payload
         );
     END;
 
@@ -2642,8 +2636,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
         in_context_id           NUMBER      := NULL,
-        in_payload              CLOB        := NULL,
-        in_as_list              BOOLEAN     := FALSE
+        in_payload              CLOB        := NULL
     )
     AS
         v_id NUMBER;
@@ -2671,8 +2664,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_name20       => in_name20,       in_value20  => in_value20,
             --
             in_context_id   => in_context_id,
-            in_payload      => in_payload,
-            in_as_list      => in_as_list
+            in_payload      => in_payload
         );
     END;
 
@@ -2701,8 +2693,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
         in_context_id           NUMBER      := NULL,
-        in_payload              CLOB        := NULL,
-        in_as_list              BOOLEAN     := FALSE
+        in_payload              CLOB        := NULL
     )
     RETURN NUMBER
     AS
@@ -2737,8 +2728,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_type         => core.flag_debug,
             in_message      => NULL,
             in_arguments    => v_arguments,
-            in_payload      => in_payload,
-            in_context_id   => in_context_id
+            in_payload      => in_payload
         );
     END;
 
@@ -2767,8 +2757,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
         in_context_id           NUMBER      := NULL,
-        in_payload              CLOB        := NULL,
-        in_as_list              BOOLEAN     := FALSE
+        in_payload              CLOB        := NULL
     )
     AS
         v_id NUMBER;
@@ -2796,8 +2785,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_name20       => in_name20,       in_value20  => in_value20,
             --
             in_context_id   => in_context_id,
-            in_payload      => in_payload,
-            in_as_list      => in_as_list
+            in_payload      => in_payload
         );
     END;
 
@@ -2826,8 +2814,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
         in_context_id           NUMBER      := NULL,
-        in_payload              CLOB        := NULL,
-        in_as_list              BOOLEAN     := FALSE
+        in_payload              CLOB        := NULL
     )
     RETURN NUMBER
     AS
@@ -2862,8 +2849,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_type         => core.flag_start,
             in_message      => NULL,
             in_arguments    => v_arguments,
-            in_payload      => in_payload,
-            in_context_id   => in_context_id
+            in_payload      => in_payload
         );
     END;
 
@@ -2892,8 +2878,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
         in_context_id           NUMBER      := NULL,
-        in_payload              CLOB        := NULL,
-        in_as_list              BOOLEAN     := FALSE
+        in_payload              CLOB        := NULL
     )
     AS
         v_id NUMBER;
@@ -2921,8 +2906,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_name20       => in_name20,       in_value20  => in_value20,
             --
             in_context_id   => in_context_id,
-            in_payload      => in_payload,
-            in_as_list      => in_as_list
+            in_payload      => in_payload
         );
     END;
 
@@ -2951,8 +2935,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
         in_context_id           NUMBER      := NULL,
-        in_payload              CLOB        := NULL,
-        in_as_list              BOOLEAN     := FALSE
+        in_payload              CLOB        := NULL
     )
     RETURN NUMBER
     AS
@@ -2987,8 +2970,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_type         => core.flag_end,
             in_message      => NULL,
             in_arguments    => v_arguments,
-            in_payload      => in_payload,
-            in_context_id   => in_context_id
+            in_payload      => in_payload
         );
     END;
 
@@ -3017,8 +2999,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
         in_context_id           NUMBER      := NULL,
-        in_payload              CLOB        := NULL,
-        in_as_list              BOOLEAN     := FALSE
+        in_payload              CLOB        := NULL
     )
     AS
         v_id NUMBER;
@@ -3046,8 +3027,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_name20       => in_name20,       in_value20  => in_value20,
             --
             in_context_id   => in_context_id,
-            in_payload      => in_payload,
-            in_as_list      => in_as_list
+            in_payload      => in_payload
         );
     END;
 
