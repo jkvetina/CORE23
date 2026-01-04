@@ -785,47 +785,50 @@ AS
 
 
     PROCEDURE raise_error (
-        in_message              VARCHAR2    := NULL,            -- message for user, translatable
+        in_message              core_logs.message%TYPE      := NULL,  -- message for user, translatable
         --
-        in_name01               VARCHAR2    := NULL,            in_value01  VARCHAR2 := NULL,
-        in_name02               VARCHAR2    := NULL,            in_value02  VARCHAR2 := NULL,
-        in_name03               VARCHAR2    := NULL,            in_value03  VARCHAR2 := NULL,
-        in_name04               VARCHAR2    := NULL,            in_value04  VARCHAR2 := NULL,
-        in_name05               VARCHAR2    := NULL,            in_value05  VARCHAR2 := NULL,
-        in_name06               VARCHAR2    := NULL,            in_value06  VARCHAR2 := NULL,
-        in_name07               VARCHAR2    := NULL,            in_value07  VARCHAR2 := NULL,
-        in_name08               VARCHAR2    := NULL,            in_value08  VARCHAR2 := NULL,
-        in_name09               VARCHAR2    := NULL,            in_value09  VARCHAR2 := NULL,
-        in_name10               VARCHAR2    := NULL,            in_value10  VARCHAR2 := NULL,
-        in_name11               VARCHAR2    := NULL,            in_value11  VARCHAR2 := NULL,
-        in_name12               VARCHAR2    := NULL,            in_value12  VARCHAR2 := NULL,
-        in_name13               VARCHAR2    := NULL,            in_value13  VARCHAR2 := NULL,
-        in_name14               VARCHAR2    := NULL,            in_value14  VARCHAR2 := NULL,
-        in_name15               VARCHAR2    := NULL,            in_value15  VARCHAR2 := NULL,
-        in_name16               VARCHAR2    := NULL,            in_value16  VARCHAR2 := NULL,
-        in_name17               VARCHAR2    := NULL,            in_value17  VARCHAR2 := NULL,
-        in_name18               VARCHAR2    := NULL,            in_value18  VARCHAR2 := NULL,
-        in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
-        in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
+        in_name01               VARCHAR2 := NULL,           in_value01  VARCHAR2 := NULL,
+        in_name02               VARCHAR2 := NULL,           in_value02  VARCHAR2 := NULL,
+        in_name03               VARCHAR2 := NULL,           in_value03  VARCHAR2 := NULL,
+        in_name04               VARCHAR2 := NULL,           in_value04  VARCHAR2 := NULL,
+        in_name05               VARCHAR2 := NULL,           in_value05  VARCHAR2 := NULL,
+        in_name06               VARCHAR2 := NULL,           in_value06  VARCHAR2 := NULL,
+        in_name07               VARCHAR2 := NULL,           in_value07  VARCHAR2 := NULL,
+        in_name08               VARCHAR2 := NULL,           in_value08  VARCHAR2 := NULL,
+        in_name09               VARCHAR2 := NULL,           in_value09  VARCHAR2 := NULL,
+        in_name10               VARCHAR2 := NULL,           in_value10  VARCHAR2 := NULL,
+        in_name11               VARCHAR2 := NULL,           in_value11  VARCHAR2 := NULL,
+        in_name12               VARCHAR2 := NULL,           in_value12  VARCHAR2 := NULL,
+        in_name13               VARCHAR2 := NULL,           in_value13  VARCHAR2 := NULL,
+        in_name14               VARCHAR2 := NULL,           in_value14  VARCHAR2 := NULL,
+        in_name15               VARCHAR2 := NULL,           in_value15  VARCHAR2 := NULL,
+        in_name16               VARCHAR2 := NULL,           in_value16  VARCHAR2 := NULL,
+        in_name17               VARCHAR2 := NULL,           in_value17  VARCHAR2 := NULL,
+        in_name18               VARCHAR2 := NULL,           in_value18  VARCHAR2 := NULL,
+        in_name19               VARCHAR2 := NULL,           in_value19  VARCHAR2 := NULL,
+        in_name20               VARCHAR2 := NULL,           in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
-        in_payload              CLOB        := NULL,
-        in_rollback             BOOLEAN     := FALSE,
-        in_as_list              BOOLEAN     := FALSE,
-        in_concat               BOOLEAN     := FALSE
+        in_context_id           core_logs.context_id%TYPE   := NULL,
+        in_payload              core_logs.payload%TYPE      := NULL,
+        in_rollback             BOOLEAN                     := FALSE
     );
 
 
 
     FUNCTION log__ (
-        in_type                 CHAR,
-        in_message              VARCHAR2,
-        in_arguments            VARCHAR2,
-        in_payload              CLOB        := NULL,
-        in_context_id           NUMBER      := NULL,
-        in_caller               VARCHAR2    := NULL
+        in_flag                 core_logs.flag%TYPE,
+        in_context_id           core_logs.context_id%TYPE       := NULL,
+        in_caller               core_logs.caller%TYPE           := NULL,
+        in_message              core_logs.message%TYPE          := NULL,
+        in_arguments            core_logs.arguments%TYPE        := NULL,
+        in_component_type       core_logs.component_type%TYPE   := NULL,
+        in_component_name       core_logs.component_name%TYPE   := NULL,
+        in_component_point      core_logs.component_point%TYPE  := NULL,
+        in_payload              core_logs.payload%TYPE          := NULL,
+        in_backtrace            core_logs.backtrace%TYPE        := NULL,
+        in_callstack            core_logs.callstack%TYPE        := NULL
     )
-    RETURN NUMBER;
+    RETURN core_logs.log_id%TYPE;
 
 
 

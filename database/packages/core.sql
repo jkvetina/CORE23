@@ -2143,28 +2143,28 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     FUNCTION get_arguments (
-        in_name01               VARCHAR2    := NULL,            in_value01  VARCHAR2 := NULL,
-        in_name02               VARCHAR2    := NULL,            in_value02  VARCHAR2 := NULL,
-        in_name03               VARCHAR2    := NULL,            in_value03  VARCHAR2 := NULL,
-        in_name04               VARCHAR2    := NULL,            in_value04  VARCHAR2 := NULL,
-        in_name05               VARCHAR2    := NULL,            in_value05  VARCHAR2 := NULL,
-        in_name06               VARCHAR2    := NULL,            in_value06  VARCHAR2 := NULL,
-        in_name07               VARCHAR2    := NULL,            in_value07  VARCHAR2 := NULL,
-        in_name08               VARCHAR2    := NULL,            in_value08  VARCHAR2 := NULL,
-        in_name09               VARCHAR2    := NULL,            in_value09  VARCHAR2 := NULL,
-        in_name10               VARCHAR2    := NULL,            in_value10  VARCHAR2 := NULL,
-        in_name11               VARCHAR2    := NULL,            in_value11  VARCHAR2 := NULL,
-        in_name12               VARCHAR2    := NULL,            in_value12  VARCHAR2 := NULL,
-        in_name13               VARCHAR2    := NULL,            in_value13  VARCHAR2 := NULL,
-        in_name14               VARCHAR2    := NULL,            in_value14  VARCHAR2 := NULL,
-        in_name15               VARCHAR2    := NULL,            in_value15  VARCHAR2 := NULL,
-        in_name16               VARCHAR2    := NULL,            in_value16  VARCHAR2 := NULL,
-        in_name17               VARCHAR2    := NULL,            in_value17  VARCHAR2 := NULL,
-        in_name18               VARCHAR2    := NULL,            in_value18  VARCHAR2 := NULL,
-        in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
-        in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
+        in_name01               VARCHAR2 := NULL,           in_value01  VARCHAR2 := NULL,
+        in_name02               VARCHAR2 := NULL,           in_value02  VARCHAR2 := NULL,
+        in_name03               VARCHAR2 := NULL,           in_value03  VARCHAR2 := NULL,
+        in_name04               VARCHAR2 := NULL,           in_value04  VARCHAR2 := NULL,
+        in_name05               VARCHAR2 := NULL,           in_value05  VARCHAR2 := NULL,
+        in_name06               VARCHAR2 := NULL,           in_value06  VARCHAR2 := NULL,
+        in_name07               VARCHAR2 := NULL,           in_value07  VARCHAR2 := NULL,
+        in_name08               VARCHAR2 := NULL,           in_value08  VARCHAR2 := NULL,
+        in_name09               VARCHAR2 := NULL,           in_value09  VARCHAR2 := NULL,
+        in_name10               VARCHAR2 := NULL,           in_value10  VARCHAR2 := NULL,
+        in_name11               VARCHAR2 := NULL,           in_value11  VARCHAR2 := NULL,
+        in_name12               VARCHAR2 := NULL,           in_value12  VARCHAR2 := NULL,
+        in_name13               VARCHAR2 := NULL,           in_value13  VARCHAR2 := NULL,
+        in_name14               VARCHAR2 := NULL,           in_value14  VARCHAR2 := NULL,
+        in_name15               VARCHAR2 := NULL,           in_value15  VARCHAR2 := NULL,
+        in_name16               VARCHAR2 := NULL,           in_value16  VARCHAR2 := NULL,
+        in_name17               VARCHAR2 := NULL,           in_value17  VARCHAR2 := NULL,
+        in_name18               VARCHAR2 := NULL,           in_value18  VARCHAR2 := NULL,
+        in_name19               VARCHAR2 := NULL,           in_value19  VARCHAR2 := NULL,
+        in_name20               VARCHAR2 := NULL,           in_value20  VARCHAR2 := NULL,
         --
-        in_as_list              BOOLEAN     := FALSE
+        in_as_list              BOOLEAN := FALSE
     )
     RETURN VARCHAR2
     AS
@@ -2238,185 +2238,177 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     PROCEDURE raise_error (
-        in_message              VARCHAR2    := NULL,            -- message for user, translatable
+        in_message              core_logs.message%TYPE      := NULL,  -- message for user, translatable
         --
-        in_name01               VARCHAR2    := NULL,            in_value01  VARCHAR2 := NULL,
-        in_name02               VARCHAR2    := NULL,            in_value02  VARCHAR2 := NULL,
-        in_name03               VARCHAR2    := NULL,            in_value03  VARCHAR2 := NULL,
-        in_name04               VARCHAR2    := NULL,            in_value04  VARCHAR2 := NULL,
-        in_name05               VARCHAR2    := NULL,            in_value05  VARCHAR2 := NULL,
-        in_name06               VARCHAR2    := NULL,            in_value06  VARCHAR2 := NULL,
-        in_name07               VARCHAR2    := NULL,            in_value07  VARCHAR2 := NULL,
-        in_name08               VARCHAR2    := NULL,            in_value08  VARCHAR2 := NULL,
-        in_name09               VARCHAR2    := NULL,            in_value09  VARCHAR2 := NULL,
-        in_name10               VARCHAR2    := NULL,            in_value10  VARCHAR2 := NULL,
-        in_name11               VARCHAR2    := NULL,            in_value11  VARCHAR2 := NULL,
-        in_name12               VARCHAR2    := NULL,            in_value12  VARCHAR2 := NULL,
-        in_name13               VARCHAR2    := NULL,            in_value13  VARCHAR2 := NULL,
-        in_name14               VARCHAR2    := NULL,            in_value14  VARCHAR2 := NULL,
-        in_name15               VARCHAR2    := NULL,            in_value15  VARCHAR2 := NULL,
-        in_name16               VARCHAR2    := NULL,            in_value16  VARCHAR2 := NULL,
-        in_name17               VARCHAR2    := NULL,            in_value17  VARCHAR2 := NULL,
-        in_name18               VARCHAR2    := NULL,            in_value18  VARCHAR2 := NULL,
-        in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
-        in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
+        in_name01               VARCHAR2 := NULL,           in_value01  VARCHAR2 := NULL,
+        in_name02               VARCHAR2 := NULL,           in_value02  VARCHAR2 := NULL,
+        in_name03               VARCHAR2 := NULL,           in_value03  VARCHAR2 := NULL,
+        in_name04               VARCHAR2 := NULL,           in_value04  VARCHAR2 := NULL,
+        in_name05               VARCHAR2 := NULL,           in_value05  VARCHAR2 := NULL,
+        in_name06               VARCHAR2 := NULL,           in_value06  VARCHAR2 := NULL,
+        in_name07               VARCHAR2 := NULL,           in_value07  VARCHAR2 := NULL,
+        in_name08               VARCHAR2 := NULL,           in_value08  VARCHAR2 := NULL,
+        in_name09               VARCHAR2 := NULL,           in_value09  VARCHAR2 := NULL,
+        in_name10               VARCHAR2 := NULL,           in_value10  VARCHAR2 := NULL,
+        in_name11               VARCHAR2 := NULL,           in_value11  VARCHAR2 := NULL,
+        in_name12               VARCHAR2 := NULL,           in_value12  VARCHAR2 := NULL,
+        in_name13               VARCHAR2 := NULL,           in_value13  VARCHAR2 := NULL,
+        in_name14               VARCHAR2 := NULL,           in_value14  VARCHAR2 := NULL,
+        in_name15               VARCHAR2 := NULL,           in_value15  VARCHAR2 := NULL,
+        in_name16               VARCHAR2 := NULL,           in_value16  VARCHAR2 := NULL,
+        in_name17               VARCHAR2 := NULL,           in_value17  VARCHAR2 := NULL,
+        in_name18               VARCHAR2 := NULL,           in_value18  VARCHAR2 := NULL,
+        in_name19               VARCHAR2 := NULL,           in_value19  VARCHAR2 := NULL,
+        in_name20               VARCHAR2 := NULL,           in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,
-        in_payload              CLOB        := NULL,
-        in_rollback             BOOLEAN     := FALSE,
-        in_as_list              BOOLEAN     := FALSE,
-        in_concat               BOOLEAN     := FALSE
+        in_context_id           core_logs.context_id%TYPE   := NULL,
+        in_payload              core_logs.payload%TYPE      := NULL,
+        in_rollback             BOOLEAN                     := FALSE
     )
     AS
-        v_caller                VARCHAR2(256);
-        v_id                    NUMBER;
-        v_arguments             VARCHAR2(32767);
-        v_message               VARCHAR2(32767);
-        v_backtrace             VARCHAR2(32767);
-        --
-        is_dev                  CONSTANT BOOLEAN := core.is_developer();
+        rec                     core_logs%ROWTYPE;
+        v_json                  JSON_OBJECT_T;
+        v_is_dev                CONSTANT BOOLEAN := core.is_developer();
     BEGIN
-        -- rollback transaction if requested (cant do this from trigger)
+        -- rollback transaction if requested (cant do this from triggers, jobs...)
         IF in_rollback THEN
             ROLLBACK;
         END IF;
 
-        -- construct message for user: source_procedure|message_or_source_line
-        v_caller := core.get_caller_name(3, TRUE);
+        -- get caller, adjust for anonymous blocks
+        rec.caller := core.get_caller_name(in_offset => 3, in_add_line => TRUE);
         --
-        IF v_caller LIKE '__anonymous_block%' THEN
-            v_caller := SUBSTR(''
+        IF rec.caller LIKE '__anonymous_block%' THEN
+            rec.caller := SUBSTR(''
                 || 'P' || REGEXP_SUBSTR(SYS_CONTEXT('USERENV', 'MODULE'), ':(\d+)$', 1, 1, NULL, 1)
                 || '_' || RTRIM(REGEXP_SUBSTR(SYS_CONTEXT('USERENV', 'ACTION'), ':\s*([^:]+)$', 1, 1, NULL, 1), ',')
-                || ' ' || REGEXP_SUBSTR(v_caller, '(\[.*)$', 1, 1, NULL, 1), 1, 128);
+                || ' ' || REGEXP_SUBSTR(rec.caller, '(\[.*)$', 1, 1, NULL, 1), 1, 128);
         END IF;
-        --
-        v_message := v_caller || '|' || in_message;
 
-        -- convert passed arguments
-        IF in_concat THEN
-            -- keep args concatenated in the message
-            v_message := SUBSTR(v_message || '|' || in_name01,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value01, 1, 32767);
-            v_message := SUBSTR(v_message || '|' || in_name02,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value02, 1, 32767);
-            v_message := SUBSTR(v_message || '|' || in_name03,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value03, 1, 32767);
-            v_message := SUBSTR(v_message || '|' || in_name04,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value04, 1, 32767);
-            v_message := SUBSTR(v_message || '|' || in_name05,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value05, 1, 32767);
-            v_message := SUBSTR(v_message || '|' || in_name06,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value06, 1, 32767);
-            v_message := SUBSTR(v_message || '|' || in_name07,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value07, 1, 32767);
-            v_message := SUBSTR(v_message || '|' || in_name08,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value08, 1, 32767);
-            v_message := SUBSTR(v_message || '|' || in_name09,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value09, 1, 32767);
-            v_message := SUBSTR(v_message || '|' || in_name10,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value10, 1, 32767);
-            v_message := SUBSTR(v_message || '|' || in_name11,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value11, 1, 32767);
-            v_message := SUBSTR(v_message || '|' || in_name12,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value12, 1, 32767);
-            v_message := SUBSTR(v_message || '|' || in_name13,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value13, 1, 32767);
-            v_message := SUBSTR(v_message || '|' || in_name14,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value14, 1, 32767);
-            v_message := SUBSTR(v_message || '|' || in_name15,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value15, 1, 32767);
-            v_message := SUBSTR(v_message || '|' || in_name16,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value16, 1, 32767);
-            v_message := SUBSTR(v_message || '|' || in_name17,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value17, 1, 32767);
-            v_message := SUBSTR(v_message || '|' || in_name18,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value18, 1, 32767);
-            v_message := SUBSTR(v_message || '|' || in_name19,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value19, 1, 32767);
-            v_message := SUBSTR(v_message || '|' || in_name20,  1, 32767);      v_message := SUBSTR(v_message || '|' || in_value20, 1, 32767);
-            --
-            v_message := RTRIM(v_message, '|');
-        ELSE
-            -- pass arguments either as JSON object or JSON array
-            v_arguments := core.get_arguments (
-                in_name01       => in_name01,       in_value01  => in_value01,
-                in_name02       => in_name02,       in_value02  => in_value02,
-                in_name03       => in_name03,       in_value03  => in_value03,
-                in_name04       => in_name04,       in_value04  => in_value04,
-                in_name05       => in_name05,       in_value05  => in_value05,
-                in_name06       => in_name06,       in_value06  => in_value06,
-                in_name07       => in_name07,       in_value07  => in_value07,
-                in_name08       => in_name08,       in_value08  => in_value08,
-                in_name09       => in_name09,       in_value09  => in_value09,
-                in_name10       => in_name10,       in_value10  => in_value10,
-                in_name11       => in_name11,       in_value11  => in_value11,
-                in_name12       => in_name12,       in_value12  => in_value12,
-                in_name13       => in_name13,       in_value13  => in_value13,
-                in_name14       => in_name14,       in_value14  => in_value14,
-                in_name15       => in_name15,       in_value15  => in_value15,
-                in_name16       => in_name16,       in_value16  => in_value16,
-                in_name17       => in_name17,       in_value17  => in_value17,
-                in_name18       => in_name18,       in_value18  => in_value18,
-                in_name19       => in_name19,       in_value19  => in_value19,
-                in_name20       => in_name20,       in_value20  => in_value20,
-                in_as_list      => in_as_list
-            );
-        END IF;
+        -- dont alter the message, keep it empty if needed
+        rec.message := SUBSTR(COALESCE(
+            in_message,
+            CASE WHEN SQLERRM NOT LIKE 'ORA-0000:%' THEN SQLERRM END
+        ), 1, 256);
+
+        -- always pass arguments as pairs and convert to JSON object
+        rec.arguments := core.get_arguments (
+            in_name01 => in_name01,     in_value01 => in_value01,
+            in_name02 => in_name02,     in_value02 => in_value02,
+            in_name03 => in_name03,     in_value03 => in_value03,
+            in_name04 => in_name04,     in_value04 => in_value04,
+            in_name05 => in_name05,     in_value05 => in_value05,
+            in_name06 => in_name06,     in_value06 => in_value06,
+            in_name07 => in_name07,     in_value07 => in_value07,
+            in_name08 => in_name08,     in_value08 => in_value08,
+            in_name09 => in_name09,     in_value09 => in_value09,
+            in_name10 => in_name10,     in_value10 => in_value10,
+            in_name11 => in_name11,     in_value11 => in_value11,
+            in_name12 => in_name12,     in_value12 => in_value12,
+            in_name13 => in_name13,     in_value13 => in_value13,
+            in_name14 => in_name14,     in_value14 => in_value14,
+            in_name15 => in_name15,     in_value15 => in_value15,
+            in_name16 => in_name16,     in_value16 => in_value16,
+            in_name17 => in_name17,     in_value17 => in_value17,
+            in_name18 => in_name18,     in_value18 => in_value18,
+            in_name19 => in_name19,     in_value19 => in_value19,
+            in_name20 => in_name20,     in_value20 => in_value20
+        );
 
         -- log raised error
-        v_id := core.log__ (
-            in_type             => core.flag_error,
-            in_message          => v_message,
-            in_arguments        => v_arguments,
-            in_payload          => in_payload,
-            in_context_id       => in_context_id,
-            in_caller           => v_caller
-        );
-
-        -- append #log_id, args and error message
-        v_message := SUBSTR(v_message || NULLIF(' #' || TO_CHAR(v_id), ' #'), 1, 32767);
-
-        -- add extra details just for developers
-        IF is_dev THEN
-            v_message := SUBSTR(v_message
-                || CASE WHEN NULLIF(v_arguments, '{}') IS NOT NULL  THEN CHR(10) || '^ARGS: ' || v_arguments END
-                || CASE WHEN SQLERRM NOT LIKE 'ORA-0000:%'          THEN CHR(10) || '^ERR: '  || SQLERRM END,
-                1, 32767);
-
-            -- add backtrace to the message to quickly find the problem
-            v_backtrace := get_shorter_stack(DBMS_UTILITY.FORMAT_ERROR_BACKTRACE);
-            IF v_backtrace IS NOT NULL THEN
-                v_backtrace := SUBSTR(CHR(10) || '^BACKTRACE: ' || v_backtrace, 1, 32767);
-            END IF;
-        END IF;
+        rec.backtrace := get_shorter_stack(DBMS_UTILITY.FORMAT_ERROR_BACKTRACE);
         --
-        RAISE_APPLICATION_ERROR (
-            core.app_exception_code,
-            REPLACE(v_message || REPLACE(v_backtrace, '"', ''), '&' || 'quot;', ''),
-            TRUE
+        rec.log_id := core.log__ (
+            in_flag             => core.flag_error,
+            in_context_id       => in_context_id,
+            in_caller           => rec.caller,
+            in_message          => rec.message,
+            in_arguments        => rec.arguments,
+            in_payload          => in_payload,
+            in_backtrace        => rec.backtrace
         );
+
+        -- we have stored the error, so lets create JSON object for FE handler
+        v_json := JSON_OBJECT_T();
+        v_json.put('id',        rec.log_id);
+        v_json.put('message',   rec.message);
+        v_json.put('caller',    CASE WHEN v_is_dev THEN rec.caller    END);
+        v_json.put('arguments', CASE WHEN v_is_dev THEN rec.arguments END);
+        v_json.put('backtrace', CASE WHEN v_is_dev THEN rec.backtrace END);
+        /*
+        v_json.put('debug',
+                APEX_PAGE.GET_URL (
+                    p_application   => 9000,
+                    p_page          => 811,
+                    p_items         => 'P811_LOG_ID',
+                    p_values        => rec.log_id,
+                    p_plain_url     => FALSE,
+                    p_absolute_url  => FALSE
+                )
+        );
+        */
+
+        -- raise error with JSON payload
+        -- if we raise this on APEX component, it might not go through APEX error handler
+        RAISE_APPLICATION_ERROR(core.app_exception_code, v_json.TO_STRING(), TRUE);
     END;
 
 
 
     FUNCTION log__ (
-        in_type                 CHAR,
-        in_message              VARCHAR2,
-        in_arguments            VARCHAR2,
-        in_payload              CLOB        := NULL,
-        in_context_id           NUMBER      := NULL,
-        in_caller               VARCHAR2    := NULL
+        in_flag                 core_logs.flag%TYPE,
+        in_context_id           core_logs.context_id%TYPE       := NULL,
+        in_caller               core_logs.caller%TYPE           := NULL,
+        in_message              core_logs.message%TYPE          := NULL,
+        in_arguments            core_logs.arguments%TYPE        := NULL,
+        in_component_type       core_logs.component_type%TYPE   := NULL,
+        in_component_name       core_logs.component_name%TYPE   := NULL,
+        in_component_point      core_logs.component_point%TYPE  := NULL,
+        in_payload              core_logs.payload%TYPE          := NULL,
+        in_backtrace            core_logs.backtrace%TYPE        := NULL,
+        in_callstack            core_logs.callstack%TYPE        := NULL
     )
-    RETURN NUMBER
+    RETURN core_logs.log_id%TYPE
     AS
-        v_caller                VARCHAR2(256);
-        v_message               VARCHAR2(32767);
-    BEGIN
-        -- construct message for user: source_procedure|message_or_source_line
-        v_caller    := COALESCE(in_caller, core.get_caller_name(5, TRUE));
-        v_message   := COALESCE(in_message, REGEXP_REPLACE(v_caller, '\[\d+\]', '') || '|' || REGEXP_SUBSTR(v_caller, '\[(\d+)\]', 1, 1, NULL, 1));
+        PRAGMA AUTONOMOUS_TRANSACTION;
         --
-        RETURN core_custom.log__ (
-            in_type         => in_type,
-            in_message      => v_message,
-            in_arguments    => in_arguments,
-            in_payload      => in_payload,
-            in_context_id   => in_context_id,
-            --
-            in_app_id       => core.get_app_id(),
-            in_page_id      => core.get_page_id(),
-            in_user_id      => core.get_user_id(),
-            in_session_id   => core.get_session_id(),
-            --
-            in_caller       => v_caller,
-            in_backtrace    => CASE WHEN SQLCODE != 0 THEN core.get_shorter_stack(core.get_error_stack()) END,
-            in_callstack    => CASE WHEN (SQLCODE != 0 OR in_type IN (flag_error, flag_warning)) THEN core.get_shorter_stack(core.get_call_stack()) END
-        );
+        rec                     core_logs%ROWTYPE;
+    BEGIN
+        -- prepare data
+        rec.log_id              := core_log_id.NEXTVAL;
+        rec.flag                := in_flag;
+        rec.app_id              := COALESCE(core.get_app_id(),      0);
+        rec.page_id             := COALESCE(core.get_page_id(),     0);
+        rec.user_id             := COALESCE(core.get_user_id(),     USER);
+        rec.session_id          := COALESCE(core.get_session_id(),  0);
+        rec.context_id          := in_context_id;
+        rec.caller              := COALESCE(in_caller, core.get_caller_name(in_offset => 5, in_add_line => TRUE));
+        rec.message             := in_message;
+        rec.arguments           := in_arguments;
+        rec.component_type      := in_component_type;
+        rec.component_name      := in_component_name;
+        rec.component_point     := in_component_point;
+        rec.payload             := in_payload;
+        rec.backtrace           := COALESCE(in_backtrace, CASE WHEN SQLCODE != 0 THEN core.get_shorter_stack(core.get_error_stack()) END);
+        rec.callstack           := COALESCE(in_callstack, CASE WHEN (SQLCODE != 0 OR in_flag IN (flag_error, flag_warning)) THEN core.get_shorter_stack(core.get_call_stack()) END);
+        rec.created_at          := SYSDATE;
+
+        -- fetch something like PAGE_VIEW_ID, APP_UNIQUE_PAGE_ID
+        -- might be off if user has multiple tabs open
+        rec.page_view_id        := core.get_number_item(c_request_id);
+        --
+        INSERT INTO core_logs
+        VALUES rec;
+
+        -- finish transaction
+        COMMIT;
+        --
+        RETURN rec.log_id;
         --
     EXCEPTION
     WHEN OTHERS THEN
+        ROLLBACK;
+        --
         DBMS_OUTPUT.PUT_LINE('-- NOT LOGGED ERROR:');
         DBMS_OUTPUT.PUT_LINE(DBMS_UTILITY.FORMAT_ERROR_STACK);
         DBMS_OUTPUT.PUT_LINE(DBMS_UTILITY.FORMAT_ERROR_BACKTRACE);
@@ -2459,32 +2451,31 @@ CREATE OR REPLACE PACKAGE BODY core AS
     BEGIN
         -- convert passed arguments
         v_arguments := core.get_arguments (
-            in_name01       => in_name01,       in_value01  => in_value01,
-            in_name02       => in_name02,       in_value02  => in_value02,
-            in_name03       => in_name03,       in_value03  => in_value03,
-            in_name04       => in_name04,       in_value04  => in_value04,
-            in_name05       => in_name05,       in_value05  => in_value05,
-            in_name06       => in_name06,       in_value06  => in_value06,
-            in_name07       => in_name07,       in_value07  => in_value07,
-            in_name08       => in_name08,       in_value08  => in_value08,
-            in_name09       => in_name09,       in_value09  => in_value09,
-            in_name10       => in_name10,       in_value10  => in_value10,
-            in_name11       => in_name11,       in_value11  => in_value11,
-            in_name12       => in_name12,       in_value12  => in_value12,
-            in_name13       => in_name13,       in_value13  => in_value13,
-            in_name14       => in_name14,       in_value14  => in_value14,
-            in_name15       => in_name15,       in_value15  => in_value15,
-            in_name16       => in_name16,       in_value16  => in_value16,
-            in_name17       => in_name17,       in_value17  => in_value17,
-            in_name18       => in_name18,       in_value18  => in_value18,
-            in_name19       => in_name19,       in_value19  => in_value19,
-            in_name20       => in_name20,       in_value20  => in_value20,
-            in_as_list      => in_as_list
+            in_name01 => in_name01,     in_value01 => in_value01,
+            in_name02 => in_name02,     in_value02 => in_value02,
+            in_name03 => in_name03,     in_value03 => in_value03,
+            in_name04 => in_name04,     in_value04 => in_value04,
+            in_name05 => in_name05,     in_value05 => in_value05,
+            in_name06 => in_name06,     in_value06 => in_value06,
+            in_name07 => in_name07,     in_value07 => in_value07,
+            in_name08 => in_name08,     in_value08 => in_value08,
+            in_name09 => in_name09,     in_value09 => in_value09,
+            in_name10 => in_name10,     in_value10 => in_value10,
+            in_name11 => in_name11,     in_value11 => in_value11,
+            in_name12 => in_name12,     in_value12 => in_value12,
+            in_name13 => in_name13,     in_value13 => in_value13,
+            in_name14 => in_name14,     in_value14 => in_value14,
+            in_name15 => in_name15,     in_value15 => in_value15,
+            in_name16 => in_name16,     in_value16 => in_value16,
+            in_name17 => in_name17,     in_value17 => in_value17,
+            in_name18 => in_name18,     in_value18 => in_value18,
+            in_name19 => in_name19,     in_value19 => in_value19,
+            in_name20 => in_name20,     in_value20 => in_value20
         );
         --
         RETURN core.log__ (
-            in_type         => core.flag_error,
-            in_message      => NULL,
+            in_flag         => core.flag_error,
+            in_context_id   => in_context_id,
             in_arguments    => v_arguments,
             in_payload      => in_payload
         );
@@ -2580,32 +2571,31 @@ CREATE OR REPLACE PACKAGE BODY core AS
     BEGIN
         -- convert passed arguments
         v_arguments := core.get_arguments (
-            in_name01       => in_name01,       in_value01  => in_value01,
-            in_name02       => in_name02,       in_value02  => in_value02,
-            in_name03       => in_name03,       in_value03  => in_value03,
-            in_name04       => in_name04,       in_value04  => in_value04,
-            in_name05       => in_name05,       in_value05  => in_value05,
-            in_name06       => in_name06,       in_value06  => in_value06,
-            in_name07       => in_name07,       in_value07  => in_value07,
-            in_name08       => in_name08,       in_value08  => in_value08,
-            in_name09       => in_name09,       in_value09  => in_value09,
-            in_name10       => in_name10,       in_value10  => in_value10,
-            in_name11       => in_name11,       in_value11  => in_value11,
-            in_name12       => in_name12,       in_value12  => in_value12,
-            in_name13       => in_name13,       in_value13  => in_value13,
-            in_name14       => in_name14,       in_value14  => in_value14,
-            in_name15       => in_name15,       in_value15  => in_value15,
-            in_name16       => in_name16,       in_value16  => in_value16,
-            in_name17       => in_name17,       in_value17  => in_value17,
-            in_name18       => in_name18,       in_value18  => in_value18,
-            in_name19       => in_name19,       in_value19  => in_value19,
-            in_name20       => in_name20,       in_value20  => in_value20,
-            in_as_list      => in_as_list
+            in_name01 => in_name01,     in_value01 => in_value01,
+            in_name02 => in_name02,     in_value02 => in_value02,
+            in_name03 => in_name03,     in_value03 => in_value03,
+            in_name04 => in_name04,     in_value04 => in_value04,
+            in_name05 => in_name05,     in_value05 => in_value05,
+            in_name06 => in_name06,     in_value06 => in_value06,
+            in_name07 => in_name07,     in_value07 => in_value07,
+            in_name08 => in_name08,     in_value08 => in_value08,
+            in_name09 => in_name09,     in_value09 => in_value09,
+            in_name10 => in_name10,     in_value10 => in_value10,
+            in_name11 => in_name11,     in_value11 => in_value11,
+            in_name12 => in_name12,     in_value12 => in_value12,
+            in_name13 => in_name13,     in_value13 => in_value13,
+            in_name14 => in_name14,     in_value14 => in_value14,
+            in_name15 => in_name15,     in_value15 => in_value15,
+            in_name16 => in_name16,     in_value16 => in_value16,
+            in_name17 => in_name17,     in_value17 => in_value17,
+            in_name18 => in_name18,     in_value18 => in_value18,
+            in_name19 => in_name19,     in_value19 => in_value19,
+            in_name20 => in_name20,     in_value20 => in_value20
         );
         --
         RETURN core.log__ (
-            in_type         => core.flag_warning,
-            in_message      => NULL,
+            in_flag         => core.flag_warning,
+            in_context_id   => in_context_id,
             in_arguments    => v_arguments,
             in_payload      => in_payload
         );
@@ -2701,32 +2691,31 @@ CREATE OR REPLACE PACKAGE BODY core AS
     BEGIN
         -- convert passed arguments
         v_arguments := core.get_arguments (
-            in_name01       => in_name01,       in_value01  => in_value01,
-            in_name02       => in_name02,       in_value02  => in_value02,
-            in_name03       => in_name03,       in_value03  => in_value03,
-            in_name04       => in_name04,       in_value04  => in_value04,
-            in_name05       => in_name05,       in_value05  => in_value05,
-            in_name06       => in_name06,       in_value06  => in_value06,
-            in_name07       => in_name07,       in_value07  => in_value07,
-            in_name08       => in_name08,       in_value08  => in_value08,
-            in_name09       => in_name09,       in_value09  => in_value09,
-            in_name10       => in_name10,       in_value10  => in_value10,
-            in_name11       => in_name11,       in_value11  => in_value11,
-            in_name12       => in_name12,       in_value12  => in_value12,
-            in_name13       => in_name13,       in_value13  => in_value13,
-            in_name14       => in_name14,       in_value14  => in_value14,
-            in_name15       => in_name15,       in_value15  => in_value15,
-            in_name16       => in_name16,       in_value16  => in_value16,
-            in_name17       => in_name17,       in_value17  => in_value17,
-            in_name18       => in_name18,       in_value18  => in_value18,
-            in_name19       => in_name19,       in_value19  => in_value19,
-            in_name20       => in_name20,       in_value20  => in_value20,
-            in_as_list      => in_as_list
+            in_name01 => in_name01,     in_value01 => in_value01,
+            in_name02 => in_name02,     in_value02 => in_value02,
+            in_name03 => in_name03,     in_value03 => in_value03,
+            in_name04 => in_name04,     in_value04 => in_value04,
+            in_name05 => in_name05,     in_value05 => in_value05,
+            in_name06 => in_name06,     in_value06 => in_value06,
+            in_name07 => in_name07,     in_value07 => in_value07,
+            in_name08 => in_name08,     in_value08 => in_value08,
+            in_name09 => in_name09,     in_value09 => in_value09,
+            in_name10 => in_name10,     in_value10 => in_value10,
+            in_name11 => in_name11,     in_value11 => in_value11,
+            in_name12 => in_name12,     in_value12 => in_value12,
+            in_name13 => in_name13,     in_value13 => in_value13,
+            in_name14 => in_name14,     in_value14 => in_value14,
+            in_name15 => in_name15,     in_value15 => in_value15,
+            in_name16 => in_name16,     in_value16 => in_value16,
+            in_name17 => in_name17,     in_value17 => in_value17,
+            in_name18 => in_name18,     in_value18 => in_value18,
+            in_name19 => in_name19,     in_value19 => in_value19,
+            in_name20 => in_name20,     in_value20 => in_value20
         );
         --
         RETURN core.log__ (
-            in_type         => core.flag_debug,
-            in_message      => NULL,
+            in_flag         => core.flag_debug,
+            in_context_id   => in_context_id,
             in_arguments    => v_arguments,
             in_payload      => in_payload
         );
@@ -2822,32 +2811,31 @@ CREATE OR REPLACE PACKAGE BODY core AS
     BEGIN
         -- convert passed arguments
         v_arguments := core.get_arguments (
-            in_name01       => in_name01,       in_value01  => in_value01,
-            in_name02       => in_name02,       in_value02  => in_value02,
-            in_name03       => in_name03,       in_value03  => in_value03,
-            in_name04       => in_name04,       in_value04  => in_value04,
-            in_name05       => in_name05,       in_value05  => in_value05,
-            in_name06       => in_name06,       in_value06  => in_value06,
-            in_name07       => in_name07,       in_value07  => in_value07,
-            in_name08       => in_name08,       in_value08  => in_value08,
-            in_name09       => in_name09,       in_value09  => in_value09,
-            in_name10       => in_name10,       in_value10  => in_value10,
-            in_name11       => in_name11,       in_value11  => in_value11,
-            in_name12       => in_name12,       in_value12  => in_value12,
-            in_name13       => in_name13,       in_value13  => in_value13,
-            in_name14       => in_name14,       in_value14  => in_value14,
-            in_name15       => in_name15,       in_value15  => in_value15,
-            in_name16       => in_name16,       in_value16  => in_value16,
-            in_name17       => in_name17,       in_value17  => in_value17,
-            in_name18       => in_name18,       in_value18  => in_value18,
-            in_name19       => in_name19,       in_value19  => in_value19,
-            in_name20       => in_name20,       in_value20  => in_value20,
-            in_as_list      => in_as_list
+            in_name01 => in_name01,     in_value01 => in_value01,
+            in_name02 => in_name02,     in_value02 => in_value02,
+            in_name03 => in_name03,     in_value03 => in_value03,
+            in_name04 => in_name04,     in_value04 => in_value04,
+            in_name05 => in_name05,     in_value05 => in_value05,
+            in_name06 => in_name06,     in_value06 => in_value06,
+            in_name07 => in_name07,     in_value07 => in_value07,
+            in_name08 => in_name08,     in_value08 => in_value08,
+            in_name09 => in_name09,     in_value09 => in_value09,
+            in_name10 => in_name10,     in_value10 => in_value10,
+            in_name11 => in_name11,     in_value11 => in_value11,
+            in_name12 => in_name12,     in_value12 => in_value12,
+            in_name13 => in_name13,     in_value13 => in_value13,
+            in_name14 => in_name14,     in_value14 => in_value14,
+            in_name15 => in_name15,     in_value15 => in_value15,
+            in_name16 => in_name16,     in_value16 => in_value16,
+            in_name17 => in_name17,     in_value17 => in_value17,
+            in_name18 => in_name18,     in_value18 => in_value18,
+            in_name19 => in_name19,     in_value19 => in_value19,
+            in_name20 => in_name20,     in_value20 => in_value20
         );
         --
         RETURN core.log__ (
-            in_type         => core.flag_start,
-            in_message      => NULL,
+            in_flag         => core.flag_start,
+            in_context_id   => in_context_id,
             in_arguments    => v_arguments,
             in_payload      => in_payload
         );
@@ -2943,32 +2931,31 @@ CREATE OR REPLACE PACKAGE BODY core AS
     BEGIN
         -- convert passed arguments
         v_arguments := core.get_arguments (
-            in_name01       => in_name01,       in_value01  => in_value01,
-            in_name02       => in_name02,       in_value02  => in_value02,
-            in_name03       => in_name03,       in_value03  => in_value03,
-            in_name04       => in_name04,       in_value04  => in_value04,
-            in_name05       => in_name05,       in_value05  => in_value05,
-            in_name06       => in_name06,       in_value06  => in_value06,
-            in_name07       => in_name07,       in_value07  => in_value07,
-            in_name08       => in_name08,       in_value08  => in_value08,
-            in_name09       => in_name09,       in_value09  => in_value09,
-            in_name10       => in_name10,       in_value10  => in_value10,
-            in_name11       => in_name11,       in_value11  => in_value11,
-            in_name12       => in_name12,       in_value12  => in_value12,
-            in_name13       => in_name13,       in_value13  => in_value13,
-            in_name14       => in_name14,       in_value14  => in_value14,
-            in_name15       => in_name15,       in_value15  => in_value15,
-            in_name16       => in_name16,       in_value16  => in_value16,
-            in_name17       => in_name17,       in_value17  => in_value17,
-            in_name18       => in_name18,       in_value18  => in_value18,
-            in_name19       => in_name19,       in_value19  => in_value19,
-            in_name20       => in_name20,       in_value20  => in_value20,
-            in_as_list      => in_as_list
+            in_name01 => in_name01,     in_value01 => in_value01,
+            in_name02 => in_name02,     in_value02 => in_value02,
+            in_name03 => in_name03,     in_value03 => in_value03,
+            in_name04 => in_name04,     in_value04 => in_value04,
+            in_name05 => in_name05,     in_value05 => in_value05,
+            in_name06 => in_name06,     in_value06 => in_value06,
+            in_name07 => in_name07,     in_value07 => in_value07,
+            in_name08 => in_name08,     in_value08 => in_value08,
+            in_name09 => in_name09,     in_value09 => in_value09,
+            in_name10 => in_name10,     in_value10 => in_value10,
+            in_name11 => in_name11,     in_value11 => in_value11,
+            in_name12 => in_name12,     in_value12 => in_value12,
+            in_name13 => in_name13,     in_value13 => in_value13,
+            in_name14 => in_name14,     in_value14 => in_value14,
+            in_name15 => in_name15,     in_value15 => in_value15,
+            in_name16 => in_name16,     in_value16 => in_value16,
+            in_name17 => in_name17,     in_value17 => in_value17,
+            in_name18 => in_name18,     in_value18 => in_value18,
+            in_name19 => in_name19,     in_value19 => in_value19,
+            in_name20 => in_name20,     in_value20 => in_value20
         );
         --
         RETURN core.log__ (
-            in_type         => core.flag_end,
-            in_message      => NULL,
+            in_flag         => core.flag_end,
+            in_context_id   => in_context_id,
             in_arguments    => v_arguments,
             in_payload      => in_payload
         );
@@ -3046,18 +3033,83 @@ CREATE OR REPLACE PACKAGE BODY core AS
         --  page_item_name      varchar2(255),              -- Associated page item name
         --  column_alias        varchar2(255)               -- Associated tabular form column alias
         --
-        v_log_id                NUMBER;                     -- log_id from your log_error function (returning most likely sequence)
         v_constraint_code       PLS_INTEGER;
-        v_message               VARCHAR2(32767);
         v_translate             VARCHAR2(32767);
         v_translated            VARCHAR2(32767);
         --
-        is_dev                  CONSTANT BOOLEAN := core.is_developer();
+        rec                     core_logs%ROWTYPE;
+        v_json                  JSON_OBJECT_T;
+        v_is_dev                CONSTANT BOOLEAN := core.is_developer();
     BEGIN
         out_result := APEX_ERROR.INIT_ERROR_RESULT(p_error => p_error);
+
+        -- message could contain a stacked (previous) message
+        -- we could parse log_id, use it as a context_id and cleanup the message
+        rec.message := out_result.message;  -- core.get_shorter_stack(p_error.ora_sqlerrm)
+
+        -- store incident in log
+        IF p_error.is_internal_error AND p_error.apex_error_code IN ('APEX.SESSION.EXPIRED') THEN
+            -- dont log session errors
+            NULL;
+        ELSE
+            rec.component_type  := REPLACE(p_error.component.type, 'APEX_APPLICATION_', '');
+            rec.component_name  := p_error.component.name;
+            rec.component_point := core.get_slug(REPLACE(SYS_CONTEXT('USERENV', 'ACTION'), 'Processes - point: ', ''));
+            rec.payload         := core.get_shorter_stack(p_error.error_statement);
+            rec.backtrace       := core.get_shorter_stack(p_error.error_backtrace);
+            --
+            rec.caller          := NULL;
+                --core.get_shorter_stack(p_error.ora_sqlerrm)
+                --APEX_ERROR.GET_FIRST_ORA_ERROR_TEXT(p_error => p_error),
+
+            rec.arguments := NULL;
+                    --'page_item',        out_result.page_item_name,
+                    --'column_alias',     out_result.column_alias,
+
+            --
+            rec.log_id := core.log__ (
+                in_flag                 => core.flag_apex,
+                in_context_id           => rec.context_id,
+                in_caller               => rec.caller,
+                in_message              => rec.message,
+                in_arguments            => rec.arguments,
+                in_component_type       => rec.component_type,
+                in_component_name       => rec.component_name,
+                in_component_point      => rec.component_point,
+                in_payload              => rec.payload,
+                in_backtrace            => rec.backtrace,
+                in_callstack            => NULL
+            );
+        END IF;
+
+        -- mark associated page item (when possible)
+        IF out_result.page_item_name IS NULL AND out_result.column_alias IS NULL THEN
+            APEX_ERROR.AUTO_SET_ASSOCIATED_ITEM (
+                p_error         => p_error,
+                p_error_result  => out_result
+            );
+        END IF;
+
         --
-        out_result.message := REPLACE(out_result.message, '&' || 'quot;', '"');  -- replace some HTML entities
+        -- MESSAGE FOR USER
+        --
+
+        -- construct the whole message as json, for easier parsing in JS
+        v_json := JSON_OBJECT_T();
+        v_json.put('id',        rec.log_id);
+        v_json.put('source',    CASE WHEN v_is_dev THEN '{"type":"' || rec.component_type || '", "name":"' || rec.component_name || '", "point":"' || rec.component_point || '"}' END);
+        v_json.put('status',    CASE WHEN rec.component_point = 'VALIDATIONS' THEN 'WARNING' ELSE 'ERROR' END);
+        v_json.put('message',   CASE WHEN rec.component_point = 'VALIDATIONS' THEN '[VAL]' END || rec.message);
+        v_json.put('caller',    CASE WHEN v_is_dev THEN rec.caller END);
+        --
+        out_result.message := v_json.TO_STRING();
         out_result.display_location := APEX_ERROR.C_INLINE_IN_NOTIFICATION;  -- also removes HTML entities
+        --
+        RETURN out_result;
+
+
+/*
+        --out_result.message := REPLACE(out_result.message, '&' || 'quot;', '"');  -- replace some HTML entities
 
         -- get error code thown before app exception to translate constraint names
         IF p_error.ora_sqlcode = app_exception_code THEN
@@ -3088,40 +3140,10 @@ CREATE OR REPLACE PACKAGE BODY core AS
             out_result.message := c_not_null_prefix || REGEXP_SUBSTR(out_result.message, '\.["]([^"]+)["]\)', 1, 1, NULL, 1);
             --
         END IF;
+*/
 
-        -- store incident in your log
-        IF p_error.is_internal_error AND p_error.apex_error_code IN ('APEX.SESSION.EXPIRED') THEN
-            -- dont log session errors
-            NULL;
-        ELSE
-            v_log_id := core.log_error (
-                'message',          out_result.message,
-                'page',             TO_CHAR(APEX_APPLICATION.G_FLOW_STEP_ID),
-                'component_type',   REPLACE(p_error.component.type, 'APEX_APPLICATION_', ''),
-                'component_name',   p_error.component.name,
-                'process_point',    RTRIM(REPLACE(SYS_CONTEXT('USERENV', 'ACTION'), 'Processes - point: ', ''), ','),
-                'page_item',        out_result.page_item_name,
-                'column_alias',     out_result.column_alias,
-                'error',            APEX_ERROR.GET_FIRST_ORA_ERROR_TEXT(p_error => p_error),
-                --
-                in_payload => ''
-                    || CHR(10) || '^DESCRIPTION: ' || core.get_shorter_stack(p_error.ora_sqlerrm)
-                    || CHR(10) || '^STATEMENT: '   || core.get_shorter_stack(p_error.error_statement)
-                    || CHR(10) || '^BACKTRACE: '   || core.get_shorter_stack(p_error.error_backtrace)
-            );
-        END IF;
 
-        -- mark associated page item (when possible)
-        IF out_result.page_item_name IS NULL AND out_result.column_alias IS NULL THEN
-            APEX_ERROR.AUTO_SET_ASSOCIATED_ITEM (
-                p_error         => p_error,
-                p_error_result  => out_result
-            );
-        END IF;
-
-        -- remove other error numbers
-        v_message := RTRIM(REGEXP_REPLACE(out_result.message, '(#\d{5,}+)\s*(<br>)?(--)?\s*', ' '));
-
+/*
         -- remove app exception
         v_message := REGEXP_REPLACE(v_message, '^(ORA' || TO_CHAR(app_exception_code) || ':\s*)\s*', '');
 
@@ -3134,9 +3156,14 @@ CREATE OR REPLACE PACKAGE BODY core AS
         -- translate message (custom) just for user (not for the log)
         -- with APEX globalization - text messages - we can also auto add new messages there through APEX_LANG.CREATE_MESSAGE
         v_translated := core.get_translated(v_translate);
+*/
+
+/*
+        -- remove other error numbers
+        --v_message := RTRIM(REGEXP_REPLACE(out_result.message, '(#\d{5,}+)\s*(<br>)?(--)?\s*', ' '));
 
         -- if we have a translation, replace Klingon with human friendly message
-        IF NOT is_dev THEN
+        IF NOT v_is_dev THEN
             v_message := CASE WHEN v_translated != v_translate THEN v_translated ELSE v_translate END;
         ELSE
             v_message := CASE WHEN v_translated != v_translate THEN v_translated || '</p><p>' END || v_message;
@@ -3158,22 +3185,12 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 || '}';
         END IF;
 
-        -- check if it is a validation and mark if for the JS to show it properly
-        IF RTRIM(SYS_CONTEXT('USERENV', 'ACTION')) = 'Validations' THEN
-            v_message := '[VAL]' || v_message;
-        END IF;
-
-        -- replace some parts to make it readable
-        v_message := REPLACE(REPLACE(REPLACE(v_message,
-            '| ', '<br>'),
-            '|', ' | '),
-            '[', ' [');
-
         -- show only the latest error message prepended with log_id for support
         out_result.message := CASE WHEN v_log_id IS NOT NULL THEN '#' || TO_CHAR(v_log_id) || '<br>' END || v_message;
         --out_result.message := REPLACE(out_result.message, '&' || '#X27;', '');
         --
         RETURN out_result;
+*/
     EXCEPTION
     WHEN OTHERS THEN
         core.raise_error (
