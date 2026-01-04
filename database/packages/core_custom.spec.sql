@@ -31,11 +31,12 @@ AS
     assert_exception_code       CONSTANT PLS_INTEGER    := -20992;
 
     -- flags use in logging
-    flag_error                  CONSTANT CHAR           := 'E';     -- error
-    flag_warning                CONSTANT CHAR           := 'W';     -- warning
-    flag_debug                  CONSTANT CHAR           := 'D';     -- debug
-    flag_start                  CONSTANT CHAR           := 'S';     -- start of any module (procedure/function)
-    flag_end                    CONSTANT CHAR           := 'Q';     -- end of the module (with timer)
+    flag_apex                   CONSTANT CHAR           := 'X';     -- error from APEX error handling function
+    flag_error                  CONSTANT CHAR           := 'E';     -- error from raise_error, log_error
+    flag_warning                CONSTANT CHAR           := 'W';     -- warning from log_warning
+    flag_debug                  CONSTANT CHAR           := 'D';     -- debug... you can guess the name
+    flag_start                  CONSTANT CHAR           := 'S';     -- start of any module (procedure/function), log_start
+    flag_end                    CONSTANT CHAR           := 'Q';     -- end of the module (with timer), log_end
 
     -- start assert messages with these prefixes
     global_assert_message       CONSTANT VARCHAR2(30)   := 'ASSERT_FAILED|';
@@ -54,11 +55,14 @@ AS
     format_integer_currency     CONSTANT VARCHAR2(32)   := 'FML999G999G999G999G999G990';
 
     -- global item names
-    global_page_name            CONSTANT VARCHAR2(30)   := 'PAGE_NAME';
+    global_success              CONSTANT VARCHAR2(30)   := 'G_SUCCESS_MESSAGE';
     global_context_app          CONSTANT VARCHAR2(30)   := 'G_CONTEXT_APP';
     global_context_page         CONSTANT VARCHAR2(30)   := 'G_CONTEXT_PAGE';
+    global_request_id           CONSTANT VARCHAR2(30)   := 'G_REQUEST_ID';
     global_workspace            CONSTANT VARCHAR2(30)   := 'G_WORKSPACE';
     global_env                  CONSTANT VARCHAR2(30)   := 'G_ENV';
+    global_user_name            CONSTANT VARCHAR2(30)   := 'G_USER_NAME';
+    global_user_email           CONSTANT VARCHAR2(30)   := 'G_USER_EMAIL';
     global_formats              CONSTANT VARCHAR2(30)   := 'FORMAT_';
 
     -- for old school http requests

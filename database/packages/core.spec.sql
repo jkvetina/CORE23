@@ -38,6 +38,7 @@ AS
     -- global items to hold application + page context
     c_context_name_app          CONSTANT VARCHAR2(30)   := core_custom.global_context_app;
     c_context_name_page         CONSTANT VARCHAR2(30)   := core_custom.global_context_page;
+    c_request_id                CONSTANT VARCHAR2(30)   := core_custom.global_request_id;
     c_master_id                 CONSTANT PLS_INTEGER    := core_custom.master_id;
 
     -- code for app exception
@@ -64,6 +65,7 @@ AS
     c_page_item_prefix          CONSTANT VARCHAR2(2)    := 'P';
 
     -- flags use in logging
+    flag_apex                   CONSTANT CHAR           := core_custom.flag_apex;
     flag_error                  CONSTANT CHAR           := core_custom.flag_error;
     flag_warning                CONSTANT CHAR           := core_custom.flag_warning;
     flag_debug                  CONSTANT CHAR           := core_custom.flag_debug;
