@@ -104,7 +104,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             NULL;
         END;
         --
-        RETURN COALESCE(v_app_id, APEX_APPLICATION.G_FLOW_ID);
+        RETURN COALESCE(v_app_id, get_app_id());
     END;
 
 
@@ -123,7 +123,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             NULL;
         END;
         --
-        RETURN COALESCE(v_page_id, APEX_APPLICATION.G_FLOW_STEP_ID);
+        RETURN COALESCE(v_page_id, get_page_id());
     END;
 
 
@@ -166,7 +166,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
     RETURN NUMBER
     AS
     BEGIN
-        RETURN APEX_APPLICATION.G_FLOW_ID;
+        RETURN SYS_CONTEXT('APEX$SESSION', 'APP_ID');
     END;
 
 
@@ -687,7 +687,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 WHERE a.application_id = in_app_id;
             EXCEPTION
             WHEN NO_DATA_FOUND THEN
-                core.raise_error('INVALID_APP', in_app_id, in_concat => TRUE);
+                core.raise_error('INVALID_APP|' || in_app_id);
             END;
         END IF;
         --
@@ -728,7 +728,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             'page_id',      in_page_id,
             'session_id',   in_session_id,
             'workspace',    in_workspace,
-            'postauth',     CASE WHEN in_postauth THEN 'Y' ELSE 'N' END
+            'postauth',     TO_CHAR(in_postauth)
         );
 
         -- set security context
@@ -757,7 +757,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 );
             EXCEPTION
             WHEN OTHERS THEN
-                core.raise_error('CREATE_SESSION_FAILED', in_app_id, in_page_id, in_user_id, in_concat => TRUE);
+                core.raise_error('CREATE_SESSION_FAILED|' || in_app_id || '|' || in_page_id || '|' || in_user_id);
             END;
 
             -- set username
@@ -817,7 +817,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             );
         EXCEPTION
         WHEN OTHERS THEN
-            core.raise_error('ATTACH_SESSION_FAILED', in_app_id, in_page_id, in_session_id, in_concat => TRUE);
+            core.raise_error('ATTACH_SESSION_FAILED|' || in_app_id || '|' || in_page_id || '|' || in_session_id);
         END;
         --
         COMMIT;
@@ -938,6 +938,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
     RETURN VARCHAR2
     AS
     BEGIN
+        --SYS_CONTEXT('APEX$SESSION', 'WORKSPACE_ID')
         RETURN NULLIF(APEX_UTIL.FIND_WORKSPACE(APEX_CUSTOM_AUTH.GET_SECURITY_GROUP_ID()), 'Unknown');
     END;
 
@@ -1182,7 +1183,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
     RETURN BOOLEAN
     AS
     BEGIN
-        RETURN APEX_APPLICATION.G_REQUEST LIKE in_name ESCAPE in_escape;
+        RETURN get_request() LIKE in_name ESCAPE in_escape;
     END;
 
 
@@ -2083,7 +2084,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         IF SQLCODE NOT IN (
             -27475      -- ORA-27475 uknown job
         ) THEN
-            NULL;--core.raise_error('STOP_JOB', v_job_name, in_concat => TRUE);
+            NULL;
         END IF;
     END;
 
@@ -2111,7 +2112,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         IF SQLCODE NOT IN (
             -27475      -- ORA-27475 uknown job
         ) THEN
-            NULL;--core.raise_error('DROP_JOB', v_job_name, in_concat => TRUE);
+            NULL;
         END IF;
     END;
 
@@ -2136,7 +2137,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         --
     EXCEPTION
     WHEN OTHERS THEN
-        core.raise_error('RUN_JOB', v_job_name, in_concat => TRUE);
+        core.raise_error('RUN_JOB|' || v_job_name);
     END;
 
 
@@ -3230,25 +3231,6 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
 
-    PROCEDURE set_json_message (
-        in_message              VARCHAR2,
-        in_type                 VARCHAR2        := NULL
-    )
-    AS
-    BEGIN
-        APEX_JSON.OPEN_OBJECT();
-        APEX_JSON.WRITE('message',  in_message);
-        APEX_JSON.WRITE('status',   NVL(in_type, 'SUCCESS'));   -- SUCCESS, ERROR, WARNING
-        APEX_JSON.CLOSE_OBJECT();
-    EXCEPTION
-    WHEN core.app_exception THEN
-        RAISE;
-    WHEN OTHERS THEN
-        core.raise_error();
-    END;
-
-
-
     PROCEDURE refresh_mviews (
         in_name_like            VARCHAR2        := NULL,
         in_percent              NUMBER          := NULL,
@@ -3842,7 +3824,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         DBMS_OUTPUT.PUT_LINE(http_resp.status_code);
         --
         IF http_resp.status_code >= 300 THEN
-            core.raise_error('WRONG_RESPONSE_CODE', http_resp.status_code, in_concat => TRUE);
+            core.raise_error('WRONG_RESPONSE_CODE|' || http_resp.status_code);
         END IF;
 
         -- get response
@@ -4116,7 +4098,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
                     AND a.static_id     = in_static_id;
             EXCEPTION
             WHEN NO_DATA_FOUND THEN
-                core.raise_error('REGION_NOT_FOUND', in_static_id, in_concat => TRUE);
+                core.raise_error('REGION_NOT_FOUND|' || in_static_id);
             END;
         END IF;
         --
@@ -4183,7 +4165,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         RETURN v_source;
     EXCEPTION
     WHEN NO_DATA_FOUND THEN
-        core.raise_error('VIEW_SOURCE_MISSING', v_owner || '.' || in_view_name, in_concat => TRUE);
+        core.raise_error('VIEW_SOURCE_MISSING|' || v_owner || '.' || in_view_name);
     END;
 
 

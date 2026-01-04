@@ -1136,13 +1136,6 @@ AS
 
 
 
-    PROCEDURE set_json_message (
-        in_message              VARCHAR2,
-        in_type                 VARCHAR2        := NULL
-    );
-
-
-
     PROCEDURE refresh_mviews (
         in_name_like            VARCHAR2        := NULL,
         in_percent              NUMBER          := NULL,
