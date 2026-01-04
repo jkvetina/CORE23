@@ -72,64 +72,6 @@ CREATE OR REPLACE PACKAGE BODY core_custom AS
         RETURN v_sender;
     END;
 
-
-
-    FUNCTION log__ (
-        in_type             CHAR,
-        in_message          VARCHAR2,
-        in_arguments        VARCHAR2    := NULL,
-        in_payload          CLOB        := NULL,
-        in_context_id       NUMBER      := NULL,
-        --
-        in_app_id           NUMBER      := NULL,
-        in_page_id          NUMBER      := NULL,
-        in_user_id          VARCHAR2    := NULL,
-        in_session_id       NUMBER      := NULL,
-        --
-        in_caller           VARCHAR2    := NULL,
-        in_backtrace        VARCHAR2    := NULL,
-        in_callstack        VARCHAR2    := NULL
-    )
-    RETURN NUMBER
-    AS
-        PRAGMA AUTONOMOUS_TRANSACTION;
-        --
-        rec                 core_logs%ROWTYPE;
-    BEGIN
-        rec.log_id          := core_log_id.NEXTVAL;
-        rec.log_parent      := in_context_id;
-        rec.app_id          := COALESCE(in_app_id,  core.get_app_id(),  0);
-        rec.page_id         := COALESCE(in_page_id, core.get_page_id(), 0);
-        rec.user_id         := COALESCE(in_user_id, core.get_user_id(), USER);
-        rec.session_id      := COALESCE(in_session_id, core.get_session_id());
-        rec.flag            := in_type;
-        rec.caller          := in_caller;
-        rec.message         := in_message;
-        rec.arguments       := in_arguments;
-        rec.payload         := in_payload;
-        rec.backtrace       := in_backtrace;
-        rec.callstack       := in_callstack;
-        rec.created_at      := SYSDATE;
-        --
-        INSERT INTO core_logs
-        VALUES rec;
-
-        -- finish transaction
-        COMMIT;
-        --
-        RETURN rec.log_id;
-        --
-    EXCEPTION
-    WHEN OTHERS THEN
-        ROLLBACK;
-        RAISE;
-    END;
-
 END;
 /
 
-
-exec recompile;
-
-alter trigger CORE_LOCKSMITH disable;
-alter trigger CORE_LOCKSMITH enable;
