@@ -3224,6 +3224,50 @@ CREATE OR REPLACE PACKAGE BODY core AS
         END IF;
         --
         RETURN v_message;
+        --
+    EXCEPTION
+    WHEN core.app_exception THEN
+        RAISE;
+    WHEN OTHERS THEN
+        core.raise_error();
+    END;
+
+
+
+    FUNCTION encode_payload (
+        in_payload              VARCHAR2
+    )
+    RETURN VARCHAR2
+    AS
+    BEGIN
+        -- encode payload for correct JSON parsing in JS
+        IF LENGTH(in_payload) > 0 THEN
+            RETURN REGEXP_REPLACE(
+                UTL_RAW.CAST_TO_VARCHAR2(UTL_ENCODE.BASE64_ENCODE(UTL_RAW.CAST_TO_RAW(in_payload))),
+                '[[:space:]]', ''
+            );
+        END IF;
+        --
+        RETURN NULL;
+        --
+    EXCEPTION
+    WHEN OTHERS THEN
+        core.raise_error();
+    END;
+
+
+
+    FUNCTION decode_payload (
+        in_payload              VARCHAR2
+    )
+    RETURN VARCHAR2
+    AS
+    BEGIN
+        RETURN UTL_RAW.CAST_TO_RAW(UTL_ENCODE.BASE64_ENCODE(UTL_RAW.CAST_TO_VARCHAR2(in_payload)));
+        --
+    EXCEPTION
+    WHEN OTHERS THEN
+        core.raise_error();
     END;
 
 
@@ -3274,6 +3318,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 );
             END IF;
         END LOOP;
+        --
     EXCEPTION
     WHEN core.app_exception THEN
         RAISE;

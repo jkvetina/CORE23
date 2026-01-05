@@ -1131,6 +1131,20 @@ AS
 
 
 
+    FUNCTION encode_payload (
+        in_payload              VARCHAR2
+    )
+    RETURN VARCHAR2;
+
+
+
+    FUNCTION decode_payload (
+        in_payload              VARCHAR2
+    )
+    RETURN VARCHAR2;
+
+
+
     PROCEDURE refresh_mviews (
         in_name_like            VARCHAR2        := NULL,
         in_percent              NUMBER          := NULL,
