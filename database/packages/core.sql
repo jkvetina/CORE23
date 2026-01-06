@@ -2267,7 +2267,6 @@ CREATE OR REPLACE PACKAGE BODY core AS
     )
     AS
         rec                     core_logs%ROWTYPE;
-        v_json                  JSON_OBJECT_T;
         v_is_dev                CONSTANT BOOLEAN := core.is_developer();
     BEGIN
         -- rollback transaction if requested (cant do this from triggers, jobs...)
@@ -2328,29 +2327,17 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_backtrace        => rec.backtrace
         );
 
-        -- we have stored the error, so lets create JSON object for FE handler
-        v_json := JSON_OBJECT_T();
-        v_json.put('id',        rec.log_id);
-        v_json.put('message',   rec.message);
-        v_json.put('caller',    CASE WHEN v_is_dev THEN rec.caller    END);
-        v_json.put('arguments', CASE WHEN v_is_dev THEN rec.arguments END);
-        v_json.put('backtrace', CASE WHEN v_is_dev THEN rec.backtrace END);
-        /*
-        v_json.put('debug',
-                APEX_PAGE.GET_URL (
-                    p_application   => 9000,
-                    p_page          => 811,
-                    p_items         => 'P811_LOG_ID',
-                    p_values        => rec.log_id,
-                    p_plain_url     => FALSE,
-                    p_absolute_url  => FALSE
-                )
-        );
-        */
+        -- raise error, keep it simple, just log_id and original message
+        rec.payload := '#' || rec.log_id || ' ' || COALESCE(in_message, SQLERRM);
 
-        -- raise error with JSON payload
         -- if we raise this on APEX component, it might not go through APEX error handler
-        RAISE_APPLICATION_ERROR(core.app_exception_code, v_json.TO_STRING(), TRUE);
+        RAISE_APPLICATION_ERROR(core.app_exception_code, rec.payload, keeperrorstack => TRUE);
+    EXCEPTION
+    WHEN core.app_exception THEN
+        RAISE;
+    WHEN OTHERS THEN
+        core.log_error('error', SQLERRM);
+        RAISE_APPLICATION_ERROR(core.app_exception_code, 'CORE_TEMPERATURE_BREACHED');
     END;
 
 
