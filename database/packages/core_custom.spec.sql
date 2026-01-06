@@ -14,6 +14,8 @@ AS
 
     -- id for the Master application
     master_id                   CONSTANT PLS_INTEGER    := 9000;
+    master_debug_page           CONSTANT PLS_INTEGER    := 811;
+    master_debug_item           CONSTANT VARCHAR2(30)   := 'P811_LOG_ID';
 
     -- package name holding constants, used as get_constant() default
     master_owner                CONSTANT VARCHAR2(30)   := 'MASTER';

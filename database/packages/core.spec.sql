@@ -40,6 +40,8 @@ AS
     c_context_name_page         CONSTANT VARCHAR2(30)   := core_custom.global_context_page;
     c_request_id                CONSTANT VARCHAR2(30)   := core_custom.global_request_id;
     c_master_id                 CONSTANT PLS_INTEGER    := core_custom.master_id;
+    c_master_debug_page         CONSTANT PLS_INTEGER    := core_custom.master_debug_page;
+    c_master_debug_item         CONSTANT VARCHAR2(30)   := core_custom.master_debug_item;
 
     -- code for app exception
     app_exception_code          CONSTANT PLS_INTEGER    := core_custom.app_exception_code;

@@ -2402,7 +2402,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         DBMS_OUTPUT.PUT_LINE(DBMS_UTILITY.FORMAT_CALL_STACK);
         DBMS_OUTPUT.PUT_LINE('-- ^');
         --
-        RAISE_APPLICATION_ERROR(core.app_exception_code, 'LOG_FAILED|' || SQLERRM, TRUE);
+        RAISE_APPLICATION_ERROR(core.app_exception_code, 'LOG_FAILED|' || SQLERRM, keeperrorstack => TRUE);
     END;
 
 
@@ -3028,10 +3028,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         v_json                  JSON_OBJECT_T;
         v_is_dev                CONSTANT BOOLEAN := core.is_developer();
     BEGIN
-        out_result := APEX_ERROR.INIT_ERROR_RESULT(p_error => p_error);
-
-        -- message could contain a stacked (previous) message
-        -- we could parse log_id, use it as a context_id and cleanup the message
+        out_result  := APEX_ERROR.INIT_ERROR_RESULT(p_error => p_error);
         rec.message := out_result.message;  -- core.get_shorter_stack(p_error.ora_sqlerrm)
 
         -- store incident in log
@@ -3053,7 +3050,16 @@ CREATE OR REPLACE PACKAGE BODY core AS
                     --'page_item',        out_result.page_item_name,
                     --'column_alias',     out_result.column_alias,
 
-            --
+            -- extract previous log_id
+            IF rec.context_id IS NULL THEN
+                rec.context_id := REGEXP_SUBSTR(rec.message, 'ORA' || TO_CHAR(core.app_exception_code) || ':\s*#(\d+)\s*', 1, 1, NULL, 1);
+            END IF;
+
+            -- cleanup message of ORA-20xxx code and previous references
+            rec.message := REGEXP_REPLACE(rec.message, 'ORA' || TO_CHAR(core.app_exception_code) || ':\s*#\d+\s*', '');
+            rec.message := REGEXP_REPLACE(rec.message, '#\d+\s*', '');
+
+            -- store error in a table and retrieve assigned log_id
             rec.log_id := core.log__ (
                 in_flag                 => core.flag_apex,
                 in_context_id           => rec.context_id,
@@ -3078,25 +3084,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
         END IF;
 
         --
-        -- MESSAGE FOR USER
+        -- CONSTRAINTS
         --
-
-        -- construct the whole message as json, for easier parsing in JS
-        v_json := JSON_OBJECT_T();
-        v_json.put('id',        rec.log_id);
-        v_json.put('source',    CASE WHEN v_is_dev THEN '{"type":"' || rec.component_type || '", "name":"' || rec.component_name || '", "point":"' || rec.component_point || '"}' END);
-        v_json.put('status',    CASE WHEN rec.component_point = 'VALIDATIONS' THEN 'WARNING' ELSE 'ERROR' END);
-        v_json.put('message',   CASE WHEN rec.component_point = 'VALIDATIONS' THEN '[VAL]' END || rec.message);
-        v_json.put('caller',    CASE WHEN v_is_dev THEN rec.caller END);
-        --
-        out_result.message := v_json.TO_STRING();
-        out_result.display_location := APEX_ERROR.C_INLINE_IN_NOTIFICATION;  -- also removes HTML entities
-        --
-        RETURN out_result;
-
-
-/*
-        --out_result.message := REPLACE(out_result.message, '&' || 'quot;', '"');  -- replace some HTML entities
 
         -- get error code thown before app exception to translate constraint names
         IF p_error.ora_sqlcode = app_exception_code THEN
@@ -3115,7 +3104,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             -2292   -- ORA-02292: integrity constraint violated - child record found
         ) THEN
             -- handle constraint violations
-            out_result.message := c_constraint_prefix || APEX_ERROR.EXTRACT_CONSTRAINT_NAME (
+            rec.message := c_constraint_prefix || APEX_ERROR.EXTRACT_CONSTRAINT_NAME (
                 p_error             => p_error,
                 p_include_schema    => FALSE
             );
@@ -3124,65 +3113,61 @@ CREATE OR REPLACE PACKAGE BODY core AS
         ELSIF NVL(v_constraint_code, p_error.ora_sqlcode) IN (
             -1400   -- ORA-01400: cannot insert NULL into...
         ) THEN
-            out_result.message := c_not_null_prefix || REGEXP_SUBSTR(out_result.message, '\.["]([^"]+)["]\)', 1, 1, NULL, 1);
+            rec.message := c_not_null_prefix || REGEXP_SUBSTR(rec.message, '\.["]([^"]+)["]\)', 1, 1, NULL, 1);
             --
         END IF;
-*/
 
+        --
+        -- TRANSLATIONS
+        --
 
-/*
         -- remove app exception
-        v_message := REGEXP_REPLACE(v_message, '^(ORA' || TO_CHAR(app_exception_code) || ':\s*)\s*', '');
+        rec.message := REGEXP_REPLACE(rec.message, '^(ORA' || TO_CHAR(app_exception_code) || ':\s*)\s*', '');
 
         -- translate message without the app main error code and line number (because that can move easily)
-        v_translate := v_message;
+        v_translate := rec.message;
         v_translate := REGEXP_REPLACE(v_translate, '\s*\[\d+\]\s*', '');                -- remove number lines
         v_translate := RTRIM(REGEXP_REPLACE(v_translate, '\s*\|\s*', '|'), '|');        -- unify splitters
-        v_translate := RTRIM(REGEXP_REPLACE(v_translate, '\^ARGS:\s*\{[^\}]*\}', ''));  -- remove arguments
 
         -- translate message (custom) just for user (not for the log)
         -- with APEX globalization - text messages - we can also auto add new messages there through APEX_LANG.CREATE_MESSAGE
         v_translated := core.get_translated(v_translate);
-*/
-
-/*
-        -- remove other error numbers
-        --v_message := RTRIM(REGEXP_REPLACE(out_result.message, '(#\d{5,}+)\s*(<br>)?(--)?\s*', ' '));
 
         -- if we have a translation, replace Klingon with human friendly message
         IF NOT v_is_dev THEN
-            v_message := CASE WHEN v_translated != v_translate THEN v_translated ELSE v_translate END;
+            rec.message := CASE WHEN v_translated != v_translate THEN v_translated ELSE v_translate END;
         ELSE
-            v_message := CASE WHEN v_translated != v_translate THEN v_translated || '</p><p>' END || v_message;
-
-            -- add point of origin just for developers
-            v_message := v_message
-                || '<br>^APEX: {'
-                || '"name":"' || p_error.component.name || '",'
-                || '"type":"' || REPLACE(p_error.component.type, 'APEX_APPLICATION_', '') || '",'
-                || CASE
-                    WHEN out_result.page_item_name IS NOT NULL
-                        THEN '"page_item":"' || out_result.page_item_name || '",'
-                    END
-                || CASE
-                    WHEN out_result.column_alias IS NOT NULL
-                        THEN '"column":"' || out_result.column_alias || '",'
-                    END
-                || '"point":"'  || RTRIM(REPLACE(SYS_CONTEXT('USERENV', 'ACTION'), 'Processes - point: ', ''), ',') || '"'
-                || '}';
+            rec.message := CASE WHEN v_translated != v_translate THEN v_translated || '</p><p>' END || rec.message;
         END IF;
 
-        -- show only the latest error message prepended with log_id for support
-        out_result.message := CASE WHEN v_log_id IS NOT NULL THEN '#' || TO_CHAR(v_log_id) || '<br>' END || v_message;
-        --out_result.message := REPLACE(out_result.message, '&' || '#X27;', '');
+        --
+        -- FINALIZE MESSAGE FOR THE USER
+        --
+
+        -- construct the whole message as json, for easier parsing in JS
+        v_json := JSON_OBJECT_T();
+        v_json.put('id',        rec.log_id);
+        v_json.put('source',    CASE WHEN v_is_dev THEN '{"type":"' || rec.component_type || '", "name":"' || rec.component_name || '", "point":"' || rec.component_point || '"}' END);
+        v_json.put('status',    CASE WHEN rec.component_point = 'VALIDATIONS' THEN 'WARNING' ELSE 'ERROR' END);
+        v_json.put('message',   CASE WHEN rec.component_point = 'VALIDATIONS' THEN '[VAL]' END || rec.message);
+        v_json.put('caller',    CASE WHEN v_is_dev THEN rec.caller END);
+        v_json.put('debug',     encode_payload(APEX_PAGE.GET_URL (     -- link for debug page
+            p_application       => core.c_master_id,
+            p_page              => core.c_master_debug_page,
+            p_clear_cache       => core.c_master_debug_page,
+            p_items             => core.c_master_debug_item,
+            p_values            => rec.log_id,
+            p_absolute_url      => TRUE
+        )));
+        --
+        out_result.message := v_json.TO_STRING();
+        out_result.display_location := APEX_ERROR.C_INLINE_IN_NOTIFICATION;  -- also removes HTML entities
         --
         RETURN out_result;
-*/
+        --
     EXCEPTION
     WHEN OTHERS THEN
-        core.raise_error (
-            in_name01       => APEX_ERROR.GET_FIRST_ORA_ERROR_TEXT(p_error => p_error)
-        );
+        core.raise_error('ERROR_HANDLER_FAILED', in_context_id => rec.log_id);
     END;
 
 
