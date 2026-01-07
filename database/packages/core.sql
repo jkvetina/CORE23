@@ -3061,36 +3061,35 @@ CREATE OR REPLACE PACKAGE BODY core AS
         v_json                  JSON_OBJECT_T;
         v_is_dev                CONSTANT BOOLEAN := core.is_developer();
     BEGIN
-        out_result  := APEX_ERROR.INIT_ERROR_RESULT(p_error => p_error);
-        rec.message := out_result.message;  -- core.get_shorter_stack(p_error.ora_sqlerrm)
+        out_result                  := APEX_ERROR.INIT_ERROR_RESULT(p_error => p_error);
+        out_result.additional_info  := '';
+        out_result.display_location := APEX_ERROR.C_INLINE_IN_NOTIFICATION;  -- also removes HTML entities
 
         -- store incident in log
         IF p_error.is_internal_error AND p_error.apex_error_code IN ('APEX.SESSION.EXPIRED') THEN
             -- dont log session errors
             NULL;
         ELSE
-            rec.component_type  := REPLACE(p_error.component.type, 'APEX_APPLICATION_', '');
-            rec.component_name  := p_error.component.name;
-            rec.component_point := core.get_slug(REPLACE(SYS_CONTEXT('USERENV', 'ACTION'), 'Processes - point: ', ''));
-            rec.payload         := core.get_shorter_stack(p_error.error_statement);
-            rec.backtrace       := core.get_shorter_stack(p_error.error_backtrace);
+            rec.component_type  := SUBSTR(REPLACE(p_error.component.type, 'APEX_APPLICATION_', ''), 1, 64);
+            rec.component_name  := SUBSTR(p_error.component.name, 1, 32);
+            rec.component_point := SUBSTR(core.get_slug(REPLACE(SYS_CONTEXT('USERENV', 'ACTION'), 'Processes - point: ', '')), 1, 32);
             --
-            rec.caller          := NULL;
-                --core.get_shorter_stack(p_error.ora_sqlerrm)
-                --APEX_ERROR.GET_FIRST_ORA_ERROR_TEXT(p_error => p_error),
+            rec.payload         := SUBSTR(core.get_shorter_stack(p_error.error_statement),  1, 4000);
+            rec.backtrace       := SUBSTR(core.get_shorter_stack(p_error.error_backtrace),  1, 4000);
+            rec.callstack       := SUBSTR(core.get_shorter_stack(p_error.ora_sqlerrm),      1, 4000);
+            rec.arguments       := NULL;
 
-            rec.arguments := NULL;
-                    --'page_item',        out_result.page_item_name,
-                    --'column_alias',     out_result.column_alias,
+            -- get message for changes
+            rec.message := SUBSTR(out_result.message, 1, 256);
 
             -- extract previous log_id
             IF rec.context_id IS NULL THEN
-                rec.context_id := REGEXP_SUBSTR(rec.message, 'ORA' || TO_CHAR(core.app_exception_code) || ':\s*#(\d+)\s*', 1, 1, NULL, 1);
+                rec.context_id := TO_NUMBER(REGEXP_SUBSTR(rec.message, 'ORA' || TO_CHAR(core.app_exception_code) || ':\s*#(\d+)\s*', 1, 1, NULL, 1));
             END IF;
 
             -- cleanup message of ORA-20xxx code and previous references
-            rec.message := REGEXP_REPLACE(rec.message, 'ORA' || TO_CHAR(core.app_exception_code) || ':\s*#\d+\s*', '');
-            rec.message := REGEXP_REPLACE(rec.message, '#\d+\s*', '');
+            rec.message := SUBSTR(REGEXP_REPLACE(rec.message, 'ORA' || TO_CHAR(core.app_exception_code) || ':\s*#\d+\s*', ''), 1, 256);
+            rec.message := SUBSTR(REGEXP_REPLACE(rec.message, '#\d+\s*', ''), 1, 256);
 
             -- store error in a table and retrieve assigned log_id
             rec.log_id := core.log__ (
@@ -3104,7 +3103,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 in_component_point      => rec.component_point,
                 in_payload              => rec.payload,
                 in_backtrace            => rec.backtrace,
-                in_callstack            => NULL
+                in_callstack            => rec.callstack
             );
         END IF;
 
@@ -3180,21 +3179,46 @@ CREATE OR REPLACE PACKAGE BODY core AS
         -- construct the whole message as json, for easier parsing in JS
         v_json := JSON_OBJECT_T();
         v_json.put('id',        rec.log_id);
-        v_json.put('source',    CASE WHEN v_is_dev THEN '{"type":"' || rec.component_type || '", "name":"' || rec.component_name || '", "point":"' || rec.component_point || '"}' END);
         v_json.put('status',    CASE WHEN rec.component_point = 'VALIDATIONS' THEN 'WARNING' ELSE 'ERROR' END);
         v_json.put('message',   CASE WHEN rec.component_point = 'VALIDATIONS' THEN '[VAL]' END || rec.message);
-        v_json.put('caller',    CASE WHEN v_is_dev THEN rec.caller END);
-        v_json.put('debug',     encode_payload(APEX_PAGE.GET_URL (     -- link for debug page
-            p_application       => core.c_master_id,
-            p_page              => core.c_master_debug_page,
-            p_clear_cache       => core.c_master_debug_page,
-            p_items             => core.c_master_debug_item,
-            p_values            => rec.log_id,
-            p_absolute_url      => TRUE
-        )));
+
+        -- add some spice for develoeprs
+        IF v_is_dev THEN
+            v_json.put('source',
+                CASE
+                    WHEN v_is_dev
+                        THEN '{' ||
+                            '"type":"' || rec.component_type || '", ' ||
+                            '"name":"' || rec.component_name || '", ' ||
+                            '"point":"' || rec.component_point || '"' ||
+                            '}'
+                    END);
+
+            -- we need previous caller + args
+            IF rec.context_id IS NOT NULL THEN
+                SELECT
+                    MIN(t.caller),
+                    MIN(t.arguments)
+                INTO
+                    rec.caller,
+                    rec.arguments
+                FROM core_logs t
+                WHERE t.log_id      = rec.context_id;
+            END IF;
+            --
+            v_json.put('caller',    rec.caller);
+            v_json.put('arguments', encode_payload(rec.arguments));
+            v_json.put('debug',     encode_payload(APEX_PAGE.GET_URL (     -- link for debug page
+                p_application       => core.c_master_id,
+                p_page              => core.c_master_debug_page,
+                p_clear_cache       => core.c_master_debug_page,
+                p_items             => core.c_master_debug_item,
+                p_values            => rec.log_id,
+                p_absolute_url      => TRUE
+            )));
+        END IF;
         --
         out_result.message := v_json.TO_STRING();
-        out_result.display_location := APEX_ERROR.C_INLINE_IN_NOTIFICATION;  -- also removes HTML entities
         --
         RETURN out_result;
         --
