@@ -2363,26 +2363,59 @@ CREATE OR REPLACE PACKAGE BODY core AS
     BEGIN
         -- prepare data
         rec.log_id              := core_log_id.NEXTVAL;
-        rec.flag                := in_flag;
+        rec.flag                := SUBSTR(in_flag, 1, 1);
         rec.app_id              := COALESCE(core.get_app_id(),      0);
         rec.page_id             := COALESCE(core.get_page_id(),     0);
-        rec.user_id             := COALESCE(core.get_user_id(),     USER);
         rec.session_id          := COALESCE(core.get_session_id(),  0);
-        rec.context_id          := in_context_id;
-        rec.caller              := COALESCE(in_caller, core.get_caller_name(in_offset => 5, in_add_line => TRUE));
-        rec.message             := in_message;
-        rec.arguments           := in_arguments;
-        rec.component_type      := in_component_type;
-        rec.component_name      := in_component_name;
-        rec.component_point     := in_component_point;
-        rec.payload             := in_payload;
-        rec.backtrace           := COALESCE(in_backtrace, CASE WHEN SQLCODE != 0 THEN core.get_shorter_stack(core.get_error_stack()) END);
-        rec.callstack           := COALESCE(in_callstack, CASE WHEN (SQLCODE != 0 OR in_flag IN (flag_error, flag_warning)) THEN core.get_shorter_stack(core.get_call_stack()) END);
         rec.created_at          := SYSDATE;
+        --
+        rec.user_id             := SUBSTR(COALESCE(core.get_user_id(), USER), 1, 128);
+        rec.context_id          := in_context_id;
+        rec.caller              := SUBSTR(in_caller, 1, 128);
+        --
+        rec.message             := SUBSTR(in_message,           1, 32);
+        rec.arguments           := SUBSTR(in_arguments,         1, 4000);
+        rec.component_type      := SUBSTR(in_component_type,    1, 64);
+        rec.component_name      := SUBSTR(in_component_name,    1, 32);
+        rec.component_point     := SUBSTR(in_component_point,   1, 32);
+        rec.payload             := SUBSTR(in_payload,           1, 32000);
+        rec.backtrace           := SUBSTR(in_backtrace, 1, 4000);
+        rec.callstack           := SUBSTR(in_callstack, 1, 4000);
+
+        -- make sure these calls dont fail
+        IF rec.caller IS NULL THEN
+            BEGIN
+                rec.caller := SUBSTR(core.get_caller_name(in_offset => 5, in_add_line => TRUE), 1, 128);
+                --
+                -- @TODO: is the 5 correct level ???
+                --
+            EXCEPTION
+            WHEN OTHERS THEN
+                rec.caller := 'INTERNAL_ERROR_' || $$PLSQL_LINE;
+            END;
+        END IF;
+        --
+        IF SQLCODE != 0 AND rec.backtrace IS NULL THEN
+            BEGIN
+                rec.backtrace := SUBSTR(core.get_shorter_stack(core.get_error_stack()), 1, 4000);
+            EXCEPTION
+            WHEN OTHERS THEN
+                rec.caller := 'INTERNAL_ERROR_' || $$PLSQL_LINE;
+            END;
+        END IF;
+        --
+        IF SQLCODE != 0 AND rec.callstack IS NULL THEN
+            BEGIN
+                rec.callstack := SUBSTR(core.get_shorter_stack(core.get_call_stack()), 1, 4000);
+            EXCEPTION
+            WHEN OTHERS THEN
+                rec.caller := 'INTERNAL_ERROR_' || $$PLSQL_LINE;
+            END;
+        END IF;
 
         -- fetch something like PAGE_VIEW_ID, APP_UNIQUE_PAGE_ID
         -- might be off if user has multiple tabs open
-        rec.page_view_id        := core.get_number_item(c_request_id);
+        rec.page_view_id := core.get_number_item(c_request_id);
         --
         INSERT INTO core_logs
         VALUES rec;
