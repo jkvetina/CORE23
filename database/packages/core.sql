@@ -2292,10 +2292,18 @@ CREATE OR REPLACE PACKAGE BODY core AS
         rec.caller := core.get_caller_name(in_offset => 3, in_add_line => TRUE);
         --
         IF rec.caller LIKE '__anonymous_block%' THEN
-            rec.caller := SUBSTR(''
-                || 'P' || REGEXP_SUBSTR(SYS_CONTEXT('USERENV', 'MODULE'), ':(\d+)$', 1, 1, NULL, 1)
-                || '_' || RTRIM(REGEXP_SUBSTR(SYS_CONTEXT('USERENV', 'ACTION'), ':\s*([^:]+)$', 1, 1, NULL, 1), ',')
-                || ' ' || REGEXP_SUBSTR(rec.caller, '(\[.*)$', 1, 1, NULL, 1), 1, 128);
+            IF core.get_cgi_env('REQUEST_METHOD') IS NOT NULL THEN
+                IF core.get_cgi_env('PATH_INFO') IS NOT NULL THEN
+                    -- it is a REST service
+                    rec.caller := SUBSTR(REGEXP_REPLACE(core.get_request_url(), '([&?]cs=.*)$', ''), 1, 128);
+                ELSE
+                    -- it is APEX call
+                    rec.caller := SUBSTR(''
+                        || 'P' || REGEXP_SUBSTR(SYS_CONTEXT('USERENV', 'MODULE'), ':(\d+)$', 1, 1, NULL, 1)
+                        || '_' || RTRIM(REGEXP_SUBSTR(SYS_CONTEXT('USERENV', 'ACTION'), ':\s*([^:]+)$', 1, 1, NULL, 1), ',')
+                        || ' ' || REGEXP_SUBSTR(rec.caller, '(\[.*)$', 1, 1, NULL, 1), 1, 128);
+                END IF;
+            END IF;
         END IF;
 
         -- dont alter the message, keep it empty if needed
