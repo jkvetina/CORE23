@@ -486,6 +486,13 @@ AS
 
 
 
+    FUNCTION get_cgi_env (
+        in_name                 VARCHAR2
+    )
+    RETURN VARCHAR2;
+
+
+
     FUNCTION get_icon (
         in_name                 VARCHAR2,
         in_title                VARCHAR2    := NULL,

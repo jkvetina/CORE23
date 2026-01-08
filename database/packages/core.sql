@@ -316,7 +316,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
     RETURN VARCHAR2
     AS
     BEGIN
-        RETURN REPLACE(UPPER(SUBSTR(OWA_UTIL.GET_CGI_ENV('HTTP_ACCEPT_LANGUAGE'), 1, 2)), 'CS', 'CZ');
+        RETURN REPLACE(UPPER(SUBSTR(core.get_cgi_env('HTTP_ACCEPT_LANGUAGE'), 1, 2)), 'CS', 'CZ');
     EXCEPTION
     WHEN OTHERS THEN
         RETURN 'EN';
@@ -1154,12 +1154,12 @@ CREATE OR REPLACE PACKAGE BODY core AS
     RETURN VARCHAR2
     AS
     BEGIN
-        RETURN RTRIM(CASE WHEN NOT in_arguments_only
+        RETURN CASE WHEN NOT in_arguments_only
             THEN UTL_URL.UNESCAPE (
-                OWA_UTIL.GET_CGI_ENV('SCRIPT_NAME') ||
-                OWA_UTIL.GET_CGI_ENV('PATH_INFO')   || '?'
+                core.get_cgi_env('SCRIPT_NAME') ||
+                core.get_cgi_env('PATH_INFO')
             ) END ||
-            UTL_URL.UNESCAPE(OWA_UTIL.GET_CGI_ENV('QUERY_STRING')), '?');
+            RTRIM('?' || UTL_URL.UNESCAPE(core.get_cgi_env('QUERY_STRING')), '?');
     EXCEPTION
     WHEN OTHERS THEN
         RETURN NULL;
@@ -1184,6 +1184,20 @@ CREATE OR REPLACE PACKAGE BODY core AS
     AS
     BEGIN
         RETURN get_request() LIKE in_name ESCAPE in_escape;
+    END;
+
+
+
+    FUNCTION get_cgi_env (
+        in_name                 VARCHAR2
+    )
+    RETURN VARCHAR2
+    AS
+    BEGIN
+        RETURN OWA_UTIL.GET_CGI_ENV(in_name);
+    EXCEPTION
+    WHEN OTHERS THEN
+        RETURN NULL;            -- acceptable for this usecase
     END;
 
 
