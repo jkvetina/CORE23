@@ -2373,7 +2373,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         rec.context_id          := in_context_id;
         rec.caller              := SUBSTR(in_caller, 1, 128);
         --
-        rec.message             := SUBSTR(in_message,           1, 32);
+        rec.message             := SUBSTR(in_message,           1, 256);
         rec.arguments           := SUBSTR(in_arguments,         1, 4000);
         rec.component_type      := SUBSTR(in_component_type,    1, 64);
         rec.component_name      := SUBSTR(in_component_name,    1, 32);
