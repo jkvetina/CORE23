@@ -2293,7 +2293,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         --
         IF rec.caller LIKE '__anonymous_block%' THEN
             IF core.get_cgi_env('REQUEST_METHOD') IS NOT NULL THEN
-                IF core.get_cgi_env('PATH_INFO') IS NOT NULL THEN
+                IF APEX_APPLICATION.G_FLOW_ID IS NULL THEN
                     -- it is a REST service
                     rec.caller := SUBSTR(REGEXP_REPLACE(core.get_request_url(), '([&?]cs=.*)$', ''), 1, 128);
                 ELSE
