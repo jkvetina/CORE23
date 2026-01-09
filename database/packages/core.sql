@@ -2484,8 +2484,9 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,
-        in_payload              CLOB        := NULL
+        in_context_id           core_logs.context_id%TYPE   := NULL,
+        in_message              core_logs.message%TYPE      := NULL,
+        in_payload              core_logs.payload%TYPE      := NULL
     )
     RETURN NUMBER
     AS
@@ -2519,6 +2520,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_flag         => core.flag_error,
             in_context_id   => in_context_id,
             in_arguments    => v_arguments,
+            in_message      => in_message,
             in_payload      => in_payload
         );
     END;
@@ -2547,11 +2549,12 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,
-        in_payload              CLOB        := NULL
+        in_context_id           core_logs.context_id%TYPE   := NULL,
+        in_message              core_logs.message%TYPE      := NULL,
+        in_payload              core_logs.payload%TYPE      := NULL
     )
     AS
-        v_id NUMBER;
+        v_id core_logs.log_id%TYPE;
     BEGIN
         v_id := core.log_error (
             in_name01       => in_name01,       in_value01  => in_value01,
@@ -2604,8 +2607,9 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,
-        in_payload              CLOB        := NULL
+        in_context_id           core_logs.context_id%TYPE   := NULL,
+        in_message              core_logs.message%TYPE      := NULL,
+        in_payload              core_logs.payload%TYPE      := NULL
     )
     RETURN NUMBER
     AS
@@ -2639,6 +2643,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_flag         => core.flag_warning,
             in_context_id   => in_context_id,
             in_arguments    => v_arguments,
+            in_message      => in_message,
             in_payload      => in_payload
         );
     END;
@@ -2667,11 +2672,12 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,
-        in_payload              CLOB        := NULL
+        in_context_id           core_logs.context_id%TYPE   := NULL,
+        in_message              core_logs.message%TYPE      := NULL,
+        in_payload              core_logs.payload%TYPE      := NULL
     )
     AS
-        v_id NUMBER;
+        v_id core_logs.log_id%TYPE;
     BEGIN
         v_id := core.log_warning (
             in_name01       => in_name01,       in_value01  => in_value01,
@@ -2724,8 +2730,9 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,
-        in_payload              CLOB        := NULL
+        in_context_id           core_logs.context_id%TYPE   := NULL,
+        in_message              core_logs.message%TYPE      := NULL,
+        in_payload              core_logs.payload%TYPE      := NULL
     )
     RETURN NUMBER
     AS
@@ -2759,6 +2766,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_flag         => core.flag_debug,
             in_context_id   => in_context_id,
             in_arguments    => v_arguments,
+            in_message      => in_message,
             in_payload      => in_payload
         );
     END;
@@ -2787,11 +2795,12 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,
-        in_payload              CLOB        := NULL
+        in_context_id           core_logs.context_id%TYPE   := NULL,
+        in_message              core_logs.message%TYPE      := NULL,
+        in_payload              core_logs.payload%TYPE      := NULL
     )
     AS
-        v_id NUMBER;
+        v_id core_logs.log_id%TYPE;
     BEGIN
         v_id := core.log_debug (
             in_name01       => in_name01,       in_value01  => in_value01,
@@ -2844,8 +2853,9 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,
-        in_payload              CLOB        := NULL
+        in_context_id           core_logs.context_id%TYPE   := NULL,
+        in_message              core_logs.message%TYPE      := NULL,
+        in_payload              core_logs.payload%TYPE      := NULL
     )
     RETURN NUMBER
     AS
@@ -2879,6 +2889,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_flag         => core.flag_start,
             in_context_id   => in_context_id,
             in_arguments    => v_arguments,
+            in_message      => in_message,
             in_payload      => in_payload
         );
     END;
@@ -2907,11 +2918,12 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,
-        in_payload              CLOB        := NULL
+        in_context_id           core_logs.context_id%TYPE   := NULL,
+        in_message              core_logs.message%TYPE      := NULL,
+        in_payload              core_logs.payload%TYPE      := NULL
     )
     AS
-        v_id NUMBER;
+        v_id core_logs.log_id%TYPE;
     BEGIN
         v_id := core.log_start (
             in_name01       => in_name01,       in_value01  => in_value01,
@@ -2964,8 +2976,9 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,
-        in_payload              CLOB        := NULL
+        in_context_id           core_logs.context_id%TYPE   := NULL,
+        in_message              core_logs.message%TYPE      := NULL,
+        in_payload              core_logs.payload%TYPE      := NULL
     )
     RETURN NUMBER
     AS
@@ -2999,6 +3012,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_flag         => core.flag_end,
             in_context_id   => in_context_id,
             in_arguments    => v_arguments,
+            in_message      => in_message,
             in_payload      => in_payload
         );
     END;
@@ -3027,11 +3041,12 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,
-        in_payload              CLOB        := NULL
+        in_context_id           core_logs.context_id%TYPE   := NULL,
+        in_message              core_logs.message%TYPE      := NULL,
+        in_payload              core_logs.payload%TYPE      := NULL
     )
     AS
-        v_id NUMBER;
+        v_id core_logs.log_id%TYPE;
     BEGIN
         v_id := core.log_end (
             in_name01       => in_name01,       in_value01  => in_value01,
@@ -4370,7 +4385,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
     )
     RETURN BOOLEAN
     AS
-        v_id NUMBER;
+        v_id core_logs.log_id%TYPE;
     BEGIN
         FOR c IN (
             SELECT

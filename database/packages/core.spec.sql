@@ -863,8 +863,9 @@ AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
-        in_payload              CLOB        := NULL
+        in_context_id           core_logs.context_id%TYPE   := NULL,
+        in_message              core_logs.message%TYPE      := NULL,
+        in_payload              core_logs.payload%TYPE      := NULL
     )
     RETURN NUMBER;
 
@@ -892,8 +893,9 @@ AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
-        in_payload              CLOB        := NULL
+        in_context_id           core_logs.context_id%TYPE   := NULL,
+        in_message              core_logs.message%TYPE      := NULL,
+        in_payload              core_logs.payload%TYPE      := NULL
     );
 
 
@@ -920,8 +922,9 @@ AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
-        in_payload              CLOB        := NULL
+        in_context_id           core_logs.context_id%TYPE   := NULL,
+        in_message              core_logs.message%TYPE      := NULL,
+        in_payload              core_logs.payload%TYPE      := NULL
     )
     RETURN NUMBER;
 
@@ -949,8 +952,9 @@ AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
-        in_payload              CLOB        := NULL
+        in_context_id           core_logs.context_id%TYPE   := NULL,
+        in_message              core_logs.message%TYPE      := NULL,
+        in_payload              core_logs.payload%TYPE      := NULL
     );
 
 
@@ -977,8 +981,9 @@ AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
-        in_payload              CLOB        := NULL
+        in_context_id           core_logs.context_id%TYPE   := NULL,
+        in_message              core_logs.message%TYPE      := NULL,
+        in_payload              core_logs.payload%TYPE      := NULL
     )
     RETURN NUMBER;
 
@@ -1006,8 +1011,9 @@ AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
-        in_payload              CLOB        := NULL
+        in_context_id           core_logs.context_id%TYPE   := NULL,
+        in_message              core_logs.message%TYPE      := NULL,
+        in_payload              core_logs.payload%TYPE      := NULL
     );
 
 
@@ -1034,8 +1040,9 @@ AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
-        in_payload              CLOB        := NULL
+        in_context_id           core_logs.context_id%TYPE   := NULL,
+        in_message              core_logs.message%TYPE      := NULL,
+        in_payload              core_logs.payload%TYPE      := NULL
     )
     RETURN NUMBER;
 
@@ -1063,8 +1070,9 @@ AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
-        in_payload              CLOB        := NULL
+        in_context_id           core_logs.context_id%TYPE   := NULL,
+        in_message              core_logs.message%TYPE      := NULL,
+        in_payload              core_logs.payload%TYPE      := NULL
     );
 
 
@@ -1091,8 +1099,9 @@ AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
-        in_payload              CLOB        := NULL
+        in_context_id           core_logs.context_id%TYPE   := NULL,
+        in_message              core_logs.message%TYPE      := NULL,
+        in_payload              core_logs.payload%TYPE      := NULL
     )
     RETURN NUMBER;
 
@@ -1120,8 +1129,9 @@ AS
         in_name19               VARCHAR2    := NULL,            in_value19  VARCHAR2 := NULL,
         in_name20               VARCHAR2    := NULL,            in_value20  VARCHAR2 := NULL,
         --
-        in_context_id           NUMBER      := NULL,            -- logger_log.parent_id
-        in_payload              CLOB        := NULL
+        in_context_id           core_logs.context_id%TYPE   := NULL,
+        in_message              core_logs.message%TYPE      := NULL,
+        in_payload              core_logs.payload%TYPE      := NULL
     );
 
 
