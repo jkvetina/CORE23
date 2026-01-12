@@ -2581,6 +2581,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_name20       => in_name20,       in_value20  => in_value20,
             --
             in_context_id   => in_context_id,
+            in_message      => in_message,
             in_payload      => in_payload
         );
     END;
@@ -2706,6 +2707,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_name20       => in_name20,       in_value20  => in_value20,
             --
             in_context_id   => in_context_id,
+            in_message      => in_message,
             in_payload      => in_payload
         );
     END;
@@ -2831,6 +2833,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_name20       => in_name20,       in_value20  => in_value20,
             --
             in_context_id   => in_context_id,
+            in_message      => in_message,
             in_payload      => in_payload
         );
     END;
@@ -2954,6 +2957,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_name20       => in_name20,       in_value20  => in_value20,
             --
             in_context_id   => in_context_id,
+            in_message      => in_message,
             in_payload      => in_payload
         );
     END;
@@ -3077,6 +3081,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
             in_name20       => in_name20,       in_value20  => in_value20,
             --
             in_context_id   => in_context_id,
+            in_message      => in_message,
             in_payload      => in_payload
         );
     END;
