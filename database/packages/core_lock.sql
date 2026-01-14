@@ -286,17 +286,13 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
                     v_alter := TRUE;
                 END IF;
             END IF;
-            --
-            c.column_value := RTRIM(c.column_value);
 
             -- fix wrong last line
             IF c.r# = c.total# THEN
                 c.column_value := REGEXP_REPLACE(c.column_value, '[^\w]$', '');
             END IF;
             --
-            IF c.column_value IS NOT NULL AND LENGTH(c.column_value) > 0 THEN
-                v_out := v_out || c.column_value || CHR(10);
-            END IF;
+            v_out := v_out || c.column_value || CHR(10);
             --
             v_rows := c.total#;
         END LOOP;
