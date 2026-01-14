@@ -1,6 +1,7 @@
 CREATE OR REPLACE PACKAGE BODY core_lock AS
 
-    g_lock_length       CONSTANT NUMBER     := 20/1440;
+    g_lock_length       CONSTANT NUMBER     := 20/1440;     -- for how long is lock valid
+    g_lock_rebook       CONSTANT NUMBER     := 10/1440;     -- how long to create a new lock (object backup)
     g_check_hash        CONSTANT BOOLEAN    := TRUE;
 
 
@@ -74,7 +75,8 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
         ) LOOP
             IF c.locked_by = rec.locked_by THEN
                 -- same user, so just extend the lock
-                rec.lock_id := c.lock_id;
+                rec.lock_id     := c.lock_id;
+                rec.locked_at   := c.locked_at;
                 --
             ELSIF c.expire_at >= SYSDATE THEN
                 -- for different user we need to check the expire date first
@@ -87,7 +89,17 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
                 core.raise_error('LOCK_HASH_ERROR: OBJECT_CHANGED_BY `' || c.locked_by || TO_CHAR(c.expire_at, 'YYYY-MM-DD HH24:MI') || '` [' || c.lock_id || ']');
             END IF;
         END LOOP;
-        --
+
+        -- check how old is the lock, so we can take object backup by creating a new record
+        IF rec.lock_id IS NOT NULL AND rec.locked_at + g_lock_rebook <= SYSDATE THEN
+            UPDATE core_locks t
+            SET t.expire_at     = SYSDATE
+            WHERE t.lock_id     = rec.lock_id;
+            --
+            rec.lock_id := NULL;    -- to trigger new record
+        END IF;
+
+        -- create a new lock or extend existing one
         IF rec.lock_id IS NOT NULL THEN
             core_lock.extend_lock (
                 in_lock_id => rec.lock_id
