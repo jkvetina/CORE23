@@ -1,28 +1,37 @@
 CREATE OR REPLACE FORCE VIEW core_rest_services_v AS
 WITH t AS (
-    SELECT
-        h.id AS handler_id,
+    SELECT /*+ MATERIALIZE */
+        m.name  AS group_name,
+        h.id    AS handler_id,
         --
-        '/' || c.pattern || m.uri_prefix ||
-        SUBSTR(s.pattern, 1, INSTR(s.pattern, '/'))     AS service_path,
-        SUBSTR(s.pattern, INSTR(s.pattern, '/') + 1)    AS service_args,
+        CASE
+            WHEN INSTR(s.pattern, ':') > 0
+                THEN '/' || c.pattern || m.uri_prefix || SUBSTR(s.pattern, 1, INSTR(s.pattern, '/'))
+            ELSE '/' || c.pattern || m.uri_prefix || s.pattern || '/'
+            END AS service_path,
+        --
+        CASE
+            WHEN INSTR(s.pattern, ':') > 0
+                THEN SUBSTR(s.pattern, INSTR(s.pattern, '/') + 1)
+            END AS service_args,
+        --
         s.method,
         --
-        c.parsing_schema AS schema_,--owner
+        c.parsing_schema AS schema_,    -- owner
         --
         CASE WHEN s.source_type = 'plsql/block'
-            THEN REGEXP_SUBSTR(UPPER(DBMS_LOB.SUBSTR(h.source, 4000)), 'BEGIN\s+([A-Z0-9_]+)\.', 1, 1, NULL, 1)
+            THEN REGEXP_SUBSTR(UPPER(DBMS_LOB.SUBSTR(h.source, 4000)), '\s+([A-Z0-9_]+)\.', 1, 1, 'i', 1)
             END AS package_name,
         --
         CASE WHEN s.source_type = 'plsql/block'
-            THEN REGEXP_SUBSTR(UPPER(DBMS_LOB.SUBSTR(h.source, 4000)), 'BEGIN\s+[A-Z0-9_]+\.([A-Z0-9_]+)', 1, 1, NULL, 1)
+            THEN REGEXP_SUBSTR(UPPER(DBMS_LOB.SUBSTR(h.source, 4000)), '\s+[A-Z0-9_]+\.([A-Z0-9_]+)', 1, 1, 'i', 1)
             END AS procedure_name,
         --
         CASE WHEN s.source_type = 'plsql/block'
             THEN TRIM(REGEXP_SUBSTR(REGEXP_REPLACE(
                 REPLACE(DBMS_LOB.SUBSTR(h.source, 4000), CHR(10), ' '),
                 '\s+', ' '),
-                '\(\s*(.*)\s*\)', 1, 1, NULL, 1))-- || ','
+                '\(\s*(.*)\s*\)', 1, 1, NULL, 1))
             END AS source_code,
         --
         h.updated_by,
@@ -38,7 +47,8 @@ WITH t AS (
     WHERE s.status      = 'PUBLISHED'
         AND m.status    = 'PUBLISHED'
         AND c.status    = 'ENABLED'
-        AND m.name      = core_reports.get_group_name()
+        AND (m.name     = core_reports.get_group_name() OR core_reports.get_group_name() IS NULL)
+        AND m.name      NOT LIKE 'oracle.example.%'
 ),
 b AS (
     SELECT
@@ -89,12 +99,17 @@ g AS (
         g.handler_id
 )
 SELECT
+    t.group_name,
     t.handler_id,
     t.service_path,
     t.service_args,
     t.method,
     --
-    NVL(g.status, 'INVALID') AS status,
+    CASE
+        WHEN t.service_args IS NULL
+            THEN 'VALID' ELSE NVL(g.status, 'INVALID')
+        END AS status,
+    --
     CASE WHEN NVL(g.status, '-') != 'VALID' THEN 'RED' END AS status__style,
     --
     t.package_name,
