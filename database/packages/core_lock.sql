@@ -21,6 +21,18 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
 
 
 
+    FUNCTION get_audit_trail
+    RETURN core_locks.audit_trail%TYPE
+    AS
+    BEGIN
+        RETURN SUBSTR(SYS_CONTEXT('USERENV', 'IP_ADDRESS')
+            || '|' || SYS_CONTEXT('USERENV', 'HOST')
+            || '|' || SESSIONTIMEZONE
+            || '|' || SYS_CONTEXT('USERENV', 'MODULE'), 1, 128);
+    END;
+
+
+
     PROCEDURE create_lock (
         in_object_owner     core_locks.object_owner%TYPE,
         in_object_type      core_locks.object_type%TYPE,
@@ -112,6 +124,7 @@ CREATE OR REPLACE PACKAGE BODY core_lock AS
             rec.locked_at       := SYSDATE;
             rec.counter         := 1;
             rec.expire_at       := NVL(in_expire_at, rec.locked_at + g_lock_length);
+            rec.audit_trail     := get_audit_trail();
             --
             INSERT INTO core_locks VALUES rec;
         END IF;

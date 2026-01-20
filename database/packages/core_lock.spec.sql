@@ -5,6 +5,11 @@ CREATE OR REPLACE PACKAGE core_lock AS
 
 
 
+    FUNCTION get_audit_trail
+    RETURN core_locks.audit_trail%TYPE;
+
+
+
     PROCEDURE create_lock (
         in_object_owner     core_locks.object_owner%TYPE,
         in_object_type      core_locks.object_type%TYPE,

@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS core_locks (
     counter                         NUMBER(4,0),
     object_payload                  CLOB,
     object_hash                     VARCHAR2(64),
+    audit_trail                     VARCHAR2(128),
     --
     CONSTRAINT core_locks_pk
         PRIMARY KEY (lock_id)
@@ -26,4 +27,5 @@ COMMENT ON COLUMN core_locks.expire_at          IS '';
 COMMENT ON COLUMN core_locks.counter            IS '';
 COMMENT ON COLUMN core_locks.object_payload     IS '';
 COMMENT ON COLUMN core_locks.object_hash        IS '';
+COMMENT ON COLUMN core_locks.audit_trail        IS '';
 
