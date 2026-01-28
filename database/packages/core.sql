@@ -1149,7 +1149,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     FUNCTION get_request_url (
-        in_arguments_only       BOOLEAN                     := FALSE
+        in_arguments_only       BOOLEAN     := FALSE
     )
     RETURN VARCHAR2
     AS
@@ -1160,6 +1160,25 @@ CREATE OR REPLACE PACKAGE BODY core AS
                 core.get_cgi_env('PATH_INFO')
             ) END ||
             RTRIM('?' || UTL_URL.UNESCAPE(core.get_cgi_env('QUERY_STRING')), '?');
+    EXCEPTION
+    WHEN OTHERS THEN
+        RETURN NULL;
+    END;
+
+
+
+    FUNCTION get_request_arg (
+        in_argument             VARCHAR2,
+        in_query_string         VARCHAR2    := NULL
+    )
+    RETURN VARCHAR2
+    AS
+    BEGIN
+        RETURN UTL_URL.UNESCAPE(REGEXP_SUBSTR(
+            COALESCE(in_query_string, core.get_cgi_env('QUERY_STRING')),
+            '(^|&)' || in_argument || '=([^&]*)',
+            1, 1, NULL, 2
+        ));
     EXCEPTION
     WHEN OTHERS THEN
         RETURN NULL;

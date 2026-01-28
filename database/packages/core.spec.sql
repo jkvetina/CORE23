@@ -467,7 +467,15 @@ AS
 
 
     FUNCTION get_request_url (
-        in_arguments_only       BOOLEAN                     := FALSE
+        in_arguments_only       BOOLEAN     := FALSE
+    )
+    RETURN VARCHAR2;
+
+
+
+    FUNCTION get_request_arg (
+        in_argument             VARCHAR2,
+        in_query_string         VARCHAR2    := NULL
     )
     RETURN VARCHAR2;
 
