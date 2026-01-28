@@ -4120,6 +4120,29 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
 
     PROCEDURE redirect (
+        in_url                  VARCHAR2
+    )
+    AS
+    BEGIN
+        -- commit otherwise anything before redirect will be rolled back
+        COMMIT;
+
+        -- check if we are in APEX or not
+        HTP.INIT;
+        APEX_UTIL.REDIRECT_URL(in_url);
+        --
+        APEX_APPLICATION.STOP_APEX_ENGINE;
+        --
+    EXCEPTION
+    WHEN APEX_APPLICATION.E_STOP_APEX_ENGINE THEN
+        RAISE;
+    WHEN OTHERS THEN
+        core.raise_error();
+    END;
+
+
+
+    PROCEDURE redirect (
         in_page_id              NUMBER          := NULL,
         in_names                VARCHAR2        := NULL,
         in_values               VARCHAR2        := NULL,
@@ -4128,15 +4151,11 @@ CREATE OR REPLACE PACKAGE BODY core AS
         in_reset                CHAR            := NULL
     )
     AS
-        out_target              VARCHAR2(32767);
+        v_target                VARCHAR2(32767);
         in_app_id               CONSTANT PLS_INTEGER := get_app_id();
     BEGIN
-        -- commit otherwise anything before redirect will be rolled back
-        COMMIT;
-
         -- check if we are in APEX or not
-        HTP.INIT;
-        out_target := core.get_page_url (
+        v_target := core.get_page_url (
             in_page_id          => in_page_id,
             in_names            => in_names,
             in_values           => in_values,
@@ -4145,27 +4164,24 @@ CREATE OR REPLACE PACKAGE BODY core AS
         );
 
         -- fix address
-        IF out_target LIKE '%/authentication-scheme-login/%' THEN
+        IF v_target LIKE '%/authentication-scheme-login/%' THEN
             FOR c IN (
                 SELECT a.alias
                 FROM apex_applications a
                 WHERE a.application_id  = in_app_id
                     AND ROWNUM          = 1
             ) LOOP
-                out_target := REPLACE(out_target, '/authentication-scheme-login/', '/' || LOWER(c.alias) || '/');
+                v_target := REPLACE(v_target, '/authentication-scheme-login/', '/' || LOWER(c.alias) || '/');
             END LOOP;
         END IF;
         --
-        APEX_UTIL.REDIRECT_URL(out_target);  -- OWA_UTIL not working on Cloud
-        --
-        APEX_APPLICATION.STOP_APEX_ENGINE;
-        --
-        -- EXCEPTION
-        -- WHEN APEX_APPLICATION.E_STOP_APEX_ENGINE THEN
+        redirect (
+            in_url => v_target
+        );
         --
     EXCEPTION
     WHEN APEX_APPLICATION.E_STOP_APEX_ENGINE THEN
-        NULL;
+        RAISE;
     WHEN OTHERS THEN
         core.raise_error();
     END;

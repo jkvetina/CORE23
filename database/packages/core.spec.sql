@@ -1322,6 +1322,12 @@ AS
 
 
     PROCEDURE redirect (
+        in_url                  VARCHAR2
+    );
+
+
+
+    PROCEDURE redirect (
         in_page_id              NUMBER          := NULL,
         in_names                VARCHAR2        := NULL,
         in_values               VARCHAR2        := NULL,
