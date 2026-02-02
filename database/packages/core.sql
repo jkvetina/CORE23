@@ -756,6 +756,8 @@ CREATE OR REPLACE PACKAGE BODY core AS
                     p_call_post_authentication  => in_postauth
                 );
             EXCEPTION
+            WHEN APEX_APPLICATION.E_STOP_APEX_ENGINE THEN
+                RAISE;
             WHEN OTHERS THEN
                 core.raise_error('CREATE_SESSION_FAILED|' || in_app_id || '|' || in_page_id || '|' || in_user_id);
             END;
