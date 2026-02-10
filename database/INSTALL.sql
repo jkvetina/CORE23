@@ -17,11 +17,13 @@
 --
 -- SEQUENCES
 --
+@"./sequences/core_log_id.sql";
 @"./sequences/core_lock_id.sql";
 
 --
 -- TABLES
 --
+@"./tables/core_logs.sql";
 @"./tables/core_locks.sql";
 @"./tables/core_report_views.sql";
 @"./tables/core_report_cols.sql";
