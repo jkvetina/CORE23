@@ -1949,7 +1949,7 @@ CREATE OR REPLACE PACKAGE BODY core AS
         v_statement := RTRIM(APEX_STRING.FORMAT (
             -- point of the first comment is that it will be visible in scheduler additional info
             q'!DECLARE
-              !    v_id PLS_INTEGER;
+              !    v_id NUMBER;
               !BEGIN
               !    -- keep comment here, so it is visible in user_scheduler_job_run_details.output column
               !    DBMS_OUTPUT.PUT_LINE('#%5 | %6');
