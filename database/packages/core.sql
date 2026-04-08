@@ -3111,6 +3111,23 @@ CREATE OR REPLACE PACKAGE BODY core AS
 
     FUNCTION handle_apex_error (
         p_error                 APEX_ERROR.T_ERROR
+        -- https://docs.oracle.com/en/database/oracle/apex/24.2/aeapi/Constants-and-Attributes-used-for-Result-Types.html#GUID-461DE6FA-D7EE-4DF7-9627-451DEE2EC8C1
+        -- message                  varchar2(32767),                /* Error message which will be displayed */
+        -- additional_info          varchar2(32767),                /* Only used for display_location ON_ERROR_PAGE to display additional error information */
+        -- display_location         varchar2(40),                   /* Use constants "used for display_location" below */
+        -- association_type         varchar2(40),                   /* Use constants "used for asociation_type" below */
+        -- page_item_name           varchar2(255),                  /* Associated page item name */
+        -- region_id                number,                         /* Associated tabular form region id of the primary application */
+        -- column_alias             varchar2(255),                  /* Associated tabular form column alias */
+        -- row_num                  pls_integer,                    /* Associated tabular form row */
+        -- apex_error_code          varchar2(255),                  /* Contains the system message code if it's an error raised by APEX */
+        -- is_internal_error        boolean,                        /* Set to TRUE if it's a critical error raised by the APEX engine, like an invalid SQL/PLSQL statements, Internal Errors are always displayed on the Error Page */
+        -- is_common_runtime_error  boolean,                        /* TRUE for internal authorization, session and session state errors that normally should not be masked by an error handler */
+        -- ora_sqlcode              number,                         /* SQLCODE on exception stack which triggered the error, NULL if the error was not raised by an ORA error */
+        -- ora_sqlerrm              varchar2(32767),                /* SQLERRM which triggered the error, NULL if the error was not raised by an ORA error */
+        -- error_backtrace          varchar2(32767),                /* Output of sys.dbms_utility.format_error_backtrace or sys.dbms_utility.format_call_stack */
+        -- error_statement          varchar2(32767),                /* Statement that was parsed when the error occurred - only suitable when parsing caused the error */
+        -- component                apex_application.t_component,   /* Component which has been processed when the error occurred */
     )
     RETURN APEX_ERROR.T_ERROR_RESULT
     AS
